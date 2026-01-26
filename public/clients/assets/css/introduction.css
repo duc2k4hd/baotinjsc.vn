@@ -1,0 +1,479 @@
+/* Introduction Page Styles */
+.intro-breadcrumb {
+    background: #f8f9fa;
+    padding: 15px 0;
+}
+
+.breadcrumb-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.breadcrumb-wrapper a {
+    color: #667eea;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.breadcrumb-wrapper a:hover {
+    color: #764ba2;
+}
+
+.breadcrumb-wrapper .separator {
+    color: #999;
+}
+
+.breadcrumb-wrapper .current {
+    color: #333;
+    font-weight: 500;
+}
+
+/* Hero Section */
+.intro-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 80px 0;
+    text-align: center;
+}
+
+.intro-hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.intro-hero-title {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.intro-hero-subtitle {
+    font-size: 20px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    opacity: 0.95;
+}
+
+.intro-hero-logo {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.intro-hero-logo img {
+    max-width: 200px;
+    height: auto;
+    filter: brightness(0) invert(1);
+}
+
+/* Main Content */
+.intro-page {
+    padding: 60px 0;
+}
+
+.intro-section {
+    margin-bottom: 80px;
+}
+
+.intro-section-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.intro-section-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.intro-section-divider {
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0 auto;
+    border-radius: 2px;
+}
+
+/* About Section */
+.intro-about-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    align-items: center;
+}
+
+.intro-about-text {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #666;
+}
+
+.intro-lead {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.intro-about-text p {
+    margin-bottom: 20px;
+}
+
+.intro-about-image {
+    text-align: center;
+}
+
+.intro-about-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+}
+
+/* Mission & Vision */
+.intro-mission-vision-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+}
+
+.intro-mission-card,
+.intro-vision-card {
+    background: #fff;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 40px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.intro-mission-card:hover,
+.intro-vision-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.intro-card-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.intro-card-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.intro-card-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #666;
+    margin: 0;
+}
+
+/* Core Values */
+.intro-values-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+
+.intro-value-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    transition: all 0.3s;
+}
+
+.intro-value-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.intro-value-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.intro-value-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.intro-value-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #666;
+    margin: 0;
+}
+
+/* Why Choose Us */
+.intro-why-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.intro-why-item {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 30px;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.intro-why-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    border-color: #667eea;
+}
+
+.intro-why-number {
+    font-size: 48px;
+    font-weight: 700;
+    color: #667eea;
+    opacity: 0.2;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    line-height: 1;
+}
+
+.intro-why-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+    margin-top: 10px;
+}
+
+.intro-why-text {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #666;
+    margin: 0;
+}
+
+/* Statistics */
+.intro-stats {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 60px 0;
+    border-radius: 12px;
+}
+
+.intro-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+}
+
+.intro-stat-item {
+    text-align: center;
+    color: #fff;
+}
+
+.intro-stat-number {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 5px;
+}
+
+.intro-stat-label {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+.intro-stat-text {
+    font-size: 16px;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* CTA Section */
+.intro-cta {
+    background: #f8f9fa;
+    padding: 60px 40px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.intro-cta-title {
+    font-size: 36px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.intro-cta-text {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.intro-cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.intro-cta-btn {
+    padding: 15px 35px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.intro-cta-btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.intro-cta-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.intro-cta-btn-secondary {
+    background: #fff;
+    color: #667eea;
+    border: 2px solid #667eea;
+}
+
+.intro-cta-btn-secondary:hover {
+    background: #667eea;
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .intro-hero-title {
+        font-size: 36px;
+    }
+    
+    .intro-hero-subtitle {
+        font-size: 18px;
+    }
+    
+    .intro-about-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .intro-mission-vision-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .intro-values-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .intro-why-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .intro-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .intro-hero {
+        padding: 60px 0;
+    }
+    
+    .intro-hero-title {
+        font-size: 28px;
+    }
+    
+    .intro-hero-subtitle {
+        font-size: 16px;
+    }
+    
+    .intro-section-title {
+        font-size: 28px;
+    }
+    
+    .intro-values-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .intro-why-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .intro-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+    }
+    
+    .intro-stat-number,
+    .intro-stat-label {
+        font-size: 36px;
+    }
+    
+    .intro-cta {
+        padding: 40px 20px;
+    }
+    
+    .intro-cta-title {
+        font-size: 28px;
+    }
+    
+    .intro-cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .intro-cta-btn {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .intro-hero-title {
+        font-size: 24px;
+    }
+    
+    .intro-section-title {
+        font-size: 24px;
+    }
+    
+    .intro-stats-grid {
+        grid-template-columns: 1fr;
+    }
+}

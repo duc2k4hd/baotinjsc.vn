@@ -1,0 +1,1538 @@
+.autosensor_shop {
+    width: 95%;
+    height: auto;
+    margin: 20px auto;
+}
+
+.autosensor_shop_breadcrumb {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    flex-wrap: wrap;
+    font-size: 0.9rem;
+    color: #555;
+    margin: 1rem auto;
+}
+
+.autosensor_shop_breadcrumb a {
+    text-decoration: none;
+    color: var(--primary-color);
+    transition: color 0.3s ease;
+}
+
+.autosensor_shop_breadcrumb a:hover {
+    color: var(--secondary-color);
+}
+
+.autosensor_shop_breadcrumb span.separator {
+    margin: 0 0.5rem;
+    color: #ccc;
+}
+
+.autosensor_shop_banner {
+    width: 100%;
+    position: relative;
+    max-width: 100%;
+    max-height: 240px;
+    aspect-ratio: 100 / 240;
+    margin: 20px auto;
+    overflow: hidden;
+    border-radius: var(--border-radius);
+}
+
+.autosensor_shop_banner_image {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    object-fit: cover;
+}
+
+.autosensor_shop_products {
+    width: 95%;
+    height: fit-content;
+    margin: 20px auto;
+    display: grid;
+    grid-template-columns: 20% auto;
+    column-gap: 10px;
+}
+
+.autosensor_shop_products_filter {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    font-family: 'Arial', sans-serif;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: sticky;
+    top: 52px;
+    height: fit-content;
+    max-height: calc(100vh - 80px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* Chrome / Edge / Safari */
+.autosensor_shop_products_filter::-webkit-scrollbar {
+    display: none;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autosensor_shop_products_filter::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autosensor_shop_products_filter::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.autosensor_shop_products_filter::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.autosensor_shop_products_filter::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.autosensor_shop_products_filter:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+/* Danh mục */
+.autosensor_shop_products_filter_categories {
+    transition: all 0.3s ease;
+    animation: slideInLeft 0.5s ease-out 0.1s both;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.autosensor_shop_products_filter_categories_title_bars {
+    display: none;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.autosensor_shop_products_filter_categories_title_bars:hover {
+    background: rgba(0, 0, 0, 0.05);
+    transform: scale(1.1);
+}
+
+.autosensor_shop_products_filter_categories_title_bars svg {
+    transition: transform 0.3s ease;
+}
+
+.autosensor_shop_products_filter_categories_title_bars.active svg {
+    transform: rotate(90deg);
+}
+
+.autosensor_shop_products_filter_categories_title_name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: color 0.3s ease;
+}
+
+.autosensor_shop_products_filter_categories_content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.autosensor_shop_products_filter_categories_content_category {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 1px solid transparent;
+    animation: fadeIn 0.4s ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.autosensor_shop_products_filter_categories_content_category:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.autosensor_shop_products_filter_categories_content_category:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.autosensor_shop_products_filter_categories_content_category:nth-child(3) {
+    animation-delay: 0.2s;
+}
+
+.autosensor_shop_products_filter_categories_content_category:nth-child(4) {
+    animation-delay: 0.25s;
+}
+
+.autosensor_shop_products_filter_categories_content_category:nth-child(5) {
+    animation-delay: 0.3s;
+}
+
+.autosensor_shop_products_filter_categories_content_category:hover {
+    background: var(--hover-color);
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary-color);
+}
+
+.autosensor_shop_products_filter_categories_content_category_active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark, var(--primary-color)) 100%);
+    color: #fff;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    transform: translateX(4px);
+}
+
+.autosensor_shop_products_filter_categories_content_category_active .autosensor_shop_products_filter_categories_content_category_text p {
+    color: #fff;
+    font-weight: 600;
+}
+
+.autosensor_shop_products_filter_categories_content_category_image {
+    transition: transform 0.3s ease;
+}
+
+.autosensor_shop_products_filter_categories_content_category:hover .autosensor_shop_products_filter_categories_content_category_image {
+    transform: scale(1.1);
+}
+
+.autosensor_shop_products_filter_categories_content_category_image img {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.autosensor_shop_products_filter_categories_content_category:hover .autosensor_shop_products_filter_categories_content_category_image img {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.autosensor_shop_products_filter_categories_content_category_active .autosensor_shop_products_filter_categories_content_category_image img {
+    border-color: #fff;
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.autosensor_shop_products_filter_categories_content_category_text p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+.autosensor_shop_products_filter_categories_content_category_quantity span {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+/* Bộ lọc chung */
+.autosensor_shop_products_filter_price,
+.autosensor_shop_products_filter_brands,
+.autosensor_shop_products_filter_color,
+.autosensor_shop_products_filter_size {
+    border-top: 1px solid #eee;
+    padding-top: 0.8rem;
+}
+
+.autosensor_shop_products_filter_price_title,
+.autosensor_shop_products_filter_brands_title,
+.autosensor_shop_products_filter_categories_title,
+.autosensor_shop_products_filter_color_title,
+.autosensor_shop_products_filter_size_title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.8rem;
+}
+
+/* Brand filter styles */
+.autosensor_shop_products_filter_brands_content {
+    height: fit-content;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 5px;
+}
+
+.autosensor_shop_products_filter_brands_list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.autosensor_shop_products_filter_brands_item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    position: relative;
+    overflow: hidden;
+}
+
+.autosensor_shop_products_filter_brands_item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.autosensor_shop_products_filter_brands_item:hover::before {
+    left: 100%;
+}
+
+.autosensor_shop_products_filter_brands_item:hover {
+    background-color: #e9ecef;
+    border-color: var(--primary-color);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.autosensor_shop_products_filter_brands_item_active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark, var(--primary-color)) 100%);
+    border-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    transform: translateX(4px);
+}
+
+.autosensor_shop_products_filter_brands_item_active .autosensor_shop_products_filter_brands_item_name {
+    color: #fff;
+    font-weight: 500;
+}
+
+.autosensor_shop_products_filter_brands_checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    flex-shrink: 0;
+}
+
+.autosensor_shop_products_filter_brands_item_name {
+    font-size: 0.9rem;
+    color: #444;
+    user-select: none;
+    flex: 1;
+}
+
+.autosensor_shop_products_filter_brands_empty {
+    font-size: 0.9rem;
+    color: #999;
+    text-align: center;
+    padding: 1rem 0;
+    font-style: italic;
+}
+
+/* Scrollbar cho brand list */
+.autosensor_shop_products_filter_brands_content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autosensor_shop_products_filter_brands_content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.autosensor_shop_products_filter_brands_content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+.autosensor_shop_products_filter_brands_content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.autosensor_shop_products_filter_price_content label,
+.autosensor_shop_products_filter_color_content label,
+.autosensor_shop_products_filter_size_content label {
+    display: block;
+    font-size: 0.9rem;
+    color: #444;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+}
+
+.autosensor_shop_products_filter input[type="radio"] {
+    accent-color: #007bff;
+    margin-right: 0.3rem;
+}
+
+.autosensor_shop_products_filter_color_form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 5px 0;
+}
+
+.autosensor_shop_products_filter_color_form label {
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    padding: 3px 8px;
+    border: 1px solid #ddd;
+    border-radius: 16px;
+    background-color: #eee;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+}
+
+.autosensor_shop_products_filter_color_form label:last-child {
+    background-color: var(--support-color);
+    color: white;
+    border: 1px solid var(--support-color);
+}
+
+.autosensor_shop_products_filter_color_form_label_active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: 1px solid var(--primary-color) !important;
+}
+
+.autosensor_shop_products_filter_color_form label:hover {
+    background-color: #f0f8ff;
+    border-color: #2196f3;
+}
+
+/* .autosensor_shop_products_filter_color_checkbox {
+    display: none;
+} */
+
+/* Hiển thị ô màu vuông nhỏ */
+/* .autosensor_shop_products_filter_color_form label::before {
+    content: '';
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+    background-color: currentColor;
+} */
+
+/* Màu trắng cần viền rõ hơn */
+/* .autosensor_shop_products_filter_color_form label[for="Trắng"]::before {
+    border: 1px solid #999;
+} */
+
+/* Khi được chọn */
+.autosensor_shop_products_filter_color_checkbox:checked + label {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    font-weight: 600;
+}
+
+/* Form chứa toàn bộ phần lọc giá */
+.autosensor_shop_products_filter_price_form {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px;
+    background-color: #f9fafb;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Label từng khoảng giá */
+.autosensor_shop_products_filter_price_content_form_label {
+    display: block;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background-color: #fff;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    user-select: none;
+    margin-bottom: 0.6rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.autosensor_shop_products_filter_price_content_form_label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s ease;
+}
+
+.autosensor_shop_products_filter_price_content_form_label:hover::before {
+    left: 100%;
+}
+
+/* Hover label */
+.autosensor_shop_products_filter_price_content_form_label:hover {
+    background-color: #e8f4ff;
+    border-color: var(--primary-color, #1e88e5);
+    color: var(--primary-color, #1e88e5);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Label được chọn */
+.autosensor_shop_products_filter_price_content_form_label_active {
+    background: linear-gradient(135deg, var(--primary-color, #1e88e5) 0%, var(--primary-color-dark, #0d47a1) 100%);
+    border-color: var(--primary-color, #1e88e5);
+    color: #fff;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(30, 136, 229, 0.3);
+    transform: translateX(4px);
+}
+
+/* Bộ lọc Size */
+.autosensor_shop_products_filter_size_form label {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    margin: 4px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.autosensor_shop_products_filter_size_form_label_active {
+    background-color: #000;
+    color: white !important;
+    border-color: #000;
+}
+
+.autosensor_shop_products_filter_size_form input[type="checkbox"] {
+    display: none;
+}
+
+
+
+/* Wizard Button */
+.autosensor_shop_products_filter_wizard {
+    background: linear-gradient(135deg, #2563EB 0%, #1e40af 100%);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.autosensor_shop_products_filter_wizard_content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.autosensor_shop_products_filter_wizard_icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+}
+
+.autosensor_shop_products_filter_wizard_text {
+    flex: 1;
+}
+
+.autosensor_shop_products_filter_wizard_title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.3rem 0;
+    text-transform: uppercase;
+}
+
+.autosensor_shop_products_filter_wizard_description {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.autosensor_shop_products_filter_wizard_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    color: #2563EB;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.autosensor_shop_products_filter_wizard_button:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.autosensor_shop_products_filter_wizard_button svg {
+    transition: transform 0.3s ease;
+}
+
+.autosensor_shop_products_filter_wizard_button:hover svg {
+    transform: translateX(4px);
+}
+
+/* Sản phẩm mới */
+.autosensor_shop_products_filter_new_products {
+    border-top: 1px solid #eee;
+    padding-top: 0.8rem;
+}
+
+.autosensor_shop_products_filter_new_products_title {
+    font-size: 1.2rem;
+    text-transform: uppercase;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.autosensor_shop_products_filter_new_products_description p {
+    font-size: 0.7rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.autosensor_shop_products_filter_new_products_item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.autosensor_shop_products_filter_new_products_item_image img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.autosensor_shop_products_filter_new_products_item_info {
+    flex: 1;
+}
+
+.autosensor_shop_products_filter_new_products_item_info_title {
+    font-size: 0.85rem;
+    color: #333;
+    margin: 0;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autosensor_shop_products_filter_new_products_item_info_price {
+    font-size: 0.85rem;
+    color: #e53935;
+    margin: 0.2rem 0 0;
+    font-weight: bold;
+}
+
+
+.autosensor_shop_products_content {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 5px;
+    align-items: start;
+    align-content: start;
+    height: fit-content;
+    position: sticky;
+    top: 0;
+}
+
+.autosensor_shop_products_content::-webkit-scrollbar {
+    width: 0;
+}
+
+.autosensor_shop_products_content:hover {
+    overflow-y: auto;
+}
+
+.autosensor_shop_products_content_filter {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.autosensor_shop_products_content_filters {
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+    align-items: start;
+    justify-content: flex-start;
+}
+
+.autosensor_shop_products_content_filter_total {
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-align: start;
+}
+
+.autosensor_shop_products_content_filter_total span {
+    font-size: 18px;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: var(--primary-color);
+}
+
+.autosensor_shop_products_content_filter_delete_all {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 14px;
+    margin-bottom: 8px;
+    margin: 0 auto;
+}
+
+.autosensor_shop_products_content_filter_delete_all_btn {
+    background-color: var(--secondary-color); /* Đỏ tươi */
+    color: white;
+    border: none;
+    padding: 7px 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.2s;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.autosensor_shop_products_content_filter_delete_all_btn:hover {
+    background-color: #d32f2f;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.autosensor_shop_products_content_filter_delete_all_btn:active {
+    background-color: #b71c1c;
+}
+
+
+.autosensor_shop_products_content_filter_select {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0.5rem 10px;
+    border-radius: 8px;
+    background: #f7fff2 !important;
+    /* nền nhẹ */
+}
+
+.autosensor_shop_products_content_filter_select label {
+    font-weight: 500;
+    color: #444;
+    font-size: 0.95rem;
+    margin-right: 0.5rem;
+}
+
+.autosensor_shop_products_content_filter_select select {
+    appearance: none;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 0.4rem 2rem 0.4rem 0.6rem;
+    /* thêm khoảng cách để đặt icon */
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: #333;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 1rem;
+}
+
+.autosensor_shop_products_content_filter_select select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15);
+}
+
+.autosensor_shop_products_content_filter_select_sort,
+.autosensor_shop_products_content_filter_select_show {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.autosensor_shop_products_content_filter_select option {
+    color: #333;
+    background: #fff;
+}
+
+.autosensor_shop_products_content_list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    border-radius: 8px;
+}
+
+.autosensor_shop_products_content_list_empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    border: 2px dashed #ccc;
+    background-color: #fafafa;
+    border-radius: 16px;
+    padding: 40px 20px;
+    text-align: center;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.autosensor_shop_products_content_list_empty p {
+    font-size: 18px;
+    color: #666;
+    font-weight: 500;
+    margin-top: 12px;
+    line-height: 1.6;
+}
+
+.autosensor_shop_products_content_list_empty::before {
+    content: "🛒";
+    font-size: 48px;
+    opacity: 0.7;
+}
+
+.autosensor_shop_products_content_list_empty_button {
+    margin-top: 24px;
+    display: inline-block;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.autosensor_shop_products_content_list_empty_button:hover {
+    background-color: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+/* Mô tả chi tiết danh mục */
+.autosensor_shop_category_description {
+    width: 90%;
+    margin: 2rem auto;
+    padding: 0;
+}
+
+.autosensor_shop_category_description_content {
+    background: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e5e7eb;
+}
+
+.autosensor_shop_category_description_title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.autosensor_shop_category_description_text {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: #4b5563;
+    margin: 0;
+}
+
+/* Typography - Headings */
+.autosensor_shop_category_description_content h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 1.5rem 0 1rem 0;
+    line-height: 1.3;
+    border-bottom: 3px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+}
+
+.autosensor_shop_category_description_content h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 1.5rem 0 0.875rem 0;
+    line-height: 1.4;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+.autosensor_shop_category_description_content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 1.25rem 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.autosensor_shop_category_description_content h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 1rem 0 0.625rem 0;
+    line-height: 1.5;
+}
+
+.autosensor_shop_category_description_content h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0.875rem 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+.autosensor_shop_category_description_content h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4b5563;
+    margin: 0.75rem 0 0.5rem 0;
+    line-height: 1.5;
+}
+
+/* Paragraphs */
+.autosensor_shop_category_description_content p {
+    margin: 0 0 1rem 0;
+    line-height: 1.8;
+    color: #4b5563;
+}
+
+.autosensor_shop_category_description_content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Lists */
+.autosensor_shop_category_description_content ul,
+.autosensor_shop_category_description_content ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+    line-height: 1.8;
+    color: #4b5563;
+}
+
+.autosensor_shop_category_description_content ul {
+    list-style-type: disc;
+}
+
+.autosensor_shop_category_description_content ol {
+    list-style-type: decimal;
+}
+
+.autosensor_shop_category_description_content li {
+    margin: 0.5rem 0;
+    line-height: 1.8;
+    color: #4b5563;
+}
+
+.autosensor_shop_category_description_content ul ul,
+.autosensor_shop_category_description_content ol ol,
+.autosensor_shop_category_description_content ul ol,
+.autosensor_shop_category_description_content ol ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.autosensor_shop_category_description_content ul ul {
+    list-style-type: circle;
+}
+
+.autosensor_shop_category_description_content ul ul ul {
+    list-style-type: square;
+}
+
+/* Links */
+.autosensor_shop_category_description_content a {
+    color: var(--primary-color);
+    text-decoration: underline;
+    transition: color 0.2s ease;
+}
+
+.autosensor_shop_category_description_content a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+.autosensor_shop_category_description_content a:visited {
+    color: #7c3aed;
+}
+
+/* Images */
+.autosensor_shop_category_description_content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: block;
+}
+
+.autosensor_shop_category_description_content img[style*="float: left"],
+.autosensor_shop_category_description_content img[style*="float:left"] {
+    float: left;
+    margin: 0 1rem 1rem 0;
+}
+
+.autosensor_shop_category_description_content img[style*="float: right"],
+.autosensor_shop_category_description_content img[style*="float:right"] {
+    float: right;
+    margin: 0 0 1rem 1rem;
+}
+
+/* Tables */
+.autosensor_shop_category_description_content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.autosensor_shop_category_description_content thead {
+    background: #f3f4f6;
+}
+
+.autosensor_shop_category_description_content th {
+    padding: 0.875rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #1f2937;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 0.95rem;
+}
+
+.autosensor_shop_category_description_content td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+    font-size: 0.95rem;
+}
+
+.autosensor_shop_category_description_content tbody tr:hover {
+    background: #f9fafb;
+}
+
+.autosensor_shop_category_description_content tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Blockquotes */
+.autosensor_shop_category_description_content blockquote {
+    margin: 1.5rem 0;
+    padding: 1rem 1.5rem;
+    border-left: 4px solid var(--primary-color);
+    background: #f9fafb;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: #374151;
+    line-height: 1.7;
+}
+
+.autosensor_shop_category_description_content blockquote p {
+    margin: 0;
+}
+
+.autosensor_shop_category_description_content blockquote p:not(:last-child) {
+    margin-bottom: 0.75rem;
+}
+
+/* Code */
+.autosensor_shop_category_description_content code {
+    background: #f3f4f6;
+    color: #dc2626;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.autosensor_shop_category_description_content pre {
+    background: #1f2937;
+    color: #f9fafb;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    line-height: 1.6;
+    font-size: 0.9rem;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+.autosensor_shop_category_description_content pre code {
+    background: transparent;
+    color: inherit;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+}
+
+/* Text formatting */
+.autosensor_shop_category_description_content strong,
+.autosensor_shop_category_description_content b {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.autosensor_shop_category_description_content em,
+.autosensor_shop_category_description_content i {
+    font-style: italic;
+    color: #374151;
+}
+
+.autosensor_shop_category_description_content u {
+    text-decoration: underline;
+    text-decoration-color: var(--primary-color);
+    text-underline-offset: 2px;
+}
+
+.autosensor_shop_category_description_content s,
+.autosensor_shop_category_description_content strike {
+    text-decoration: line-through;
+    color: #6b7280;
+}
+
+.autosensor_shop_category_description_content mark {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.1rem 0.2rem;
+    border-radius: 3px;
+}
+
+/* Subscript and Superscript */
+.autosensor_shop_category_description_content sub {
+    font-size: 0.75em;
+    vertical-align: sub;
+    line-height: 0;
+}
+
+.autosensor_shop_category_description_content sup {
+    font-size: 0.75em;
+    vertical-align: super;
+    line-height: 0;
+}
+
+/* Horizontal Rule */
+.autosensor_shop_category_description_content hr {
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    margin: 2rem 0;
+    border-radius: 2px;
+}
+
+/* Divs and containers */
+.autosensor_shop_category_description_content div {
+    margin: 0.5rem 0;
+}
+
+/* First and last child spacing */
+.autosensor_shop_category_description_content > *:first-child {
+    margin-top: 0;
+}
+
+.autosensor_shop_category_description_content > *:last-child {
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .autosensor_shop_category_description {
+        width: 98%;
+        margin: .5rem auto;
+        padding: 0;
+    }
+
+    .autosensor_shop_category_description_content {
+        padding: 1.5rem;
+    }
+    
+    .autosensor_shop_category_description_title {
+        font-size: 1.25rem;
+    }
+    
+    .autosensor_shop_category_description_text {
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+    
+    /* Responsive typography */
+    .autosensor_shop_category_description_content h1 {
+        font-size: 1.75rem;
+        margin: 1.25rem 0 0.875rem 0;
+    }
+    
+    .autosensor_shop_category_description_content h2 {
+        font-size: 1.5rem;
+        margin: 1.25rem 0 0.75rem 0;
+    }
+    
+    .autosensor_shop_category_description_content h3 {
+        font-size: 1.25rem;
+        margin: 1rem 0 0.625rem 0;
+    }
+    
+    .autosensor_shop_category_description_content h4 {
+        font-size: 1.125rem;
+        margin: 0.875rem 0 0.5rem 0;
+    }
+    
+    .autosensor_shop_category_description_content h5 {
+        font-size: 1rem;
+        margin: 0.75rem 0 0.5rem 0;
+    }
+    
+    .autosensor_shop_category_description_content h6 {
+        font-size: 0.95rem;
+        margin: 0.625rem 0 0.5rem 0;
+    }
+    
+    .autosensor_shop_category_description_content table {
+        font-size: 0.875rem;
+    }
+    
+    .autosensor_shop_category_description_content th,
+    .autosensor_shop_category_description_content td {
+        padding: 0.625rem 0.75rem;
+    }
+    
+    .autosensor_shop_category_description_content blockquote {
+        padding: 0.875rem 1.25rem;
+        margin: 1.25rem 0;
+    }
+    
+    .autosensor_shop_category_description_content pre {
+        padding: 0.875rem;
+        font-size: 0.85rem;
+    }
+    
+    .autosensor_shop_category_description_content img {
+        margin: 0.875rem 0;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+.autosensor_shop_products_content_list_item {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.autosensor_shop_products_content_list_item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+}
+
+.autosensor_shop_products_content_list_item_label {
+    background: #ff4c4c;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.5rem;
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    border-radius: 4px;
+    z-index: 200;
+}
+
+.autosensor_shop_products_content_list_item_image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-bottom: 1px solid #eee;
+}
+
+.autosensor_shop_products_content_list_item_image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.autosensor_shop_products_content_list_item:hover .autosensor_shop_products_content_list_item_image img {
+    transform: scale(1.05);
+}
+
+.autosensor_shop_products_content_list_item_category {
+    margin-top: 0.5rem;
+    color: #888;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.autosensor_shop_products_content_list_item_category_name {
+    text-transform: uppercase;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autosensor_shop_products_content_list_item_title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #333;
+    text-align: center;
+    padding: 0.3rem 0.5rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autosensor_shop_products_content_list_item_title_name {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    font-size: .95rem;
+    text-transform: uppercase;
+    font-family: 'Arial', sans-serif;
+    font-weight: 500;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.autosensor_shop_products_content_list_item_title_name:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+
+.autosensor_shop_products_content_list_item_star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #f6b100;
+}
+
+.autosensor_shop_products_content_list_item_star svg {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+}
+
+.autosensor_shop_products_content_list_item_star_count {
+    font-size: 0.75rem;
+    color: #8a8a8a;
+}
+
+.autosensor_shop_products_content_list_item_price {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+}
+
+.autosensor_shop_products_content_list_item_price_new {
+    color: #e53935;
+    font-weight: 700;
+}
+
+.autosensor_shop_products_content_list_item_price_old {
+    color: #999;
+    text-decoration: line-through;
+    font-size: 0.85rem;
+}
+
+.autosensor_shop_products_content_list_item_addtocart {
+    text-align: center;
+    margin: 0.5rem;
+}
+
+.autosensor_shop_products_content_list_item_addtocart .add-to-cart-form {
+    display: flex;
+    flex-wrap: nowrap;
+    text-align: center;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px;
+}
+
+.autosensor_shop_products_content_list_item_addtocart button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    background: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-align: center;
+}
+
+.autosensor_shop_products_content_list_item_addtocart button:hover {
+    background: var(--secondary-color);
+}
+
+.autosensor_shop_products_content_list_item_addtocart svg {
+    width: 16px;
+    height: 16px;
+    fill: #fff;
+}
+
+.autosensor_shop_products_content_pagination {
+    display: flex;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.autosensor_shop_products_content_pagination .pagination {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.autosensor_shop_products_content_pagination .page-item {
+    flex: 0 0 auto;
+}
+
+.autosensor_shop_products_content_pagination .page-link {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.autosensor_shop_products_content_pagination .page-link svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--primary-color);
+    transition: fill 0.3s ease;
+}
+
+.autosensor_shop_products_content_pagination .page-link:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.autosensor_shop_products_content_pagination .page-link:hover svg {
+    fill: #fff;
+}
+
+.autosensor_shop_products_content_pagination .page-item.active .page-link {
+    background: var(--primary-color);
+    color: #fff;
+    font-weight: bold;
+}
+
+.autosensor_shop_products_content_pagination .page-item.active .page-link svg {
+    fill: #fff;
+}

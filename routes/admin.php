@@ -1,0 +1,386 @@
+<?php
+
+use App\Http\Controllers\Admins\AccountController;
+use App\Http\Controllers\Admins\AdminNewsletterController;
+use App\Http\Controllers\Admins\AuthController;
+use App\Http\Controllers\Admins\CartController as AdminCartController;
+use App\Http\Controllers\Admins\ContactController as AdminContactController;
+use App\Http\Controllers\Admins\ImportExcelController;
+use App\Http\Controllers\Admins\MediaController;
+use App\Http\Controllers\Admins\OrderController as AdminOrderController;
+use App\Http\Controllers\Admins\ProductController;
+use App\Http\Controllers\Admins\SitemapController;
+use App\Http\Controllers\Admins\SupportStaffController;
+use App\Http\Controllers\Admins\PopupContentController;
+use Illuminate\Support\Facades\Route;
+
+// Admin Login (public)
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.attempt');
+});
+
+// Admin Routes (protected)
+// Chỉ dùng 'admin' middleware vì CheckAdmin đã xử lý authentication và redirect
+Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Dashboard
+    Route::get('/', [\App\Http\Controllers\Admins\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Admins\DashboardController::class, 'index'])->name('dashboard');
+
+    // Account Management
+    Route::resource('accounts', AccountController::class);
+
+    // Category Management
+    // Đặt routes export/import TRƯỚC resource route để tránh conflict
+    Route::get('categories/export', [\App\Http\Controllers\Admins\CategoryController::class, 'exportCategories'])->name('categories.export');
+    Route::post('categories/import', [\App\Http\Controllers\Admins\CategoryController::class, 'importCategories'])->name('categories.import');
+    Route::get('categories/tree', [\App\Http\Controllers\Admins\CategoryController::class, 'tree'])->name('categories.tree');
+    Route::post('categories/bulk-operations', [\App\Http\Controllers\Admins\CategoryController::class, 'bulkAction'])->name('categories.bulk-operations');
+    Route::post('categories/reorder', [\App\Http\Controllers\Admins\CategoryController::class, 'reorder'])->name('categories.reorder');
+    // Resource route với except để tránh conflict
+    Route::resource('categories', \App\Http\Controllers\Admins\CategoryController::class);
+    Route::resource('brands', \App\Http\Controllers\Admins\BrandController::class);
+    Route::post('categories/{category}/toggle-status', [\App\Http\Controllers\Admins\CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
+    Route::patch('categories/{category}/update-parent', [\App\Http\Controllers\Admins\CategoryController::class, 'updateParent'])->name('categories.update-parent');
+    Route::get('api/categories/{category}', [\App\Http\Controllers\Admins\CategoryController::class, 'apiShow'])->name('api.categories.show');
+
+    // Product Management
+    Route::resource('products', ProductController::class)->except(['show']);
+    Route::get('products/media-images', [ProductController::class, 'getMediaImagesApi'])->name('products.media-images');
+    Route::get('products/search-tags', [ProductController::class, 'searchTagsApi'])->name('products.search-tags');
+    
+    // Featured Products Management
+    Route::get('products/featured', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'index'])->name('featured-products.index');
+    Route::get('products/featured/search', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'search'])->name('featured-products.search');
+    Route::get('products/featured/by-category-brand', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'getByCategoryOrBrand'])->name('featured-products.by-category-brand');
+    Route::post('products/featured/add', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'add'])->name('featured-products.add');
+    Route::post('products/featured/add-by-category-brand', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'addByCategoryOrBrand'])->name('featured-products.add-by-category-brand');
+    Route::post('products/featured/remove', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'remove'])->name('featured-products.remove');
+    
+    // Product Import (Tool riêng biệt)
+    Route::get('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'index'])->name('products.import');
+    Route::post('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'import'])->name('products.import.process');
+
+    // Support Staff (CSKH)
+    Route::get('support-staff', [SupportStaffController::class, 'index'])->name('support-staff.index');
+    Route::post('support-staff', [SupportStaffController::class, 'store'])->name('support-staff.store');
+    Route::put('support-staff/{supportStaff}', [SupportStaffController::class, 'update'])->name('support-staff.update');
+    Route::delete('support-staff/{supportStaff}', [SupportStaffController::class, 'destroy'])->name('support-staff.destroy');
+    Route::post('support-staff/reorder', [SupportStaffController::class, 'reorder'])->name('support-staff.reorder');
+
+    // Popup Contents
+    Route::get('popup-contents', [PopupContentController::class, 'index'])->name('popup-contents.index');
+    Route::post('popup-contents', [PopupContentController::class, 'store'])->name('popup-contents.store');
+    Route::put('popup-contents/{popupContent}', [PopupContentController::class, 'update'])->name('popup-contents.update');
+    Route::delete('popup-contents/{popupContent}', [PopupContentController::class, 'destroy'])->name('popup-contents.destroy');
+    Route::post('popup-contents/reorder', [PopupContentController::class, 'reorder'])->name('popup-contents.reorder');
+
+    // Product Actions
+    Route::post('products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk-action');
+    Route::post('products/{product}/release-lock', [ProductController::class, 'releaseLock'])->name('products.release-lock');
+    Route::post('products/{product}/restore', [ProductController::class, 'restore'])->name('products.restore');
+    Route::get('products/{product}/inventory', [ProductController::class, 'inventory'])->name('products.inventory');
+    Route::post('products/{product}/inventory-adjust', [ProductController::class, 'inventoryAdjust'])->name('products.inventory-adjust');
+    Route::post('products/upload-cropped-image', [ProductController::class, 'uploadCroppedImage'])->name('products.upload-cropped-image');
+
+    // Product Import/Export
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/import-excel', [ImportExcelController::class, 'index'])->name('import-excel');
+        Route::post('/import-excel', [ImportExcelController::class, 'import'])->name('import-excel.import');
+        Route::post('/import-excel/process', [ImportExcelController::class, 'import'])->name('import-excel.process');
+        Route::get('/export-excel', [ImportExcelController::class, 'export'])->name('export-excel');
+        Route::post('/export-excel', [ImportExcelController::class, 'export'])->name('export-excel.post'); // Export với Job (nền)
+        
+        // Export/Import với filter (API)
+        Route::post('/export-import/export/start', [ImportExcelController::class, 'startExportWithFilter'])->name('export-import.export.start');
+        Route::post('/export-import/export/chunk', [ImportExcelController::class, 'processExportChunk'])->name('export-import.export.chunk');
+        Route::post('/export-import/export/cancel', [ImportExcelController::class, 'cancelExport'])->name('export-import.export.cancel');
+        Route::get('/export-import/export/progress', [ImportExcelController::class, 'getExportProgress'])->name('export-import.export.progress');
+        Route::get('/export-import/download/{sessionId}', [ImportExcelController::class, 'downloadExport'])->name('export-import.download');
+        
+        // Import với file upload (API)
+        Route::post('/export-import/import/start', [ImportExcelController::class, 'startImportWithFile'])->name('export-import.import.start');
+        Route::post('/export-import/import/chunk', [ImportExcelController::class, 'processImportChunk'])->name('export-import.import.chunk');
+        Route::post('/export-import/import/cancel', [ImportExcelController::class, 'cancelImport'])->name('export-import.import.cancel');
+        Route::get('/export-import/import/progress', [ImportExcelController::class, 'getImportProgress'])->name('export-import.import.progress');
+    });
+    
+    // Product Import (Tool riêng biệt - Batch processing)
+    Route::get('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'index'])->name('products.import');
+    Route::post('products/import/upload', [\App\Http\Controllers\Admins\ProductImportController::class, 'upload'])->name('products.import.upload');
+    Route::post('products/import/batch', [\App\Http\Controllers\Admins\ProductImportController::class, 'processBatch'])->name('products.import.batch');
+    Route::post('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'import'])->name('products.import.process');
+
+    // Account Actions
+    Route::post('accounts/{account}/lock', [AccountController::class, 'lock'])->name('accounts.lock');
+    Route::post('accounts/{account}/unlock', [AccountController::class, 'unlock'])->name('accounts.unlock');
+    Route::patch('accounts/{account}/toggle', [AccountController::class, 'toggle'])->name('accounts.toggle');
+    Route::post('accounts/{account}/ban', [AccountController::class, 'ban'])->name('accounts.ban');
+    Route::post('accounts/{account}/unban', [AccountController::class, 'unban'])->name('accounts.unban');
+    Route::post('accounts/{account}/reset-password', [AccountController::class, 'resetPassword'])->name('accounts.reset-password');
+    Route::post('accounts/{account}/verify-email', [AccountController::class, 'verifyEmail'])->name('accounts.verify-email');
+    Route::post('accounts/{account}/reset-login-attempts', [AccountController::class, 'resetLoginAttempts'])->name('accounts.reset-login-attempts');
+    Route::post('accounts/{id}/restore', [AccountController::class, 'restore'])->name('accounts.restore');
+
+    // Bulk Actions
+    Route::post('accounts/bulk-action', [AccountController::class, 'bulkAction'])->name('accounts.bulk-action');
+
+    // Export
+    Route::get('accounts/export/excel', [AccountController::class, 'export'])->name('accounts.export');
+
+    // Dashboard
+    Route::get('accounts/dashboard', [AccountController::class, 'dashboard'])->name('accounts.dashboard');
+
+    // API Routes for Account Edit Page
+    Route::prefix('api/accounts')->name('api.accounts.')->group(function () {
+        Route::get('{account}', [AccountController::class, 'apiShow'])->name('show');
+        Route::put('{account}', [AccountController::class, 'apiUpdate'])->name('update');
+        Route::patch('{account}/toggle', [AccountController::class, 'apiToggle'])->name('toggle');
+        Route::post('{account}/change-role', [AccountController::class, 'apiChangeRole'])->name('change-role');
+        Route::patch('{account}/reset-password', [AccountController::class, 'apiResetPassword'])->name('reset-password');
+        Route::post('{account}/force-logout', [AccountController::class, 'apiForceLogout'])->name('force-logout');
+        Route::post('{account}/verify-email', [AccountController::class, 'apiVerifyEmail'])->name('verify-email');
+
+        // Profile API
+        Route::prefix('{account}/profile')->name('profile.')->group(function () {
+            Route::get('/', [AccountController::class, 'apiProfileShow'])->name('show');
+            Route::put('/', [AccountController::class, 'apiProfileUpdate'])->name('update');
+            Route::patch('/visibility', [AccountController::class, 'apiProfileVisibility'])->name('visibility');
+            Route::post('/avatar', [AccountController::class, 'apiProfileAvatar'])->name('avatar');
+        });
+
+        // Logs API
+        Route::prefix('{account}/logs')->name('logs.')->group(function () {
+            Route::get('/', [AccountController::class, 'apiLogsIndex'])->name('index');
+            Route::get('/export', [AccountController::class, 'apiLogsExport'])->name('export');
+        });
+    });
+
+    // Orders
+    // Các route tĩnh phải khai báo trước resource để không bị trùng với `orders/{order}`
+    Route::get('orders/get-pick-shifts', [AdminOrderController::class, 'getPickShifts'])->name('orders.get-pick-shifts');
+    Route::get('orders/track', [AdminOrderController::class, 'track'])->name('orders.track');
+    Route::post('orders/track', [AdminOrderController::class, 'trackPost'])->name('orders.track.post');
+
+    Route::resource('orders', AdminOrderController::class);
+    Route::patch('orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::patch('orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
+    Route::patch('orders/{order}/complete', [AdminOrderController::class, 'complete'])->name('orders.complete');
+    Route::post('orders/{order}/recalculate', [AdminOrderController::class, 'recalculate'])->name('orders.recalculate');
+    Route::get('orders/{order}/invoice', [AdminOrderController::class, 'invoice'])->name('orders.invoice');
+    Route::get('orders/{order}/invoice-pdf', [AdminOrderController::class, 'invoicePdf'])->name('orders.invoice.pdf');
+
+    // Quotes Management
+    Route::get('quotes', [\App\Http\Controllers\Admins\QuoteController::class, 'index'])->name('quotes.index');
+    Route::get('quotes/{quote}', [\App\Http\Controllers\Admins\QuoteController::class, 'show'])->name('quotes.show');
+    Route::patch('quotes/{quote}/status', [\App\Http\Controllers\Admins\QuoteController::class, 'updateStatus'])->name('quotes.update-status');
+    Route::get('quotes/{quote}/download-pdf', [\App\Http\Controllers\Admins\QuoteController::class, 'downloadPdf'])->name('quotes.download-pdf');
+
+    // Carts
+    // Các route tĩnh phải khai báo trước resource để không bị trùng với `carts/{cart}`
+    Route::get('carts/create-order', [AdminCartController::class, 'createOrderIndex'])->name('carts.create-order.index');
+    Route::get('carts/{cart}/create-order', [AdminCartController::class, 'createOrder'])->name('carts.create-order');
+    Route::post('carts/{cart}/store-order', [AdminCartController::class, 'storeOrder'])->name('carts.store-order');
+
+    Route::resource('carts', AdminCartController::class)->except(['create', 'store']);
+    Route::post('carts/{cart}/recalculate', [AdminCartController::class, 'recalculate'])->name('carts.recalculate');
+
+
+    // Post Management
+    Route::resource('posts', \App\Http\Controllers\Admins\PostController::class);
+    Route::post('posts/upload-image', [\App\Http\Controllers\Admins\PostController::class, 'uploadImage'])->name('posts.upload-image');
+    Route::post('posts/{post}/publish', [\App\Http\Controllers\Admins\PostController::class, 'publish'])->name('posts.publish');
+    Route::post('posts/{post}/archive', [\App\Http\Controllers\Admins\PostController::class, 'archive'])->name('posts.archive');
+    Route::post('posts/{post}/duplicate', [\App\Http\Controllers\Admins\PostController::class, 'duplicate'])->name('posts.duplicate');
+    Route::post('posts/{post}/feature', [\App\Http\Controllers\Admins\PostController::class, 'feature'])->name('posts.feature');
+    Route::post('posts/{post}/unfeature', [\App\Http\Controllers\Admins\PostController::class, 'unfeature'])->name('posts.unfeature');
+    Route::post('posts/{post}/restore', [\App\Http\Controllers\Admins\PostController::class, 'restore'])->name('posts.restore');
+    Route::get('posts/{post}/revisions', [\App\Http\Controllers\Admins\PostController::class, 'revisions'])->name('posts.revisions');
+    Route::post('posts/{post}/autosave', [\App\Http\Controllers\Admins\PostController::class, 'autosave'])->name('posts.autosave');
+    Route::post('posts/{post}/restore-revision/{revision}', [\App\Http\Controllers\Admins\PostController::class, 'restoreRevision'])->name('posts.restore-revision');
+    Route::get('posts/search-tags', [\App\Http\Controllers\Admins\PostController::class, 'searchTagsApi'])->name('posts.search-tags');
+
+    // Media Management
+    Route::prefix('media')->name('media.')->group(function () {
+        Route::get('/', [MediaController::class, 'index'])->name('index');
+        Route::get('/list', [MediaController::class, 'list'])->name('list');
+        Route::get('/folder-tree', [MediaController::class, 'folderTree'])->name('folder-tree');
+        Route::get('/search', [MediaController::class, 'search'])->name('search');
+        Route::get('/info', [MediaController::class, 'info'])->name('info');
+        Route::get('/find-id', [MediaController::class, 'findId'])->name('find-id');
+        Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
+        Route::post('/rename', [MediaController::class, 'rename'])->name('rename');
+        Route::post('/move', [MediaController::class, 'move'])->name('move');
+        Route::post('/copy', [MediaController::class, 'copy'])->name('copy');
+        Route::post('/delete', [MediaController::class, 'delete'])->name('delete');
+        Route::post('/bulk-delete', [MediaController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/update-meta', [MediaController::class, 'updateMeta'])->name('update-meta');
+        Route::post('/folder/create', [MediaController::class, 'createFolder'])->name('folder.create');
+        Route::post('/folder/rename', [MediaController::class, 'renameFolder'])->name('folder.rename');
+        Route::post('/folder/delete', [MediaController::class, 'deleteFolder'])->name('folder.delete');
+    });
+
+    // Voucher Management
+    // Các route tĩnh phải khai báo trước resource để không bị trùng với `vouchers/{voucher}`
+    Route::get('vouchers/analytics', [\App\Http\Controllers\Admins\VoucherAnalyticsController::class, 'dashboard'])->name('vouchers.analytics');
+    Route::get('vouchers/analytics/{voucher}', [\App\Http\Controllers\Admins\VoucherAnalyticsController::class, 'voucherDetail'])->name('vouchers.analytics.detail');
+    Route::post('vouchers/test', [\App\Http\Controllers\Admins\VoucherController::class, 'test'])->name('vouchers.test');
+    Route::post('vouchers/upload-image', [\App\Http\Controllers\Admins\VoucherController::class, 'uploadImage'])->name('vouchers.upload-image');
+
+    Route::resource('vouchers', \App\Http\Controllers\Admins\VoucherController::class);
+    Route::post('vouchers/{voucher}/toggle', [\App\Http\Controllers\Admins\VoucherController::class, 'toggle'])->name('vouchers.toggle');
+    Route::post('vouchers/{voucher}/duplicate', [\App\Http\Controllers\Admins\VoucherController::class, 'duplicate'])->name('vouchers.duplicate');
+    Route::post('vouchers/{voucher}/restore', [\App\Http\Controllers\Admins\VoucherController::class, 'restore'])->name('vouchers.restore');
+    Route::get('vouchers/{voucher}/products', [\App\Http\Controllers\Admins\VoucherController::class, 'getProducts'])->name('vouchers.products');
+
+    // Comments Management
+    Route::get('comments', [\App\Http\Controllers\Admins\AdminCommentController::class, 'index'])->name('comments.index');
+    Route::get('comments/{id}', [\App\Http\Controllers\Admins\AdminCommentController::class, 'show'])->name('comments.show');
+    Route::post('comments/{id}/approve', [\App\Http\Controllers\Admins\AdminCommentController::class, 'approve'])->name('comments.approve');
+    Route::post('comments/{id}/reject', [\App\Http\Controllers\Admins\AdminCommentController::class, 'reject'])->name('comments.reject');
+    Route::post('comments/{id}/reply', [\App\Http\Controllers\Admins\AdminCommentController::class, 'reply'])->name('comments.reply');
+    Route::post('comments/replies/{id}', [\App\Http\Controllers\Admins\AdminCommentController::class, 'updateReply'])->name('comments.replies.update');
+    Route::delete('comments/replies/{id}', [\App\Http\Controllers\Admins\AdminCommentController::class, 'deleteReply'])->name('comments.replies.delete');
+    Route::delete('comments/{id}', [\App\Http\Controllers\Admins\AdminCommentController::class, 'destroy'])->name('comments.destroy');
+
+    // Tags Management
+    Route::resource('tags', \App\Http\Controllers\Admins\TagController::class)->except(['show']);
+    Route::post('tags/bulk-delete', [\App\Http\Controllers\Admins\TagController::class, 'destroyMultiple'])->name('tags.bulk-delete');
+    Route::post('tags/merge', [\App\Http\Controllers\Admins\TagController::class, 'merge'])->name('tags.merge');
+    Route::get('tags/suggest', [\App\Http\Controllers\Admins\TagController::class, 'suggest'])->name('tags.suggest');
+    Route::post('tags/suggest-from-content', [\App\Http\Controllers\Admins\TagController::class, 'suggestFromContent'])->name('tags.suggest-from-content');
+    Route::get('tags/entities', [\App\Http\Controllers\Admins\TagController::class, 'getEntities'])->name('tags.entities');
+
+    // Settings Management
+    Route::resource('settings', \App\Http\Controllers\Admins\SettingController::class);
+
+    // Banners Management
+    Route::resource('banners', \App\Http\Controllers\Admins\BannerController::class);
+    Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\Admins\BannerController::class, 'toggle'])->name('banners.toggle');
+    Route::post('banners/reorder', [\App\Http\Controllers\Admins\BannerController::class, 'reorder'])->name('banners.reorder');
+
+    // Sitemap Management
+    Route::prefix('sitemap')->name('sitemap.')->group(function () {
+        Route::get('/', [SitemapController::class, 'index'])->name('index');
+        Route::post('/config', [SitemapController::class, 'updateConfig'])->name('config.update');
+        Route::post('/rebuild', [SitemapController::class, 'rebuild'])->name('rebuild');
+        Route::post('/clear-cache', [SitemapController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/ping', [SitemapController::class, 'ping'])->name('ping');
+        Route::get('/preview', [SitemapController::class, 'preview'])->name('preview');
+
+        Route::post('/excludes', [SitemapController::class, 'storeExclude'])->name('excludes.store');
+        Route::patch('/excludes/{id}/toggle', [SitemapController::class, 'toggleExclude'])->name('excludes.toggle');
+        Route::delete('/excludes/{id}', [SitemapController::class, 'deleteExclude'])->name('excludes.delete');
+    });
+
+    // Contacts Management
+    Route::resource('contacts', AdminContactController::class)->only(['index', 'show', 'destroy']);
+    Route::post('contacts/{contact}/status', [AdminContactController::class, 'updateStatus'])->name('contacts.update-status');
+
+    // Quick Consultation Leads Management
+    Route::get('quick-consultation-leads', [\App\Http\Controllers\Admins\QuickConsultationLeadController::class, 'index'])->name('quick-consultation-leads.index');
+    Route::get('quick-consultation-leads/{id}', [\App\Http\Controllers\Admins\QuickConsultationLeadController::class, 'show'])->name('quick-consultation-leads.show');
+    Route::post('quick-consultation-leads/{id}/mark-contacted', [\App\Http\Controllers\Admins\QuickConsultationLeadController::class, 'markContacted'])->name('quick-consultation-leads.mark-contacted');
+    Route::delete('quick-consultation-leads/{id}', [\App\Http\Controllers\Admins\QuickConsultationLeadController::class, 'destroy'])->name('quick-consultation-leads.destroy');
+    Route::post('contacts/{contact}/note', [AdminContactController::class, 'updateNote'])->name('contacts.update-note');
+    Route::post('contacts/{contact}/reply', [AdminContactController::class, 'reply'])->name('contacts.reply');
+    Route::get('contacts/{contact}/attachment', [AdminContactController::class, 'downloadAttachment'])->name('contacts.attachment');
+    Route::post('contacts/editor/upload-image', [AdminContactController::class, 'uploadEditorImage'])->name('contacts.editor.upload-image');
+    Route::post('contacts/bulk-action', [AdminContactController::class, 'bulkAction'])->name('contacts.bulk-action');
+    Route::post('contacts/{id}/restore', [AdminContactController::class, 'restore'])->name('contacts.restore');
+
+    // Addresses Management
+    Route::resource('addresses', \App\Http\Controllers\Admins\AddressController::class)
+        ->only(['index', 'show', 'edit', 'update', 'destroy']);
+    Route::post('addresses/{address}/set-default', [\App\Http\Controllers\Admins\AddressController::class, 'setDefault'])
+        ->name('addresses.set-default');
+    Route::get('addresses/search/accounts', [\App\Http\Controllers\Admins\AddressController::class, 'searchAccounts'])
+        ->name('addresses.search.accounts');
+    Route::get('addresses/search/provinces', [\App\Http\Controllers\Admins\AddressController::class, 'searchProvinces'])
+        ->name('addresses.search.provinces');
+    Route::get('addresses/search/districts', [\App\Http\Controllers\Admins\AddressController::class, 'searchDistricts'])
+        ->name('addresses.search.districts');
+
+    // Newsletters Management
+    Route::get('newsletters/campaign', [AdminNewsletterController::class, 'showCampaignForm'])->name('newsletters.campaign');
+    Route::post('newsletters/send-bulk', [AdminNewsletterController::class, 'sendBulkEmail'])->name('newsletters.send-bulk');
+    Route::get('newsletters/campaigns', [AdminNewsletterController::class, 'campaignsIndex'])->name('newsletters.campaigns.index');
+    Route::get('newsletters/campaigns/{id}', [AdminNewsletterController::class, 'campaignsShow'])->name('newsletters.campaigns.show');
+    Route::get('newsletters', [AdminNewsletterController::class, 'index'])->name('newsletters.index');
+    Route::get('newsletters/{id}', [AdminNewsletterController::class, 'show'])->name('newsletters.show');
+    Route::delete('newsletters/{id}', [AdminNewsletterController::class, 'destroy'])->name('newsletters.destroy');
+    Route::post('newsletters/{id}/change-status', [AdminNewsletterController::class, 'changeStatus'])->name('newsletters.change-status');
+    Route::post('newsletters/{id}/resend-verify', [AdminNewsletterController::class, 'resendVerifyEmail'])->name('newsletters.resend-verify');
+
+    // Notifications Management
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'index'])->name('index');
+        Route::post('{id}/read', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'markAsRead'])->name('read');
+        Route::post('read-all', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::delete('{id}', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('read/delete', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'deleteRead'])->name('delete-read');
+        Route::get('unread-count', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'unreadCount'])->name('unread-count');
+        Route::get('latest', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'latest'])->name('latest');
+    });
+
+    // Affiliates Management
+    Route::resource('affiliates', \App\Http\Controllers\Admins\AffiliateController::class)->except(['show', 'create', 'edit']);
+    Route::post('affiliates', [\App\Http\Controllers\Admins\AffiliateController::class, 'store'])->name('affiliates.store');
+    Route::patch('affiliates/{affiliate}', [\App\Http\Controllers\Admins\AffiliateController::class, 'update'])->name('affiliates.update');
+
+    // Reports & Analytics
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admins\ReportController::class, 'index'])->name('index');
+        Route::get('/revenue', [\App\Http\Controllers\Admins\ReportController::class, 'revenue'])->name('revenue');
+        Route::get('/products', [\App\Http\Controllers\Admins\ReportController::class, 'products'])->name('products');
+        Route::get('/customers', [\App\Http\Controllers\Admins\ReportController::class, 'customers'])->name('customers');
+        Route::get('/inventory', [\App\Http\Controllers\Admins\ReportController::class, 'inventory'])->name('inventory');
+        Route::post('/export', [\App\Http\Controllers\Admins\ReportController::class, 'export'])->name('export');
+    });
+
+    // Orders Export
+    Route::get('orders/export/excel', [AdminOrderController::class, 'export'])->name('orders.export');
+
+    // Contacts Export
+    Route::get('contacts/export/excel', [AdminContactController::class, 'export'])->name('contacts.export');
+
+    // Email Templates Management
+    Route::resource('email-templates', \App\Http\Controllers\Admins\EmailTemplateController::class)->except(['show']);
+    Route::post('email-templates/{emailTemplate}/toggle', [\App\Http\Controllers\Admins\EmailTemplateController::class, 'toggle'])->name('email-templates.toggle');
+
+    // Backup & Restore
+    Route::resource('backups', \App\Http\Controllers\Admins\BackupController::class)->only(['index', 'store', 'destroy']);
+    Route::get('backups/{fileName}/download', [\App\Http\Controllers\Admins\BackupController::class, 'download'])->name('backups.download');
+    Route::post('backups/{fileName}/restore', [\App\Http\Controllers\Admins\BackupController::class, 'restore'])->name('backups.restore');
+
+    // Trash Management (Thùng rác)
+    Route::prefix('trash')->name('trash.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admins\TrashController::class, 'index'])->name('index');
+        Route::patch('{type}/{id}/restore', [\App\Http\Controllers\Admins\TrashController::class, 'restore'])->name('restore');
+        Route::delete('{type}/{id}', [\App\Http\Controllers\Admins\TrashController::class, 'forceDelete'])->name('force-delete');
+        Route::post('{type}/restore-all', [\App\Http\Controllers\Admins\TrashController::class, 'restoreAll'])->name('restore-all');
+        Route::delete('{type}/empty', [\App\Http\Controllers\Admins\TrashController::class, 'forceDeleteAll'])->name('empty');
+        Route::post('bulk-restore', [\App\Http\Controllers\Admins\TrashController::class, 'bulkRestore'])->name('bulk-restore');
+        Route::post('bulk-delete', [\App\Http\Controllers\Admins\TrashController::class, 'bulkForceDelete'])->name('bulk-delete');
+    });
+
+    // Tools Management (Công cụ website)
+    Route::prefix('tools')->name('tools.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admins\ToolsController::class, 'index'])->name('index');
+        Route::get('/unused-tags-stats', [\App\Http\Controllers\Admins\ToolsController::class, 'getUnusedTagsStats'])->name('unused-tags-stats');
+        Route::post('/delete-unused-tags', [\App\Http\Controllers\Admins\ToolsController::class, 'deleteUnusedTags'])->name('delete-unused-tags');
+        Route::get('/unused-images-stats', [\App\Http\Controllers\Admins\ToolsController::class, 'getUnusedImagesStats'])->name('unused-images-stats');
+        Route::post('/delete-unused-images', [\App\Http\Controllers\Admins\ToolsController::class, 'deleteUnusedImages'])->name('delete-unused-images');
+        Route::post('/clear-cache', [\App\Http\Controllers\Admins\ToolsController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/clear-application-cache', [\App\Http\Controllers\Admins\ToolsController::class, 'clearApplicationCache'])->name('clear-application-cache');
+        Route::post('/clean-temporary-files', [\App\Http\Controllers\Admins\ToolsController::class, 'cleanTemporaryFiles'])->name('clean-temporary-files');
+        Route::post('/optimize-database', [\App\Http\Controllers\Admins\ToolsController::class, 'optimizeDatabase'])->name('optimize-database');
+        Route::get('/system-info', [\App\Http\Controllers\Admins\ToolsController::class, 'getSystemInfo'])->name('system-info');
+        Route::post('/clear-old-sessions', [\App\Http\Controllers\Admins\ToolsController::class, 'clearOldSessions'])->name('clear-old-sessions');
+        Route::get('/analyze-disk-usage', [\App\Http\Controllers\Admins\ToolsController::class, 'analyzeDiskUsage'])->name('analyze-disk-usage');
+    });
+});
+
+Route::fallback(fn () => response()->view('clients.pages.errors.404', [], 404));
