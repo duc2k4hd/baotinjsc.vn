@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         copyBtn.style.background = '';
                         copyBtn.style.color = '';
                     }, 2000);
-                }).catch(function(err) {
-                    console.error('Failed to copy:', err);
+                }).catch(function() {
+                    // ignore copy error
                 });
             } else {
                 // Fallback for older browsers
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         copyBtn.style.color = '';
                     }, 2000);
                 } catch (err) {
-                    console.error('Failed to copy:', err);
+                    // ignore copy error
                 }
                 document.body.removeChild(textArea);
             }

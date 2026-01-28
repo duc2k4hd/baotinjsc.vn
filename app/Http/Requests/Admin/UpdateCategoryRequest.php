@@ -76,17 +76,9 @@ class UpdateCategoryRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // Auto-update slug if name changed and slug not provided
-        if ($this->has('name') && (! $this->has('slug') || empty($this->input('slug')))) {
-            $category = $this->route('category');
-            $this->merge([
-                'slug' => CategoryHelper::generateUniqueSlugGlobal(
-                    \Illuminate\Support\Str::slug($this->input('name')),
-                    $category->id
-                ),
-            ]);
-        }
-
+        // Không tự động đổi slug khi cập nhật:
+        // - Nếu slug để trống thì giữ nguyên slug cũ trong DB.
+        // - Chỉ khi admin nhập slug mới thì mới kiểm tra và chuẩn hóa unique.
         // Ensure slug is unique globally if provided
         if ($this->has('slug') && ! empty($this->input('slug'))) {
             $category = $this->route('category');

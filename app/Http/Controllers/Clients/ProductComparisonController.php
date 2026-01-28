@@ -85,7 +85,7 @@ class ProductComparisonController extends Controller
             ]);
         }
 
-        $products = Product::with(['primaryCategory'])
+        $products = Product::with(['primaryCategory', 'brand'])
             ->withApprovedCommentsMeta()
             ->whereIn('id', $productIds)
             ->get()
@@ -94,6 +94,9 @@ class ProductComparisonController extends Controller
                 return array_search($product->id, $productIds);
             })
             ->values();
+
+        // Preload images
+        Product::preloadImages($products);
 
         return view('clients.pages.comparison.index', [
             'products' => $products,

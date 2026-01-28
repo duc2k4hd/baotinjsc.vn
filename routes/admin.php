@@ -13,6 +13,7 @@ use App\Http\Controllers\Admins\SitemapController;
 use App\Http\Controllers\Admins\SupportStaffController;
 use App\Http\Controllers\Admins\PopupContentController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 
 // Admin Login (public)
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -325,10 +326,6 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::get('latest', [\App\Http\Controllers\Admins\AdminNotificationController::class, 'latest'])->name('latest');
     });
 
-    // Affiliates Management
-    Route::resource('affiliates', \App\Http\Controllers\Admins\AffiliateController::class)->except(['show', 'create', 'edit']);
-    Route::post('affiliates', [\App\Http\Controllers\Admins\AffiliateController::class, 'store'])->name('affiliates.store');
-    Route::patch('affiliates/{affiliate}', [\App\Http\Controllers\Admins\AffiliateController::class, 'update'])->name('affiliates.update');
 
     // Reports & Analytics
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -380,6 +377,19 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::get('/system-info', [\App\Http\Controllers\Admins\ToolsController::class, 'getSystemInfo'])->name('system-info');
         Route::post('/clear-old-sessions', [\App\Http\Controllers\Admins\ToolsController::class, 'clearOldSessions'])->name('clear-old-sessions');
         Route::get('/analyze-disk-usage', [\App\Http\Controllers\Admins\ToolsController::class, 'analyzeDiskUsage'])->name('analyze-disk-usage');
+    });
+
+    // Fallback debug cho các route admin bị 404 (bắt POST /admin/... không match, ví dụ bulk-operations)
+    Route::fallback(function (Request $request) {
+        \Log::error('Admin fallback 404 hit', [
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'path' => $request->path(),
+            'input' => $request->all(),
+            'user_id' => $request->user()?->id,
+        ]);
+
+        abort(404);
     });
 });
 

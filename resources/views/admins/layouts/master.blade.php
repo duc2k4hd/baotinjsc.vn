@@ -814,12 +814,7 @@
                     Báo Cáo
                 </a>
             @endif
-            @if(Route::has('admin.affiliates.index'))
-                <a href="{{ route('admin.affiliates.index') }}" class="menu-item {{ request()->routeIs('admin.affiliates.*') ? 'active' : '' }}">
-                    <span class="menu-item-icon">🔗</span>
-                    Affiliate
-                </a>
-            @endif
+            
             
             <div class="menu-section">Hệ Thống</div>
             @if(Route::has('admin.email-templates.index'))

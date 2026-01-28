@@ -524,6 +524,15 @@
     background-color: #C0392B;
 }
 
+.btn-compare-home.active {
+    background-color: #667eea;
+    color: var(--text-color-light);
+}
+
+.btn-compare-home.active:hover {
+    background-color: #5568d3;
+}
+
 /* Brands Section */
 .brands-section {
     background: var(--text-color-light);

@@ -311,16 +311,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                // Even on error, show success if it's a redirect (Laravel behavior)
+            .catch(() => {
+                // Even on error, show success nếu backend redirect
                 if (typeof showCustomToast === 'function') {
                     showCustomToast('Đã thêm sản phẩm vào giỏ hàng!', 'success');
                 }
                 if (window.updateCartCount) {
                     window.updateCartCount();
-        }
-        });
+                }
+            });
     });
 }
 
@@ -371,7 +370,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 // Even on error, toggle UI and show message (optimistic update)
                 this.classList.toggle('active');
                 if (typeof showCustomToast === 'function') {
@@ -496,7 +494,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     submitBtn.textContent = originalText;
                 }
             } catch (error) {
-                console.error('Review submission error:', error);
                 if (typeof showCustomToast === 'function') {
                     showCustomToast('Có lỗi xảy ra khi gửi đánh giá. Vui lòng thử lại.', 'error', 5000);
                 }
@@ -527,5 +524,4 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             });
     
-    console.log('Single Product Page - JavaScript Loaded Successfully');
 });

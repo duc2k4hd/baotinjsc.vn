@@ -408,13 +408,13 @@
                                 @if($hasStock)
                                     <span class="status-text">Còn hàng</span>
                                 @else
-                                    <span class="status-text">Hết hàng</span>
+                                    <span class="status-text">Liên hệ</span>
                                 @endif
                             @else
                                 @if($quantityProductDetail > 0)
                                     <span class="status-text">Còn hàng</span>
                                 @else
-                                    <span class="status-text">Hết hàng</span>
+                                    <span class="status-text">Liên hệ</span>
                                 @endif
                             @endif
                             </span>
@@ -547,6 +547,45 @@
                         </div>
                 </div>
 
+                {{-- Danh sách CSKH --}}
+                @if(isset($supportStaff) && $supportStaff->count())
+                    <div class="support-staff-section">
+                        <h3 class="support-staff-title">Danh sách CSKH</h3>
+                        <div class="support-staff-grid">
+                            @foreach($supportStaff as $staff)
+                                <div class="support-staff-card" @if($staff->color) style="background-color: {{ $staff->color }};" @endif>
+                                    @if($staff->avatar)
+                                        <div class="support-staff-avatar">
+                                            <img src="{{ asset('clients/assets/img/avatars/' . $staff->avatar) }}"
+                                                 alt="{{ $staff->name }}">
+                                        </div>
+                                    @endif
+                                    <div class="support-staff-info">
+                                        <div class="support-staff-name">{{ $staff->name }}</div>
+                                        @if($staff->role)
+                                            <div class="support-staff-role">{{ $staff->role }}</div>
+                                        @endif
+                                        <div class="support-staff-contact">
+                                            @if($staff->phone)
+                                                <a href="tel:{{ $staff->phone }}" class="support-staff-phone">
+                                                    📞 {{ $staff->phone }}
+                                                </a>
+                                            @endif
+                                            @if($staff->zalo)
+                                                <a href="https://zalo.me/{{ $staff->zalo }}"
+                                                   target="_blank"
+                                                   class="support-staff-zalo">
+                                                    Zalo
+                                                </a>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Related Products Sidebar -->
                 {{-- @if($productFeatured && $productFeatured->isNotEmpty())
                     <div class="related-products-sidebar">
@@ -577,8 +616,8 @@
                         @endforeach
                     </div>
                 @endif --}}
-            </div>
-        </div>
+                        </div>
+                    </div>
 
         <!-- Product Description -->
         <div class="product-description">

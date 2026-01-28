@@ -287,7 +287,7 @@
     <div class="invoice-container">
         <div class="print-actions">
             <button onclick="window.print()" class="btn">🖨️ In hóa đơn</button>
-            <a href="{{ route('client.orders.show', $order->code) }}" class="btn btn-secondary">← Quay lại</a>
+            <a href="{{ route('client.order.show', $order->code) }}" class="btn btn-secondary">← Quay lại</a>
         </div>
 
         <div class="invoice-header">

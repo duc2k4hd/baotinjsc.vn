@@ -64,7 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         } catch (error) {
-            console.error('Checkout error:', error);
             alert('Có lỗi xảy ra khi xử lý đơn hàng. Vui lòng thử lại.');
             
             if (submitBtn) {

@@ -136,7 +136,17 @@
                    placeholder="Từ ngày" style="width:150px;">
             <input type="date" name="created_to" value="{{ request('created_to') }}" 
                    placeholder="Đến ngày" style="width:150px;">
-            
+
+            <select name="per_page" style="min-width:120px;">
+                @php
+                    $perPageValue = request('per_page', $perPage ?? 50);
+                @endphp
+                <option value="50" {{ $perPageValue == 50 ? 'selected' : '' }}>50/tag trang</option>
+                <option value="500" {{ $perPageValue == 500 ? 'selected' : '' }}>500/tag trang</option>
+                <option value="1000" {{ $perPageValue == 1000 ? 'selected' : '' }}>1000/tag trang</option>
+                <option value="2000" {{ $perPageValue == 2000 ? 'selected' : '' }}>2000/tag trang</option>
+            </select>
+
             <button type="submit" class="btn btn-primary">🔍 Lọc</button>
             <a href="{{ route('admin.tags.index') }}" class="btn btn-outline-secondary">🔄 Reset</a>
         </form>

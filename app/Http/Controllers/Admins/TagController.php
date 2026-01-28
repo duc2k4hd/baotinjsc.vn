@@ -25,11 +25,16 @@ class TagController extends Controller
      */
     public function index(Request $request): View
     {
+        $perPage = (int) ($request->get('per_page') ?: 50);
+        if (! in_array($perPage, [50, 500, 1000, 2000], true)) {
+            $perPage = 50;
+        }
+
         $query = Tag::with('entity')
             ->filter($request->all())
             ->orderByDesc('created_at');
 
-        $tags = $query->paginate(20)->withQueryString();
+        $tags = $query->paginate($perPage)->withQueryString();
 
         // Lấy danh sách entity types (dùng string để dễ xử lý trong JavaScript)
         $entityTypes = [
@@ -53,6 +58,7 @@ class TagController extends Controller
             'filters' => $request->all(),
             'entityTypes' => $entityTypes,
             'currentEntity' => $currentEntity,
+            'perPage' => $perPage,
         ]);
     }
 
@@ -195,11 +201,6 @@ class TagController extends Controller
     public function destroy(Tag $tag): RedirectResponse
     {
         try {
-            if ($tag->usage_count > 0) {
-                return back()
-                    ->with('error', 'Không thể xóa tag đang được sử dụng. Vui lòng chuyển sang inactive.');
-            }
-
             $entityType = $tag->entity_type;
             $this->tagService->delete($tag);
 
@@ -229,17 +230,16 @@ class TagController extends Controller
             'ids.*' => 'integer|exists:tags,id',
         ]);
 
-        // Kiểm tra xem có product tags hoặc post tags nào trong danh sách không
-        $hasProductTags = Tag::whereIn('id', $request->ids)
-            ->where('entity_type', Product::class)
-            ->exists();
-        
-        $hasPostTags = Tag::whereIn('id', $request->ids)
-            ->where('entity_type', Post::class)
-            ->exists();
+        $ids = $request->ids;
+
+        // Lấy toàn bộ tags được chọn để xác định loại entity (để clear cache)
+        $allSelectedTags = Tag::whereIn('id', $ids)->get();
+        $hasProductTags = $allSelectedTags->where('entity_type', Product::class)->isNotEmpty();
+        $hasPostTags = $allSelectedTags->where('entity_type', Post::class)->isNotEmpty();
 
         try {
-            $deleted = $this->tagService->deleteMultiple($request->ids);
+            // Xóa toàn bộ tag theo IDs (kể cả đang được sử dụng, theo yêu cầu)
+            $deleted = $this->tagService->deleteMultiple($ids);
 
             // Clear cache khi xóa tags
             if ($hasProductTags) {

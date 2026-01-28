@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let updateTimeout = null;
 
     if (!updateForm) {
-        console.warn('[Cart] Update form not found!');
+        // Update form not found
     }
 
     const autoUpdateCart = () => {
@@ -133,8 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     }, 5000);
                 }
                 updateForm.submit();
-            } else {
-                console.error('[Cart] Update form not found, cannot auto-update');
             }
         }, 1500);
     };

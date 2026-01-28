@@ -1063,10 +1063,24 @@
                                                     }
                                                 }
                                             }
+
+                                            // Kiểm tra tồn kho
+                                            $hasVariantInStock = false;
+                                            if (!empty($variantsData)) {
+                                                foreach ($variantsData as $variant) {
+                                                    $stockQty = $variant['stock_quantity'] ?? null;
+                                                    if ($stockQty === null || $stockQty > 0) {
+                                                        $hasVariantInStock = true;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+
+                                            $productInStock = $product->stock_quantity === null || $product->stock_quantity > 0;
                                         @endphp
                                         
                                         @if(!empty($variantsData))
-                                            @if($hasValidVariantPrice)
+                                            @if($hasValidVariantPrice && $hasVariantInStock)
                                                 <button type="button" 
                                                         class="autosensor_shop_products_content_list_item_addtocart_button open-variant-modal-btn" 
                                                         style="width: 100%;" 
@@ -1084,6 +1098,19 @@
                                                             d="M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96zM252 160c0 11 9 20 20 20l44 0 0 44c0 11 9 20 20 20s20-9 20-20l0-44 44 0c11 0 20-9 20-20s-9-20-20-20l-44 0 0-44c0-11-9-20-20-20s-20 9-20 20l0 44-44 0c-11 0-20 9-20 20z" />
                                                     </svg> Thêm
                                                 </button>
+                                            @elseif(!$hasVariantInStock)
+                                                {{-- Hết hàng: Liên hệ Zalo --}}
+                                                <a href="{{ 'https://zalo.me/' . ($settings->contact_zalo ?? '#') }}" 
+                                                   class="autosensor_shop_products_content_list_item_addtocart_button" 
+                                                   style="width: 100%; text-decoration: none; display: inline-block;"
+                                                   target="_blank" rel="noopener">
+                                                    <svg focusable="false" aria-hidden="true"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 512 512"
+                                                        style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;">
+                                                        <path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
+                                                    </svg> Liên hệ
+                                                </a>
                                             @else
                                                 <a href="{{ route('client.contact.index') }}" 
                                                    class="autosensor_shop_products_content_list_item_addtocart_button" 
@@ -1097,7 +1124,7 @@
                                                 </a>
                                             @endif
                                         @else
-                                            @if($isValidPrice)
+                                            @if($isValidPrice && $productInStock)
                                                 <form action="{{ route('client.cart.store') }}" method="POST" class="add-to-cart-form" data-product-id="{{ $product->id }}">
                                                     @csrf
                                                     <input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -1121,6 +1148,19 @@
                                                         </svg> Thêm
                                                     </button>
                                                 </form>
+                                            @elseif(!$productInStock)
+                                                {{-- Hết hàng: Liên hệ Zalo --}}
+                                                <a href="{{ 'https://zalo.me/' . ($settings->contact_zalo ?? '#') }}" 
+                                                   class="autosensor_shop_products_content_list_item_addtocart_button" 
+                                                   style="width: 100%; text-decoration: none; display: inline-block;"
+                                                   target="_blank" rel="noopener">
+                                                    <svg focusable="false" aria-hidden="true"
+                                                        xmlns="http://www.w3.org/2000/svg"
+                                                        viewBox="0 0 512 512"
+                                                        style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;">
+                                                        <path fill="currentColor" d="M64 112c-8.8 0-16 7.2-16 16v22.1L220.5 291.7c20.7 17 50.4 17 71.1 0L464 150.1V128c0-8.8-7.2-16-16-16H64zM48 212.2V384c0 8.8 7.2 16 16 16H448c8.8 0 16-7.2 16-16V212.2L322 328.8c-38.4 31.5-93.7 31.5-132 0L48 212.2zM0 128C0 92.7 28.7 64 64 64H448c35.3 0 64 28.7 64 64V384c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V128z"/>
+                                                    </svg> Liên hệ
+                                                </a>
                                             @else
                                                 <a href="{{ route('client.contact.index') }}" 
                                                    class="autosensor_shop_products_content_list_item_addtocart_button" 

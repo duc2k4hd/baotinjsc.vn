@@ -157,6 +157,9 @@ class ViewServiceProvider extends ServiceProvider
                 $favIds = $favorites->toArray();
                 $favLink = $favCount > 0 ? route('client.wishlist.index') : null;
 
+                // Lấy comparison count từ session
+                $comparisonCount = count(session()->get('product_comparison', []));
+
                 $sharedPayload = [
                     'account' => $account,
                     'cart' => $cart,
@@ -169,6 +172,7 @@ class ViewServiceProvider extends ServiceProvider
                     'wishlistCount' => $favCount,
                     'wishlistLink' => $favLink,
                     'favoriteProductIds' => $favIds,
+                    'comparisonCount' => $comparisonCount,
                 ];
             } catch (Throwable $e) {
                 Log::debug('Trình soạn thảo ViewServiceProvider đã bỏ qua', [
@@ -187,6 +191,7 @@ class ViewServiceProvider extends ServiceProvider
                     'wishlistCount' => 0,
                     'wishlistLink' => null,
                     'favoriteProductIds' => [],
+                    'comparisonCount' => 0,
                 ];
             }
 

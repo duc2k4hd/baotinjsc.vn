@@ -382,16 +382,26 @@ class CategoryController extends Controller
      */
     public function bulkAction(Request $request): RedirectResponse
     {
-        $this->authorize('viewAny', Category::class);
-
-        $request->validate([
-            'selected' => ['required', 'array'],
-            'selected.*' => ['integer', 'exists:categories,id'],
-            'bulk_action' => ['required', 'in:hide,show,delete'],
+        // Debug log để bắt lỗi 404/bulk delete
+        \Log::info('Category bulkAction called', [
+            'user_id' => $request->user()?->id,
+            'ip' => $request->ip(),
+            'input' => $request->all(),
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
         ]);
 
-        $ids = $request->input('selected', []);
-        $action = $request->input('bulk_action');
+        try {
+            $this->authorize('viewAny', Category::class);
+
+            $request->validate([
+                'selected' => ['required', 'array'],
+                'selected.*' => ['integer', 'exists:categories,id'],
+                'bulk_action' => ['required', 'in:hide,show,delete'],
+            ]);
+
+            $ids = $request->input('selected', []);
+            $action = $request->input('bulk_action');
 
         if ($action === 'hide') {
             // Exclude default category (id = 1) from bulk hide
@@ -452,7 +462,8 @@ class CategoryController extends Controller
                 try {
                     $category = Category::findOrFail($id);
                     if (Gate::allows('delete', $category)) {
-                        $this->categoryService->delete($category);
+                        // Xóa cả cây danh mục: cha + toàn bộ con/cháu (nếu không bị ràng buộc bởi sản phẩm/bài viết)
+                        $this->categoryService->delete($category, true);
                         $deleted++;
                     } else {
                         $errors[] = "Không có quyền xóa danh mục: {$category->name}";
@@ -484,7 +495,14 @@ class CategoryController extends Controller
             return back()->with('success', $message);
         }
 
-        return back()->with('error', 'Hành động không hợp lệ.');
+            return back()->with('error', 'Hành động không hợp lệ.');
+        } catch (\Throwable $e) {
+            \Log::error('Category bulkAction error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
     }
 
     /**

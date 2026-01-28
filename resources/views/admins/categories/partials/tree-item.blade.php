@@ -6,7 +6,7 @@
             &nbsp;
         @endif
     </span>
-    <span style="flex:1;">{{ $item['name'] }}</span>
+    <span class="tree-label" style="flex:1;">{{ $item['name'] }}</span>
     <span class="badge" style="background:#e0e7ff;color:#4338ca;font-size:10px;">
         {{ $item['children_count'] ?? 0 }}
     </span>

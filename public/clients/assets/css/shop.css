@@ -1467,6 +1467,26 @@
     text-align: center;
 }
 
+.autosensor_shop_products_content_list_item_addtocart a.autosensor_shop_products_content_list_item_addtocart_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    background: var(--primary-color);
+    color: #fff;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    text-align: center;
+}
+
+.autosensor_shop_products_content_list_item_addtocart a.autosensor_shop_products_content_list_item_addtocart_button:hover {
+    background: var(--secondary-color);
+    color: #fff;
+}
+
 .autosensor_shop_products_content_list_item_addtocart button:hover {
     background: var(--secondary-color);
 }

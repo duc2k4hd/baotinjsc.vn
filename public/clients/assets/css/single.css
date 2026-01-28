@@ -146,7 +146,7 @@
 }
 
 .product-info-details .info-value.out-of-stock .status-text {
-    color: #dc3545;
+    color: #28a745;
     font-weight: 600;
 }
 
@@ -253,6 +253,80 @@
     font-size: 12px;
     color: #E74C3C;
     font-weight: 600;
+}
+
+/* Support Staff (CSKH) */
+.support-staff-section {
+    margin-top: 20px;
+    padding: 14px 16px;
+    border-radius: var(--border-radius);
+    border: var(--border);
+    background-color: #F9FAFB;
+}
+
+.support-staff-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-color-dark);
+}
+
+.support-staff-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.support-staff-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+}
+
+.support-staff-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #E5E7EB;
+}
+
+.support-staff-info {
+    flex: 1;
+}
+
+.support-staff-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color-dark);
+}
+
+.support-staff-role {
+    font-size: 12px;
+    color: #6B7280;
+    margin-top: 2px;
+}
+
+.support-staff-contact {
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.support-staff-phone,
+.support-staff-zalo {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.support-staff-phone:hover,
+.support-staff-zalo:hover {
+    text-decoration: underline;
 }
 
 .product-price {

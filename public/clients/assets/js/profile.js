@@ -188,6 +188,105 @@
         }
     }
 
+    // Address Modal Functions
+    window.openAddressModal = function(addressId = null) {
+        const modal = document.getElementById('addressModal');
+        const form = document.getElementById('addressForm');
+        const formMethod = document.getElementById('addressFormMethod');
+        const modalTitle = document.getElementById('addressModalTitle');
+        const addressIdInput = document.getElementById('addressId');
+
+        if (!modal || !form) {
+            return;
+        }
+
+        // Reset form
+        form.reset();
+        formMethod.innerHTML = '';
+
+        if (addressId) {
+            // Edit mode
+            modalTitle.textContent = 'Sửa địa chỉ';
+            addressIdInput.value = addressId;
+            
+            // Get address data from DOM
+            const addressItem = document.getElementById('address-' + addressId);
+            if (addressItem) {
+                const nameEl = addressItem.querySelector('.address-name');
+                const phoneEl = addressItem.querySelector('.address-phone');
+                const detailEl = addressItem.querySelector('.address-detail');
+                const locationEl = addressItem.querySelector('.address-location');
+                const notesEl = addressItem.querySelector('.address-notes');
+                const isDefault = addressItem.querySelector('.badge-primary');
+
+                if (nameEl) document.getElementById('full_name').value = nameEl.textContent.trim();
+                if (phoneEl) {
+                    const phoneText = phoneEl.textContent.replace(/[^\d+]/g, '').trim();
+                    document.getElementById('phone_number').value = phoneText;
+                }
+                if (detailEl) document.getElementById('detail_address').value = detailEl.textContent.trim();
+                if (locationEl) {
+                    const locationParts = locationEl.textContent.split(',').map(s => s.trim());
+                    if (locationParts.length >= 3) {
+                        document.getElementById('ward').value = locationParts[0];
+                        document.getElementById('district').value = locationParts[1];
+                        document.getElementById('province').value = locationParts[2];
+                    }
+                }
+                if (notesEl) {
+                    const notesText = notesEl.textContent.replace(/.*?fa-sticky-note.*?/, '').trim();
+                    document.getElementById('notes').value = notesText;
+                }
+                if (isDefault) {
+                    document.getElementById('is_default').checked = true;
+                }
+            }
+
+            // Set form action and method
+            form.action = '/tai-khoan/dia-chi/' + addressId;
+            formMethod.innerHTML = '<input type="hidden" name="_method" value="PUT">';
+        } else {
+            // Add mode
+            modalTitle.textContent = 'Thêm địa chỉ mới';
+            addressIdInput.value = '';
+            form.action = '/tai-khoan/dia-chi';
+        }
+
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeAddressModal = function() {
+        const modal = document.getElementById('addressModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+    };
+
+    // Close modal when clicking outside
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('addressModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeAddressModal();
+                    }
+                });
+            }
+        });
+    } else {
+        const modal = document.getElementById('addressModal');
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeAddressModal();
+                }
+            });
+        }
+    }
+
     // Initialize all features
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {

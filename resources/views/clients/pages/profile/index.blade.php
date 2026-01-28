@@ -333,27 +333,58 @@
                         <!-- Tab: Địa chỉ -->
                         <div id="addresses" class="tab-pane">
                             <div class="profile-card">
-                                <h3 class="card-title">
-                                    <i class="fas fa-map-marker-alt"></i> Địa chỉ giao hàng
-                                </h3>
+                                <div class="card-header-actions">
+                                    <h3 class="card-title">
+                                        <i class="fas fa-map-marker-alt"></i> Địa chỉ giao hàng
+                                    </h3>
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="openAddressModal()">
+                                        <i class="fas fa-plus"></i> Thêm địa chỉ
+                                    </button>
+                                </div>
+
                                 @if($account->addresses && $account->addresses->count() > 0)
                                     <div class="addresses-list">
                                         @foreach($account->addresses as $address)
-                                            <div class="address-item">
+                                            <div class="address-item" id="address-{{ $address->id }}">
                                                 <div class="address-content">
-                                                    <h4 class="address-name">{{ $address->receiver_name }}</h4>
+                                                    <div class="address-header">
+                                                        <h4 class="address-name">{{ $address->full_name }}</h4>
+                                                        @if($address->is_default)
+                                                            <span class="badge badge-primary">Mặc định</span>
+                                                        @endif
+                                                    </div>
                                                     <p class="address-phone">
-                                                        <i class="fas fa-phone"></i> {{ $address->receiver_phone }}
+                                                        <i class="fas fa-phone"></i> {{ $address->phone_number }}
                                                     </p>
                                                     <p class="address-detail">{{ $address->detail_address }}</p>
                                                     <p class="address-location">
                                                         {{ $address->ward }}, {{ $address->district }}, {{ $address->province }}
                                                     </p>
+                                                    @if($address->notes)
+                                                        <p class="address-notes">
+                                                            <i class="fas fa-sticky-note"></i> {{ $address->notes }}
+                                                        </p>
+                                                    @endif
                                                 </div>
                                                 <div class="address-actions">
-                                                    @if($address->is_default)
-                                                        <span class="badge badge-primary">Mặc định</span>
+                                                    @if(!$address->is_default)
+                                                        <form action="{{ route('client.profile.address.set-default', $address->id) }}" method="POST" class="d-inline">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Đặt làm mặc định">
+                                                                <i class="fas fa-star"></i> Mặc định
+                                                            </button>
+                                                        </form>
                                                     @endif
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="openAddressModal({{ $address->id }})" title="Sửa địa chỉ">
+                                                        <i class="fas fa-edit"></i> Sửa
+                                                    </button>
+                                                    <form action="{{ route('client.profile.address.delete', $address->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa địa chỉ này?');">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa địa chỉ">
+                                                            <i class="fas fa-trash"></i> Xóa
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </div>
                                         @endforeach
@@ -363,8 +394,111 @@
                                         <i class="fas fa-map-marker-alt"></i>
                                         <p>Bạn chưa có địa chỉ nào</p>
                                         <p class="text-muted">Thêm địa chỉ để đặt hàng nhanh hơn</p>
+                                        <button type="button" class="btn btn-primary mt-3" onclick="openAddressModal()">
+                                            <i class="fas fa-plus"></i> Thêm địa chỉ đầu tiên
+                                        </button>
                                     </div>
                                 @endif
+                            </div>
+
+                            <!-- Modal thêm/sửa địa chỉ -->
+                            <div id="addressModal" class="address-modal">
+                                <div class="address-modal-content">
+                                    <div class="address-modal-header">
+                                        <h3 id="addressModalTitle">Thêm địa chỉ mới</h3>
+                                        <button type="button" class="close-btn" onclick="closeAddressModal()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <form id="addressForm" method="POST">
+                                        @csrf
+                                        <input type="hidden" id="addressId" name="address_id">
+                                        <div id="addressFormMethod"></div>
+                                        
+                                        <div class="form-group">
+                                            <label for="full_name">Họ và tên <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control @error('full_name') is-invalid @enderror" 
+                                                   id="full_name" name="full_name" value="{{ old('full_name') }}" required>
+                                            @error('full_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="phone_number">Số điện thoại <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control @error('phone_number') is-invalid @enderror" 
+                                                   id="phone_number" name="phone_number" value="{{ old('phone_number') }}" required>
+                                            @error('phone_number')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="detail_address">Địa chỉ chi tiết <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control @error('detail_address') is-invalid @enderror" 
+                                                   id="detail_address" name="detail_address" value="{{ old('detail_address') }}" required>
+                                            @error('detail_address')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="ward">Phường/Xã <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control @error('ward') is-invalid @enderror" 
+                                                           id="ward" name="ward" value="{{ old('ward') }}" required>
+                                                    @error('ward')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="district">Quận/Huyện <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control @error('district') is-invalid @enderror" 
+                                                           id="district" name="district" value="{{ old('district') }}" required>
+                                                    @error('district')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="province">Tỉnh/Thành phố <span class="text-danger">*</span></label>
+                                                    <input type="text" class="form-control @error('province') is-invalid @enderror" 
+                                                           id="province" name="province" value="{{ old('province') }}" required>
+                                                    @error('province')
+                                                        <div class="invalid-feedback">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="notes">Ghi chú</label>
+                                            <textarea class="form-control @error('notes') is-invalid @enderror" 
+                                                      id="notes" name="notes" rows="2">{{ old('notes') }}</textarea>
+                                            @error('notes')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+
+                                        <div class="form-group">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="is_default" name="is_default" value="1" {{ old('is_default') ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="is_default">
+                                                    Đặt làm địa chỉ mặc định
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-actions">
+                                            <button type="button" class="btn btn-secondary" onclick="closeAddressModal()">Hủy</button>
+                                            <button type="submit" class="btn btn-primary">Lưu địa chỉ</button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
 

@@ -498,29 +498,6 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Auto-generate slug from name
-            const nameInput = document.getElementById('name');
-            const slugInput = document.getElementById('slug');
-            
-            if (nameInput && slugInput) {
-                let slugManuallyEdited = false;
-                
-                nameInput.addEventListener('input', () => {
-                    if (!slugManuallyEdited && !slugInput.value) {
-                        slugInput.value = nameInput.value
-                            .toLowerCase()
-                            .normalize('NFD')
-                            .replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^a-z0-9]+/g, '-')
-                            .replace(/^-+|-+$/g, '');
-                    }
-                });
-                
-                slugInput.addEventListener('input', () => {
-                    slugManuallyEdited = slugInput.value.length > 0;
-                });
-            }
-            
             // Image preview
             const imageInput = document.getElementById('image');
             const imagePreview = document.getElementById('imagePreview');

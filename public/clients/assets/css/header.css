@@ -50,11 +50,13 @@
     color: var(--primary-color);
 }
 
-.info-item.wishlist-item {
+.info-item.wishlist-item,
+.info-item.comparison-item {
     position: relative;
 }
 
-.info-item.wishlist-item .badge {
+.info-item.wishlist-item .badge,
+.info-item.comparison-item .badge {
     position: absolute;
     top: -5px;
     right: -10px;
@@ -69,6 +71,10 @@
     font-size: 11px;
     font-weight: bold;
     z-index: 10;
+}
+
+.info-item.comparison-item .badge {
+    background-color: #667eea;
 }
 
 .info-item div strong {

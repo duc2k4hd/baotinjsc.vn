@@ -67,7 +67,6 @@
 .intro-hero-logo img {
     max-width: 200px;
     height: auto;
-    filter: brightness(0) invert(1);
 }
 
 /* Main Content */

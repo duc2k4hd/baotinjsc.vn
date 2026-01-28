@@ -770,8 +770,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Kiểm tra nếu response không phải JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                const text = await response.text();
-                console.error('Non-JSON response:', text);
+                await response.text();
                 throw new Error('Server trả về dữ liệu không hợp lệ. Status: ' + response.status);
             }
 
@@ -793,8 +792,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 searchButton.style.opacity = '1';
             }
         } catch (error) {
-            console.error('Search error:', error);
-            
             // Xử lý các loại lỗi khác nhau
             let errorMessage = 'Có lỗi xảy ra. Vui lòng thử lại sau.';
             

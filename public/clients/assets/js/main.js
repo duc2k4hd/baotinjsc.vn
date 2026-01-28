@@ -132,8 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
                 })
-                .catch(error => {
-                    console.error('Search error:', error);
+                .catch(() => {
                     if (searchSuggestions) {
                         searchSuggestions.classList.remove('show');
                         searchSuggestions.innerHTML = '';
@@ -206,7 +205,6 @@ function showCustomToast(
 ) {
     const container = document.getElementById("custom-toast-container");
     if (!container) {
-        console.warn('Toast container not found');
         return;
     }
     
@@ -484,8 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             })
-            .catch(error => {
-                console.error('Newsletter error:', error);
+            .catch(() => {
                 showNewsletterMessage('Đã có lỗi xảy ra. Vui lòng thử lại sau.', 'error');
             })
             .finally(() => {

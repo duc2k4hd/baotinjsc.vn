@@ -58,10 +58,6 @@ class TagService
      */
     public function delete(Tag $tag): bool
     {
-        if ($tag->usage_count > 0) {
-            throw new \Exception('Không thể xóa tag đang được sử dụng.');
-        }
-
         return $tag->delete();
     }
 
@@ -70,9 +66,7 @@ class TagService
      */
     public function deleteMultiple(array $ids): int
     {
-        $tags = Tag::whereIn('id', $ids)
-            ->where('usage_count', 0)
-            ->get();
+        $tags = Tag::whereIn('id', $ids)->get();
 
         $deleted = 0;
         foreach ($tags as $tag) {

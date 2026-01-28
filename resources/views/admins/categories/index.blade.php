@@ -64,6 +64,10 @@
             font-size: 13px;
         }
         
+        .tree-item.selected {
+            background: #fee2e2;
+        }
+        
         .tree-item:hover {
             background: #f1f5f9;
         }
@@ -182,6 +186,40 @@
             color: #4338ca;
         }
         
+        .tree-actions {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .tree-context-menu {
+            position: fixed;
+            z-index: 1050;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            padding: 6px 8px;
+            font-size: 12px;
+            min-width: 160px;
+            display: none;
+        }
+
+        .tree-context-menu button {
+            width: 100%;
+            text-align: left;
+            padding: 4px 6px;
+            border: none;
+            background: transparent;
+            font-size: 12px;
+        }
+
+        .tree-context-menu button:hover {
+            background: #fee2e2;
+        }
+        
         .actions {
             display: flex;
             gap: 4px;
@@ -263,6 +301,25 @@
                     @include('admins.categories.partials.tree-item', ['item' => $item, 'level' => 0])
                 @endforeach
             </ul>
+
+            <div class="tree-actions">
+                <button type="button" id="tree-select-all" class="btn btn-sm btn-outline-secondary">Chọn tất cả</button>
+                <button type="button" id="tree-clear-selection" class="btn btn-sm btn-outline-secondary">Bỏ chọn</button>
+                @can('deleteAny', \App\Models\Category::class)
+                    <button type="button" id="tree-delete-selected" class="btn btn-sm btn-danger">Xóa danh mục đã chọn</button>
+                @endcan
+                <small style="font-size:11px;color:#6b7280;display:block;margin-top:4px;">
+                    Tip: Ctrl + click để chọn nhiều, click phải để bật/tắt chọn nhanh.
+                </small>
+            </div>
+
+            {{-- Context menu chuột phải cho từng danh mục trong cây --}}
+            <div id="tree-context-menu" class="tree-context-menu">
+                <div style="font-weight:600;font-size:12px;margin-bottom:4px;">Thao tác danh mục</div>
+                @can('deleteAny', \App\Models\Category::class)
+                    <button type="button" id="tree-context-delete-btn">🗑️ Xóa danh mục này (cả cây con)</button>
+                @endcan
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -305,10 +362,8 @@
                 @endif
             </form>
 
-            <form id="category-bulk-form" action="{{ route('admin.categories.bulk-operations') }}" method="POST">
-                @csrf
-                <div class="table-responsive">
-                    <table class="category-table">
+            <div class="table-responsive">
+                <table class="category-table">
                         <thead>
                         <tr>
                             <th style="width:30px;">
@@ -415,15 +470,19 @@
                     </table>
                 </div>
 
-                <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <button type="submit" class="btn btn-secondary btn-sm" name="bulk_action" value="hide">Ẩn đã chọn</button>
-                    <button type="submit" class="btn btn-primary btn-sm" name="bulk_action" value="show">Hiển thị đã chọn</button>
-                    @can('deleteAny', \App\Models\Category::class)
-                        <button type="submit" class="btn btn-danger btn-sm" name="bulk_action" value="delete" 
-                                onclick="return confirm('Xóa các danh mục đã chọn?');">Xóa đã chọn</button>
-                    @endcan
-                </div>
+            <form id="category-bulk-form" action="{{ route('admin.categories.bulk-operations') }}" method="POST" style="display:none;">
+                @csrf
             </form>
+
+            <div style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button type="submit" class="btn btn-secondary btn-sm" name="bulk_action" value="hide" form="category-bulk-form">Ẩn đã chọn</button>
+                <button type="submit" class="btn btn-primary btn-sm" name="bulk_action" value="show" form="category-bulk-form">Hiển thị đã chọn</button>
+                @can('deleteAny', \App\Models\Category::class)
+                    <button type="submit" class="btn btn-danger btn-sm" name="bulk_action" value="delete"
+                            form="category-bulk-form"
+                            onclick="return confirm('Xóa các danh mục đã chọn?');">Xóa đã chọn</button>
+                @endcan
+            </div>
 
             <div style="margin-top:16px;">
                 {{ $categories->links() }}
@@ -468,23 +527,167 @@
                 });
             });
 
-            // Tree item click
+            // Tree item click: chọn parent để filter danh sách + hỗ trợ multi-select cho bulk delete
+            const treeItems = document.querySelectorAll('.tree-item');
+
             document.querySelectorAll('.tree-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     if (e.target.classList.contains('tree-toggle')) return;
-                    
-                    // Update active state
-                    document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    
-                    // Filter by parent
-                    const categoryId = item.dataset.categoryId;
-                    if (categoryId) {
-                        window.location.href = '{{ route("admin.categories.index") }}?parent_id=' + categoryId;
+
+                    const isCtrl = e.ctrlKey || e.metaKey;
+
+                    if (!isCtrl) {
+                        // Chọn 1 parent để filter danh sách
+                        document.querySelectorAll('.tree-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+
+                        const categoryId = item.dataset.categoryId;
+                        if (categoryId) {
+                            window.location.href = '{{ route("admin.categories.index") }}?parent_id=' + categoryId;
+                        }
+                    } else {
+                        // Ctrl + click: toggle chọn để bulk delete
+                        item.classList.toggle('selected');
                     }
                 });
+
             });
 
+
+            // Tree bulk delete buttons
+            const treeSelectAllBtn = document.getElementById('tree-select-all');
+            const treeClearBtn = document.getElementById('tree-clear-selection');
+            const treeDeleteBtn = document.getElementById('tree-delete-selected');
+
+            if (treeSelectAllBtn) {
+                treeSelectAllBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.tree-item').forEach(item => {
+                        item.classList.add('selected');
+                    });
+                });
+            }
+
+            if (treeClearBtn) {
+                treeClearBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.tree-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                });
+            }
+
+            if (treeDeleteBtn) {
+                treeDeleteBtn.addEventListener('click', () => {
+                    const selectedTreeItems = Array.from(document.querySelectorAll('.tree-item.selected'));
+                    if (selectedTreeItems.length === 0) {
+                        alert('Vui lòng chọn ít nhất một danh mục trong cây để xóa.');
+                        return;
+                    }
+
+                    if (!confirm('Xóa các danh mục đã chọn trong cây?')) {
+                        return;
+                    }
+
+                    // Gán các ID vào form bulk (checkbox ảo)
+                    const bulkForm = document.getElementById('category-bulk-form');
+                    if (!bulkForm) return;
+
+                    // Xóa input selected[] cũ nếu có
+                    bulkForm.querySelectorAll('input[name="selected[]"]').forEach(el => el.remove());
+
+                    selectedTreeItems.forEach(item => {
+                        const id = item.dataset.categoryId;
+                        if (id && id !== '1') { // không cho xóa ID 1
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = 'selected[]';
+                            input.value = id;
+                            bulkForm.appendChild(input);
+                        }
+                    });
+
+                    // Set action delete và submit
+                    let bulkActionInput = bulkForm.querySelector('input[name="bulk_action"]');
+                    if (!bulkActionInput) {
+                        bulkActionInput = document.createElement('input');
+                        bulkActionInput.type = 'hidden';
+                        bulkActionInput.name = 'bulk_action';
+                        bulkForm.appendChild(bulkActionInput);
+                    }
+                    bulkActionInput.value = 'delete';
+
+                    bulkForm.submit();
+                });
+            }
+
+            // Context menu chuột phải cho từng danh mục trong cây
+            const treeContextMenu = document.getElementById('tree-context-menu');
+            const treeContextDeleteBtn = document.getElementById('tree-context-delete-btn');
+            let currentContextCategoryId = null;
+
+            if (treeContextMenu) {
+                // Gán contextmenu cho từng item
+                treeItems.forEach(item => {
+                    item.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+
+                        const categoryId = item.dataset.categoryId;
+                        if (!categoryId || categoryId === '1') {
+                            // Không cho xóa root bằng chuột phải
+                            return;
+                        }
+
+                        currentContextCategoryId = categoryId;
+
+                        // Hiển thị menu tại vị trí chuột
+                        treeContextMenu.style.display = 'block';
+                        treeContextMenu.style.left = e.pageX + 'px';
+                        treeContextMenu.style.top = e.pageY + 'px';
+                    });
+                });
+
+                // Ẩn menu khi click chỗ khác
+                document.addEventListener('click', (e) => {
+                    if (!treeContextMenu.contains(e.target)) {
+                        treeContextMenu.style.display = 'none';
+                    }
+                });
+            }
+
+            if (treeContextDeleteBtn) {
+                treeContextDeleteBtn.addEventListener('click', () => {
+                    if (!currentContextCategoryId) {
+                        return;
+                    }
+
+                    if (!confirm('Xóa danh mục này và toàn bộ danh mục con?')) {
+                        return;
+                    }
+
+                    const bulkForm = document.getElementById('category-bulk-form');
+                    if (!bulkForm) return;
+
+                    // Xóa input selected[] cũ
+                    bulkForm.querySelectorAll('input[name="selected[]"]').forEach(el => el.remove());
+
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'selected[]';
+                    input.value = currentContextCategoryId;
+                    bulkForm.appendChild(input);
+
+                    let bulkActionInput = bulkForm.querySelector('input[name="bulk_action"]');
+                    if (!bulkActionInput) {
+                        bulkActionInput = document.createElement('input');
+                        bulkActionInput.type = 'hidden';
+                        bulkActionInput.name = 'bulk_action';
+                        bulkForm.appendChild(bulkActionInput);
+                    }
+                    bulkActionInput.value = 'delete';
+
+                    treeContextMenu.style.display = 'none';
+                    bulkForm.submit();
+                });
+            }
 
             // Update category parent function - tạo form động để tránh form lồng nhau
             window.updateCategoryParent = function(categoryId, parentId) {

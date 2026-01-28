@@ -15,7 +15,6 @@ function setPrice(min, max) {
     const form = document.getElementById('autosensor_shop_products_filter_price_content_form');
 
     if (!minInput || !maxInput || !form) {
-        console.error('Không tìm thấy form hoặc input để lọc giá');
         if (typeof showCustomToast === 'function') {
             showCustomToast('Có lỗi xảy ra khi lọc giá. Vui lòng thử lại.', 'error');
         }
@@ -44,7 +43,6 @@ function setPrice(min, max) {
     try {
         form.submit();
     } catch (error) {
-        console.error('Lỗi khi submit form:', error);
         if (typeof showCustomToast === 'function') {
             showCustomToast('Có lỗi xảy ra khi lọc giá. Vui lòng thử lại.', 'error');
         }

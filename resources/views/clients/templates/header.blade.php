@@ -43,6 +43,18 @@
                     </div>
                     </a>
                 </div>
+                <div class="info-item comparison-item">
+                    <a href="{{ route('client.comparison.index') }}" class="info-item-link">
+                        <i class="fas fa-balance-scale"></i>
+                        @if(isset($comparisonCount) && $comparisonCount > 0)
+                            <span class="badge">{{ $comparisonCount }}</span>
+                        @endif
+                        <div>
+                            <strong>SO SÁNH</strong>
+                            <p>Sản phẩm so sánh</p>
+            </div>
+                    </a>
+                </div>
                 <div class="cart-icon">
                     <a href="{{ $cartLink ?? route('client.cart.index') }}">
                         <i class="fas fa-shopping-cart"></i>

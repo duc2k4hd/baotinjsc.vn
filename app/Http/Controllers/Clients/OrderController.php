@@ -204,18 +204,6 @@ class OrderController extends Controller
     }
 
     /**
-     * Tra cứu vận đơn
-     */
-    public function track(Request $request, ?string $tracking_code = null): View
-    {
-        $trackingCode = $tracking_code ?? $request->get('tracking_code');
-
-        return view('clients.pages.order.track', [
-            'tracking_code' => $trackingCode,
-        ]);
-    }
-
-    /**
      * In hóa đơn.
      */
     public function invoice(string $code): View

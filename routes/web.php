@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Clients\AffiliateController as ClientAffiliateController;
 use App\Http\Controllers\Clients\AiChatController;
 use App\Http\Controllers\Clients\APIs\V1\VoucherController as ClientVoucherController;
 use App\Http\Controllers\Clients\AuthController as ClientAuthController;
@@ -10,7 +9,6 @@ use App\Http\Controllers\Clients\QuoteController as ClientQuoteController;
 use App\Http\Controllers\Clients\CheckoutController;
 use App\Http\Controllers\Clients\ContactController as ClientContactController;
 use App\Http\Controllers\Clients\HomeController as ClientHomeController;
-use App\Http\Controllers\Clients\ImageController as ClientImageController;
 use App\Http\Controllers\Clients\ImageSearchController as ClientImageSearchController;
 use App\Http\Controllers\Clients\OrderController as ClientOrderController;
 use App\Http\Controllers\Clients\PaymentController as ClientPaymentController;
@@ -24,9 +22,8 @@ use App\Models\Favorite;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
-// Trang chủ (với affiliate tracking)
+// Trang chủ
 Route::get('/', [ClientHomeController::class, 'index'])
-    ->middleware(\App\Http\Middleware\TrackAffiliateClick::class)
     ->name('client.home.index');
 Route::post('/newsletter/subscription', [\App\Http\Controllers\Clients\NewsletterController::class, 'subscription'])->name('client.newsletter.subscription');
 Route::prefix('/tu-dong-hoa')->name('client.blog.')->group(function () {
@@ -115,6 +112,12 @@ Route::middleware(['auth:web'])->group(function () {
     Route::get('/tai-khoan', [ClientProfileController::class, 'index'])->name('client.profile.index');
     Route::put('/tai-khoan', [ClientProfileController::class, 'update'])->name('client.profile.update');
     Route::post('/tai-khoan/doi-mat-khau', [ClientProfileController::class, 'changePassword'])->name('client.profile.change-password');
+    
+    // Address management
+    Route::post('/tai-khoan/dia-chi', [ClientProfileController::class, 'storeAddress'])->name('client.profile.address.store');
+    Route::put('/tai-khoan/dia-chi/{id}', [ClientProfileController::class, 'updateAddress'])->name('client.profile.address.update');
+    Route::delete('/tai-khoan/dia-chi/{id}', [ClientProfileController::class, 'deleteAddress'])->name('client.profile.address.delete');
+    Route::post('/tai-khoan/dia-chi/{id}/mac-dinh', [ClientProfileController::class, 'setDefaultAddress'])->name('client.profile.address.set-default');
 
     // Orders
     Route::prefix('don-hang')->name('client.order.')->group(function () {
@@ -124,10 +127,6 @@ Route::middleware(['auth:web'])->group(function () {
         Route::post('/{code}/mua-lai', [ClientOrderController::class, 'reorder'])->name('reorder');
         Route::get('/{code}/hoa-don', [ClientOrderController::class, 'invoice'])->name('invoice');
     });
-
-    Route::get('/tai-khoan/don-hang/{code}', [ClientOrderController::class, 'show'])->name('client.orders.show');
-
-    Route::get('/tra-cuu-van-don', [ClientOrderController::class, 'track'])->name('client.order.track');
 
     // Notifications
     Route::prefix('thong-bao')->name('client.notifications.')->group(function () {
@@ -140,11 +139,6 @@ Route::middleware(['auth:web'])->group(function () {
         Route::get('latest', [\App\Http\Controllers\Clients\NotificationController::class, 'latest'])->name('latest');
     });
 
-    // Affiliate
-    Route::prefix('affiliate')->name('client.affiliate.')->group(function () {
-        Route::get('/', [ClientAffiliateController::class, 'index'])->name('index');
-        Route::post('/copy-link', [ClientAffiliateController::class, 'copyLink'])->name('copy-link');
-    });
 });
 
 
