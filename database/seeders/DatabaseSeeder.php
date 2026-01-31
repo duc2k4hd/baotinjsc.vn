@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             CategoriesTableSeeder::class,
             BrandsTableSeeder::class,
             VouchersTableSeeder::class,
+            ProductSeeder::class, // Phải chạy sau Categories và Brands
         ]);
     }
 }

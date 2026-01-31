@@ -115,6 +115,99 @@
     border-radius: var(--border-radius);
 }
 
+/* Footer Support Staff (CSKH) */
+.footer-support-staff {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-support-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.footer-support-item:hover {
+    padding-left: 5px;
+}
+
+.footer-support-item:last-child {
+    border-bottom: none;
+}
+
+.footer-support-info {
+    flex: 1;
+    min-width: 0;
+    padding-right: 15px;
+}
+
+.footer-support-name {
+    display: block;
+    font-size: 14px;
+    color: var(--text-color-light);
+    font-weight: 600;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.footer-support-role {
+    display: block;
+    font-size: 12px;
+    color: var(--text-color-light);
+    opacity: 0.7;
+    line-height: 1.4;
+}
+
+.footer-support-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.footer-support-link {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    color: var(--text-color-light);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.footer-support-link:hover {
+    transform: translateY(-3px) scale(1.05);
+    border-color: transparent;
+}
+
+.footer-support-link i {
+    font-size: 14px;
+}
+
+.footer-support-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+.footer-support-phone:hover {
+    background-color: #10b981;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.footer-support-zalo:hover {
+    background-color: #0068ff;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 104, 255, 0.4);
+}
+
 .footer-bottom {
     padding: 20px 0;
     text-align: center;

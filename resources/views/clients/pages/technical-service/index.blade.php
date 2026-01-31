@@ -139,7 +139,7 @@
     </section>
 
     <!-- Why Choose Us Section -->
-    <section class="why-choose-section">
+    {{-- <section class="why-choose-section">
         <div class="container">
             <div class="section-header">
                 <h2>Tại sao chọn Bảo Tín JSC?</h2>
@@ -183,7 +183,7 @@
                 </div>
             </div>
         </div>
-    </section>
+    </section> --}}
 
     <!-- Process Section -->
     <section class="process-section">

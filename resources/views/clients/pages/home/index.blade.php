@@ -205,7 +205,8 @@
                         <div class="banner-item large">
                             <a href="{{ $banner->link ?? '#' }}">
                                 <img src="{{ asset('clients/assets/img/banners/' . ($banner->image_desktop ?? 'no-image.webp')) }}"
-                                    alt="{{ $banner->title ?? 'Banner' }}">
+                                    alt="{{ $banner->title ?? 'Banner' }}"
+                                    onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/banners/no-image.webp') }}';">
                                 @if ($banner->title)
                                     <div class="banner-label red">{{ $banner->title }}</div>
                                 @endif
@@ -218,7 +219,8 @@
                         <div class="banner-item">
                             <a href="{{ $banner->link ?? '#' }}">
                                 <img src="{{ asset('clients/assets/img/banners/' . ($banner->image_desktop ?? 'no-image.webp')) }}"
-                                    alt="{{ $banner->title ?? 'Banner' }}">
+                                    alt="{{ $banner->title ?? 'Banner' }}"
+                                    onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/banners/no-image.webp') }}';">
                                 @if ($banner->title)
                                     <div class="banner-label">{{ $banner->title }}</div>
                                 @endif
@@ -240,8 +242,9 @@
                         <div class="motor-item">
                             <a href="/{{ $category->slug ?? '#' }}">
                                 @if ($category->image)
-                                    <img src="{{ asset('clients/assets/img/categories/' . $category->image) }}"
-                                        alt="{{ $category->name }}">
+                                    <img src="{{ asset('clients/assets/img/categories/' . ($category->image ?? 'no-image.webp')) }}"
+                                        alt="{{ $category->name }}"
+                                        onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/categories/no-image.webp') }}';">
                                             @else
                                     <img src="https://placehold.co/600x400" alt="{{ $category->name }}">
                                             @endif
@@ -347,11 +350,13 @@
                                         data-variants='{{ $variantsData }}'>
                                         <a href="/{{ $product->slug ?? '#' }}">
                                             @if ($product->primaryImage && $product->primaryImage->url)
-                                                <img src="{{ asset('clients/assets/img/clothes/' . $product->primaryImage->url) }}"
-                                                    alt="{{ $product->name }}">
+                                                <img src="{{ asset('clients/assets/img/clothes/' . ($product->primaryImage->url ?? 'no-image.webp')) }}"
+                                                    alt="{{ $product->name }}"
+                                                    onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                                             @else
                                                 <img src="{{ asset('clients/assets/img/clothes/no-image.webp') }}"
-                                                    alt="{{ $product->name }}">
+                                                    alt="{{ $product->name }}"
+                                                    onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                                             @endif
                                             <h4>{{ $product->name }}</h4>
                                             <p class="price">
@@ -389,25 +394,23 @@
                     @endif
 
                     @if ($categoriesForTabs->isNotEmpty() && isset($categoryProducts))
-                        @foreach ($categoriesForTabs->skip(1)->take(2) as $category)
+                        @foreach ($categoriesForTabs->skip(1)->take(3) as $category)
                             @if (isset($categoryProducts[$category->id]) && $categoryProducts[$category->id]->isNotEmpty())
                                 <div class="product-category">
-                                    <div class="category-header green-bg">
-                                        <h2><i class="fas fa-cog"></i> {{ strtoupper($category->name) }}</h2>
-                                        <a href="/{{ $category->slug ?? '' }}" class="view-all white">Xem Tất Cả <i
+                                    <div class="category-header">
+                                        <h2><i class="fas fa-list"></i> {{ strtoupper($category->name) }}</h2>
+                                        <a href="/{{ $category->slug ?? '' }}" class="view-all">Xem Tất Cả <i
                                                 class="fas fa-chevron-right"></i></a>
-                </div>
+                                    </div>
                                     <div class="product-grid">
                                         @foreach ($categoryProducts[$category->id]->take(4) as $product)
                                             @php
-                                                $hasVariants =
-                                                    $product->hasVariants() && $product->variants->count() > 0;
+                                                $hasVariants = $product->hasVariants() && $product->variants->count() > 0;
                                                 $variantsData = $hasVariants
                                                     ? $product->variants
                                                         ->map(function ($variant) {
                                                             $variantStock = $variant->stock_quantity;
-                                                            $variantInStock =
-                                                                $variantStock === null || $variantStock > 0;
+                                                            $variantInStock = $variantStock === null || $variantStock > 0;
                                                             return [
                                                                 'id' => $variant->id,
                                                                 'name' => $variant->name,
@@ -430,27 +433,29 @@
                                                         })
                                                         ->toJson()
                                                     : '[]';
-                                        @endphp
+                                            @endphp
                                             <div class="product-card" data-product-id="{{ $product->id }}"
-                                                            data-product-name="{{ $product->name }}"
+                                                data-product-name="{{ $product->name }}"
                                                 data-product-slug="{{ $product->slug ?? '#' }}"
                                                 data-has-variants="{{ $hasVariants ? '1' : '0' }}"
-                                                data-variants="{{ htmlspecialchars($variantsData, ENT_QUOTES, 'UTF-8') }}">
+                                                data-variants='{{ $variantsData }}'>
                                                 <a href="/{{ $product->slug ?? '#' }}">
                                                     @if ($product->primaryImage && $product->primaryImage->url)
-                                                        <img src="{{ asset('clients/assets/img/clothes/' . $product->primaryImage->url) }}"
-                                                            alt="{{ $product->name }}">
+                                                        <img src="{{ asset('clients/assets/img/clothes/' . ($product->primaryImage->url ?? 'no-image.webp')) }}"
+                                                            alt="{{ $product->name }}"
+                                                            onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                                                     @else
                                                         <img src="{{ asset('clients/assets/img/clothes/no-image.webp') }}"
-                                                            alt="{{ $product->name }}">
+                                                            alt="{{ $product->name }}"
+                                                            onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                                                     @endif
                                                     <h4>{{ $product->name }}</h4>
                                                     <p class="price">
                                                         @if ($product->price)
                                                             {{ number_format($product->price, 0, ',', '.') }} đ
-                                @else
+                                                        @else
                                                             Liên hệ {{ $settings->contact_phone ?? '0902 223 663' }}
-                                @endif
+                                                        @endif
                                                     </p>
                                                     <a href="/{{ $product->slug ?? '#' }}" class="quick-view">
                                                         <i class="fas fa-eye"></i>
@@ -462,8 +467,7 @@
                                                         title="Thêm vào giỏ hàng">
                                                         <i class="fas fa-shopping-cart"></i>
                                                     </button>
-                                                    <button class="btn-favorite-home"
-                                                        data-product-id="{{ $product->id }}"
+                                                    <button class="btn-favorite-home" data-product-id="{{ $product->id }}"
                                                         data-wishlist-add="{{ route('client.product.wishlist.add') }}"
                                                         data-wishlist-remove="{{ route('client.product.wishlist.remove') }}"
                                                         title="Yêu thích">
@@ -473,51 +477,14 @@
                                                         title="Thêm vào so sánh">
                                                         <i class="fas fa-balance-scale"></i>
                                                     </button>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        @endif
-                        @endforeach
-                                        @endif
-
-                    <!-- Brands Section -->
-                    @if ($partners->isNotEmpty())
-                        <div class="brands-section">
-                            <div class="category-header green-bg">
-                                <h2><i class="fas fa-award"></i> ĐỐI TÁC CỦA
-                                    {{ strtoupper($settings->site_name ?? 'BẢO TÍN JSC') }}</h2>
-                                        </div>
-                            <div class="brands-grid">
-                                <div class="brand-logos">
-                                    @foreach ($partners->take(8) as $partner)
-                                        <img src="{{ asset($partner->image ?? 'no-image.webp') }}"
-                                            alt="{{ $partner->name }}">
-                            @endforeach
-                    </div>
-                </div>
-            </div>
-                    @endif
-
-                    <!-- Installation Section -->
-                    <div class="installation-section">
-                        <div class="category-header blue-bg">
-                            <h2><i class="fas fa-tools"></i> DỊCH VỤ KHẢO SÁT VÀ TƯ VẤN CHUYÊN NGHIỆP</h2>
-                    </div>
-                        <div class="installation-preview">
-                            @if ($banners_home_parent->isNotEmpty() && $banners_home_parent->first()->image_desktop)
-                                <img src="{{ asset('clients/assets/img/banners/' . $banners_home_parent->first()->image_desktop) }}"
-                                    alt="Dịch vụ khảo sát">
-                            @else
-                                <img src="https://via.placeholder.com/500x300/3498db/ffffff?text=DỊCH+VỤ+KHẢO+SÁT"
-                                    alt="Dịch vụ khảo sát">
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
                             @endif
-                            <div class="installation-overlay">
-                                <p>DỊCH VỤ KHẢO SÁT VÀ TƯ VẤN CHUYÊN NGHIỆP</p>
-                    </div>
-                    </div>
-                    </div>
+                        @endforeach
+                    @endif
 
                     <!-- News Section -->
                     @php
@@ -535,7 +502,8 @@
                                     <div class="news-card">
                                         <a href="/tu-dong-hoa/{{ $post->slug ?? '' }}">
                                             <img src="{{ asset('clients/assets/img/posts/' . ($post->image ?? 'no-image.webp')) }}"
-                                                alt="{{ $post->title ?? 'Tin tức' }}">
+                                                alt="{{ $post->title ?? 'Tin tức' }}"
+                                                onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/posts/no-image.webp') }}';">
                                             <div class="news-content">
                                                 <h4>{{ Str::limit($post->title ?? 'Tin tức', 50) }}</h4>
                                                 <div class="news-meta">

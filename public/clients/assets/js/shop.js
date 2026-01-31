@@ -1,10 +1,24 @@
 // Show lọc danh mục sản phẩm
 const autosensorFilterWrapper = document.querySelector('.autosensor_shop_products_filter');
 const autosensorFilterHeading = document.querySelector('.autosensor_shop_products_filter_categories_title');
+const autosensorFilterCategories = document.querySelector('.autosensor_shop_products_filter_categories');
+const autosensorFilterBars = document.querySelector('.autosensor_shop_products_filter_categories_title_bars');
 
-if (autosensorFilterWrapper && autosensorFilterHeading) {
+// Toggle filter trên mobile/tablet
+if (autosensorFilterHeading && autosensorFilterCategories) {
     autosensorFilterHeading.addEventListener('click', function() {
-        autosensorFilterWrapper.classList.toggle('autosensor_shop_products_filter_height_full');
+        // Toggle class active cho filter categories
+        autosensorFilterCategories.classList.toggle('active');
+        
+        // Toggle class active cho icon bars
+        if (autosensorFilterBars) {
+            autosensorFilterBars.classList.toggle('active');
+        }
+        
+        // Toggle height full cho desktop (backward compatibility)
+        if (autosensorFilterWrapper) {
+            autosensorFilterWrapper.classList.toggle('autosensor_shop_products_filter_height_full');
+        }
     });
 }
 

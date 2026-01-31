@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -97,7 +98,22 @@ class ProductController extends Controller
     public function store(ProductRequest $request): RedirectResponse
     {
         try {
-            $product = $this->productService->create($request->validated());
+            // DEBUG: Log request data
+            Log::info('🔵 [DEBUG ProductController] store - Request data', [
+                'all_input' => $request->all(),
+                'variants_raw' => $request->input('variants'),
+                'variants_count' => is_array($request->input('variants')) ? count($request->input('variants')) : 0,
+            ]);
+            
+            $validated = $request->validated();
+            
+            // DEBUG: Log validated data
+            Log::info('🟢 [DEBUG ProductController] store - Validated data', [
+                'variants' => Arr::get($validated, 'variants'),
+                'variants_count' => is_array(Arr::get($validated, 'variants')) ? count(Arr::get($validated, 'variants')) : 0,
+            ]);
+            
+            $product = $this->productService->create($validated);
 
             // Log activity
             $this->activityLogService->logCreate($product, 'Tạo sản phẩm mới: '.$product->name);
@@ -106,6 +122,10 @@ class ProductController extends Controller
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Tạo sản phẩm thành công');
         } catch (\Throwable $e) {
+            Log::error('🔴 [DEBUG ProductController] store - Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             report($e);
 
             return back()
@@ -116,7 +136,7 @@ class ProductController extends Controller
 
     public function show(Product $product): View
     {
-        $product->load(['primaryCategory', 'faqs', 'howTos']);
+        $product->load(['primaryCategory']);
 
         return view('admins.products.show', compact('product'));
     }
@@ -128,7 +148,7 @@ class ProductController extends Controller
         }
 
         // Load images từ image_ids
-        $product->load(['primaryCategory', 'faqs', 'howTos', 'allVariants']);
+        $product->load(['primaryCategory', 'allVariants']);
 
         // Cache categories, brands, tags để tránh load lại mỗi lần vào trang
         // Cache 1 ngày vì dữ liệu này ít thay đổi
@@ -167,8 +187,25 @@ class ProductController extends Controller
         }
 
         try {
+            // DEBUG: Log request data
+            Log::info('🔵 [DEBUG ProductController] update - Request data', [
+                'product_id' => $product->id,
+                'all_input' => $request->all(),
+                'variants_raw' => $request->input('variants'),
+                'variants_count' => is_array($request->input('variants')) ? count($request->input('variants')) : 0,
+            ]);
+            
+            $validated = $request->validated();
+            
+            // DEBUG: Log validated data
+            Log::info('🟢 [DEBUG ProductController] update - Validated data', [
+                'product_id' => $product->id,
+                'variants' => Arr::get($validated, 'variants'),
+                'variants_count' => is_array(Arr::get($validated, 'variants')) ? count(Arr::get($validated, 'variants')) : 0,
+            ]);
+            
             $oldData = $product->toArray();
-            $this->productService->update($product, $request->validated());
+            $this->productService->update($product, $validated);
             $this->releaseEditingLock($product);
 
             // Log activity
@@ -178,6 +215,11 @@ class ProductController extends Controller
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Cập nhật sản phẩm thành công');
         } catch (\Throwable $e) {
+            Log::error('🔴 [DEBUG ProductController] update - Error', [
+                'product_id' => $product->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             report($e);
 
             return back()

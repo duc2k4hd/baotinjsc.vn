@@ -74,22 +74,6 @@ class ProductRequest extends FormRequest
             'images.*.order' => ['nullable', 'integer', 'min:0'],
             'images.*.file' => ['nullable', 'image', 'max:2048'],
 
-            // FAQs data
-            'faqs' => ['nullable', 'array'],
-            'faqs.*.id' => ['nullable', 'integer', 'exists:product_faqs,id'],
-            'faqs.*.question' => ['nullable', 'string', 'max:500'],
-            'faqs.*.answer' => ['nullable', 'string'],
-            'faqs.*.order' => ['nullable', 'integer', 'min:0'],
-
-            // How-Tos data
-            'how_tos' => ['nullable', 'array'],
-            'how_tos.*.id' => ['nullable', 'integer', 'exists:product_how_tos,id'],
-            'how_tos.*.title' => ['nullable', 'string', 'max:255'],
-            'how_tos.*.description' => ['nullable', 'string'],
-            'how_tos.*.steps' => ['nullable'],
-            'how_tos.*.supplies' => ['nullable'],
-            'how_tos.*.is_active' => ['nullable', 'boolean'],
-
             // Variants data
             'variants' => ['nullable', 'array'],
             'variants.*.id' => ['nullable', 'integer', 'exists:product_variants,id'],

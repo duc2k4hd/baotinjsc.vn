@@ -235,15 +235,6 @@ class Product extends Model
         return 'Bán chạy '.date('Y').'';
     }
 
-    public function faqs()
-    {
-        return $this->hasMany(ProductFaq::class);
-    }
-
-    public function howTos()
-    {
-        return $this->hasMany(ProductHowTo::class);
-    }
 
     public function orderItems()
     {

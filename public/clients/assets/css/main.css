@@ -350,6 +350,14 @@ img {
     background-color: #0052CC;
 }
 
+@media (max-width: 768px) {
+    .zalo-widget {
+        right: 15px !important;
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
+
 @keyframes pulse {
     0% {
         box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);

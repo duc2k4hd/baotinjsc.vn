@@ -1020,16 +1020,30 @@
                                         </span>
                                     </div>
                                     <div class="autosensor_shop_products_content_list_item_price">
-                                        @if ($product->sale_price && $product->sale_price < $product->price)
+                                        @php
+                                            $productPrice = $product->price ?? 0;
+                                            $productSalePrice = $product->sale_price ?? 0;
+                                            $hasValidPrice = ($productPrice > 0) || ($productSalePrice > 0 && $productSalePrice < $productPrice);
+                                        @endphp
+                                        
+                                        @if (!$hasValidPrice)
+                                            {{-- Giá = 0: Hiển thị Liên hệ Zalo --}}
+                                            <a href="{{ 'https://zalo.me/' . ($settings->contact_zalo ?? '#') }}" 
+                                               class="autosensor_shop_products_content_list_item_price_new"
+                                               style="color: var(--primary-color); text-decoration: none;"
+                                               target="_blank" rel="noopener">
+                                                Liên hệ
+                                            </a>
+                                        @elseif ($productSalePrice && $productSalePrice < $productPrice && $productSalePrice > 0)
                                             <span class="autosensor_shop_products_content_list_item_price_new">
-                                                {{ number_format($product->sale_price, 0, ',', '.') }}đ
+                                                {{ number_format($productSalePrice, 0, ',', '.') }}đ
                                             </span>
                                             <span class="autosensor_shop_products_content_list_item_price_old">
-                                                {{ number_format($product->price, 0, ',', '.') }}đ
+                                                {{ number_format($productPrice, 0, ',', '.') }}đ
                                             </span>
                                         @else
                                             <span class="autosensor_shop_products_content_list_item_price_new">
-                                                {{ number_format($product->price ?? 0, 0, ',', '.') }}đ
+                                                {{ number_format($productPrice, 0, ',', '.') }}đ
                                             </span>
                                         @endif
                                     </div>

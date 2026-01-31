@@ -8,8 +8,6 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\Product;
-use App\Models\ProductFaq;
-use App\Models\ProductHowTo;
 use App\Models\ProductVariant;
 use App\Models\Tag;
 use Illuminate\Http\Request;
@@ -335,13 +333,7 @@ class ImportExcelController extends Controller
             // Import Images (Sheet 2)
             $this->importImages($spreadsheet, $errors);
 
-            // Import FAQs (Sheet 3)
-            $this->importFaqs($spreadsheet, $errors);
-
-            // Import How-Tos (Sheet 4)
-            $this->importHowTos($spreadsheet, $errors);
-
-            // Import Variants (Sheet 5)
+            // Import Variants (Sheet 3)
             $this->importVariants($spreadsheet, $errors);
 
             DB::commit();
@@ -493,57 +485,6 @@ class ImportExcelController extends Controller
         }
     }
 
-    /**
-     * Build FAQs Sheet
-     */
-    private function buildFaqsSheet(Spreadsheet $spreadsheet, $products)
-    {
-        $sheet = $spreadsheet->createSheet();
-        $sheet->setTitle('faqs');
-
-        $headers = ['sku', 'question', 'answer', 'order'];
-        $sheet->fromArray($headers, null, 'A1');
-
-        $row = 2;
-        foreach ($products as $product) {
-            foreach ($product->faqs as $faq) {
-                $sheet->fromArray([
-                    $product->sku,
-                    $faq->question,
-                    $faq->answer,
-                    $faq->order,
-                ], null, 'A'.$row);
-                $row++;
-            }
-        }
-    }
-
-    /**
-     * Build How-Tos Sheet
-     */
-    private function buildHowTosSheet(Spreadsheet $spreadsheet, $products)
-    {
-        $sheet = $spreadsheet->createSheet();
-        $sheet->setTitle('how_tos');
-
-        $headers = ['sku', 'title', 'description', 'steps', 'supplies', 'is_active'];
-        $sheet->fromArray($headers, null, 'A1');
-
-        $row = 2;
-        foreach ($products as $product) {
-            foreach ($product->howTos as $howTo) {
-                $sheet->fromArray([
-                    $product->sku,
-                    $howTo->title,
-                    $howTo->description,
-                    ! empty($howTo->steps) ? json_encode($howTo->steps, JSON_UNESCAPED_UNICODE) : '',
-                    ! empty($howTo->supplies) ? json_encode($howTo->supplies, JSON_UNESCAPED_UNICODE) : '',
-                    $howTo->is_active ? 1 : 0,
-                ], null, 'A'.$row);
-                $row++;
-            }
-        }
-    }
 
     /**
      * Build Variants Sheet
@@ -1240,82 +1181,6 @@ class ImportExcelController extends Controller
         }
     }
 
-    /**
-     * Import FAQs
-     */
-    private function importFaqs($spreadsheet, &$errors)
-    {
-        $sheet = $spreadsheet->getSheetByName('faqs');
-        if (! $sheet) {
-            return;
-        } // Sheet tùy chọn
-
-        $rows = $sheet->toArray();
-        $headers = array_shift($rows);
-
-        foreach ($rows as $rowIndex => $row) {
-            if (empty($row[0])) {
-                continue;
-            }
-
-            $sku = trim($row[0] ?? '');
-            $question = trim($row[1] ?? '');
-            $answer = trim($row[2] ?? '');
-            $order = (int) ($row[3] ?? 0);
-
-            if (empty($sku) || empty($question)) {
-                continue;
-            }
-
-            $product = Product::where('sku', $sku)->first();
-            if (! $product) {
-                $errors[] = [
-                    'type' => 'PRODUCT_NOT_FOUND',
-                    'sku' => $sku,
-                    'message' => "Không tìm thấy sản phẩm với SKU '{$sku}'. Đã bỏ qua FAQ này.",
-                    'row' => $rowIndex + 2,
-                    'sheet' => 'faqs',
-                ];
-
-                continue;
-            }
-
-            // Kiểm tra xem FAQ đã tồn tại chưa
-            $existingFaq = ProductFaq::where('product_id', $product->id)
-                ->where('question', $question)
-                ->first();
-
-            $wasCreated = ! $existingFaq;
-            $wasChanged = false;
-
-            if ($existingFaq) {
-                // So sánh dữ liệu cũ và mới
-                $oldAnswer = $existingFaq->answer;
-                $oldOrder = $existingFaq->order;
-                if ($oldAnswer != $answer || $oldOrder != $order) {
-                    $wasChanged = true;
-                }
-            }
-
-            // Update or create FAQ
-            ProductFaq::updateOrCreate(
-                [
-                    'product_id' => $product->id,
-                    'question' => $question,
-                ],
-                [
-                    'answer' => $answer ?: null,
-                    'order' => $order,
-                ]
-            );
-
-            // Nếu FAQ được tạo mới hoặc thay đổi → xóa cache
-            if ($wasCreated || $wasChanged) {
-                Cache::forget('product_detail_'.$product->slug);
-                Cache::forget('slug_type_'.$product->slug);
-            }
-        }
-    }
 
     /**
      * Import Variants
@@ -1453,115 +1318,6 @@ class ImportExcelController extends Controller
         }
     }
 
-    /**
-     * Import How-Tos
-     */
-    private function importHowTos($spreadsheet, &$errors)
-    {
-        $sheet = $spreadsheet->getSheetByName('how_tos');
-        if (! $sheet) {
-            return;
-        } // Sheet tùy chọn
-
-        $rows = $sheet->toArray();
-        $headers = array_shift($rows);
-
-        foreach ($rows as $rowIndex => $row) {
-            if (empty($row[0])) {
-                continue;
-            }
-
-            $sku = trim($row[0] ?? '');
-            $title = trim($row[1] ?? '');
-            $description = trim($row[2] ?? '');
-            $stepsRaw = trim($row[3] ?? '');
-            $suppliesRaw = trim($row[4] ?? '');
-            $isActive = isset($row[5]) ? (bool) $row[5] : true;
-
-            if (empty($sku) || empty($title)) {
-                continue;
-            }
-
-            $product = Product::where('sku', $sku)->first();
-            if (! $product) {
-                $errors[] = [
-                    'type' => 'PRODUCT_NOT_FOUND',
-                    'sku' => $sku,
-                    'message' => "Không tìm thấy sản phẩm với SKU '{$sku}'. Đã bỏ qua How-To này.",
-                    'row' => $rowIndex + 2,
-                    'sheet' => 'how_tos',
-                ];
-
-                continue;
-            }
-
-            // Xử lý steps và supplies (JSON)
-            $steps = null;
-            if (! empty($stepsRaw)) {
-                $decoded = json_decode($stepsRaw, true);
-                $steps = $decoded ?: array_filter(array_map('trim', explode("\n", $stepsRaw)));
-            }
-
-            $supplies = null;
-            if (! empty($suppliesRaw)) {
-                $decoded = json_decode($suppliesRaw, true);
-                $supplies = $decoded ?: array_filter(array_map('trim', explode(',', $suppliesRaw)));
-            }
-
-            // Kiểm tra xem How-To đã tồn tại chưa
-            $existingHowTo = ProductHowTo::where('product_id', $product->id)
-                ->where('title', $title)
-                ->first();
-
-            $wasCreated = ! $existingHowTo;
-            $wasChanged = false;
-
-            if ($existingHowTo) {
-                // So sánh dữ liệu cũ và mới
-                $oldDescription = $existingHowTo->description;
-                $oldSteps = $existingHowTo->steps ?? [];
-                $oldSupplies = $existingHowTo->supplies ?? [];
-                $oldIsActive = $existingHowTo->is_active;
-
-                $oldStepsArray = is_array($oldSteps) ? $oldSteps : [];
-                $newStepsArray = is_array($steps) ? $steps : [];
-                sort($oldStepsArray);
-                sort($newStepsArray);
-
-                $oldSuppliesArray = is_array($oldSupplies) ? $oldSupplies : [];
-                $newSuppliesArray = is_array($supplies) ? $supplies : [];
-                sort($oldSuppliesArray);
-                sort($newSuppliesArray);
-
-                if ($oldDescription != $description ||
-                    $oldStepsArray !== $newStepsArray ||
-                    $oldSuppliesArray !== $newSuppliesArray ||
-                    $oldIsActive != $isActive) {
-                    $wasChanged = true;
-                }
-            }
-
-            // Update or create How-To
-            ProductHowTo::updateOrCreate(
-                [
-                    'product_id' => $product->id,
-                    'title' => $title,
-                ],
-                [
-                    'description' => $description ?: null,
-                    'steps' => $steps,
-                    'supplies' => $supplies,
-                    'is_active' => $isActive,
-                ]
-            );
-
-            // Nếu How-To được tạo mới hoặc thay đổi → xóa cache
-            if ($wasCreated || $wasChanged) {
-                Cache::forget('product_detail_'.$product->slug);
-                Cache::forget('slug_type_'.$product->slug);
-            }
-        }
-    }
 
     /**
      * Ghi log lỗi vào file txt
@@ -2497,114 +2253,7 @@ class ImportExcelController extends Controller
             unset($chunkFilesForImages);
 
             // =========================
-            // Sheet 3: FAQs
-            // =========================
-            $faqsSheet = $writer->addNewSheetAndMakeItCurrent();
-            $faqsSheet->setName('faqs');
-            
-            $faqsHeaders = ['sku', 'question', 'answer', 'order'];
-            $faqsHeaderCells = array_map(fn($value) => Cell::fromValue($value), $faqsHeaders);
-            $writer->addRow(new Row($faqsHeaderCells));
-
-            // Đọc lại từ chunk files - KHÔNG load tất cả IDs
-            $chunkFilesForFaqs = glob("{$exportDir}/{$sessionId}_chunk_*.json");
-            sort($chunkFilesForFaqs);
-            
-            foreach ($chunkFilesForFaqs as $chunkFile) {
-                if (!file_exists($chunkFile)) {
-                    continue;
-                }
-                
-                $productIds = json_decode(file_get_contents($chunkFile), true);
-                if (!is_array($productIds) || empty($productIds)) {
-                    unset($productIds);
-                    continue;
-                }
-                
-                ProductFaq::whereIn('product_id', $productIds)
-                ->orderBy('product_id')
-                ->chunkById(200, function ($faqsChunk) use ($writer, $productIdToSku) {
-                    foreach ($faqsChunk as $faq) {
-                        $sku = $productIdToSku[$faq->product_id] ?? '';
-
-                        $rowValues = [
-                            $sku,
-                            $faq->question,
-                            $faq->answer,
-                            $faq->order,
-                        ];
-                        
-                        $rowCells = array_map(fn($value) => Cell::fromValue($value), $rowValues);
-                        $writer->addRow(new Row($rowCells));
-                    }
-
-                    unset($faqsChunk);
-                    gc_collect_cycles();
-                    });
-                
-                unset($productIds);
-                gc_collect_cycles();
-            }
-            unset($chunkFilesForFaqs);
-
-            // =========================
-            // Sheet 4: How-Tos
-            // =========================
-            $howTosSheet = $writer->addNewSheetAndMakeItCurrent();
-            $howTosSheet->setName('how_tos');
-            
-            $howTosHeaders = ['sku', 'title', 'description', 'steps', 'supplies', 'is_active'];
-            $howTosHeaderCells = array_map(fn($value) => Cell::fromValue($value), $howTosHeaders);
-            $writer->addRow(new Row($howTosHeaderCells));
-
-            // Đọc lại từ chunk files - KHÔNG load tất cả IDs
-            $chunkFilesForHowTos = glob("{$exportDir}/{$sessionId}_chunk_*.json");
-            sort($chunkFilesForHowTos);
-            
-            foreach ($chunkFilesForHowTos as $chunkFile) {
-                if (!file_exists($chunkFile)) {
-                    continue;
-                }
-                
-                $productIds = json_decode(file_get_contents($chunkFile), true);
-                if (!is_array($productIds) || empty($productIds)) {
-                    unset($productIds);
-                    continue;
-                }
-                
-                ProductHowTo::whereIn('product_id', $productIds)
-                ->orderBy('product_id')
-                ->chunkById(200, function ($howTosChunk) use ($writer, $productIdToSku) {
-                    foreach ($howTosChunk as $howTo) {
-                        $sku = $productIdToSku[$howTo->product_id] ?? '';
-
-                        $steps = is_array($howTo->steps) ? implode('|', $howTo->steps) : ($howTo->steps ?? '');
-                        $supplies = is_array($howTo->supplies) ? implode(',', $howTo->supplies) : ($howTo->supplies ?? '');
-
-                        $rowValues = [
-                            $sku,
-                            $howTo->title,
-                            $howTo->description,
-                            $steps,
-                            $supplies,
-                            $howTo->is_active ? 1 : 0,
-                        ];
-                        
-                        $rowCells = array_map(fn($value) => Cell::fromValue($value), $rowValues);
-                        $writer->addRow(new Row($rowCells));
-                    }
-
-                    unset($howTosChunk);
-                    gc_collect_cycles();
-                    });
-                
-                unset($productIds);
-                gc_collect_cycles();
-            }
-            unset($chunkFilesForHowTos);
-
-            // =========================
-            // Sheet 5: Variants
+            // Sheet 3: Variants
             // =========================
             $variantsSheet = $writer->addNewSheetAndMakeItCurrent();
             $variantsSheet->setName('variants');
@@ -3384,37 +3033,7 @@ class ImportExcelController extends Controller
                     ];
                 }
 
-                // Import FAQs (Sheet 3)
-                try {
-                    $this->importFaqs($spreadsheet, $allErrors);
-                } catch (\Exception $e) {
-                    Log::error('Finalize import group: Lỗi khi import FAQs', [
-                        'group_id' => $groupId,
-                        'error' => $e->getMessage(),
-                    ]);
-                    $allErrors[] = [
-                        'type' => 'FAQS_IMPORT_ERROR',
-                        'sku' => 'N/A',
-                        'message' => $e->getMessage(),
-                    ];
-                }
-
-                // Import How-Tos (Sheet 4)
-                try {
-                    $this->importHowTos($spreadsheet, $allErrors);
-                } catch (\Exception $e) {
-                    Log::error('Finalize import group: Lỗi khi import How-Tos', [
-                        'group_id' => $groupId,
-                        'error' => $e->getMessage(),
-                    ]);
-                    $allErrors[] = [
-                        'type' => 'HOWTOS_IMPORT_ERROR',
-                        'sku' => 'N/A',
-                        'message' => $e->getMessage(),
-                    ];
-                }
-
-                // Import Variants (Sheet 5)
+                // Import Variants (Sheet 3)
                 try {
                     $this->importVariants($spreadsheet, $allErrors);
                 } catch (\Exception $e) {
@@ -3516,33 +3135,6 @@ class ImportExcelController extends Controller
                     ];
                 }
 
-                // Import FAQs (Sheet 3)
-                try {
-                    $this->importFaqs($spreadsheet, $errors);
-                } catch (\Exception $e) {
-                    Log::error('Finalize import: Lỗi khi import FAQs', [
-                        'error' => $e->getMessage(),
-                    ]);
-                    $errors[] = [
-                        'type' => 'FAQS_IMPORT_ERROR',
-                        'sku' => 'N/A',
-                        'message' => $e->getMessage(),
-                    ];
-                }
-
-                // Import How-Tos (Sheet 4)
-                try {
-                    $this->importHowTos($spreadsheet, $errors);
-                } catch (\Exception $e) {
-                    Log::error('Finalize import: Lỗi khi import How-Tos', [
-                        'error' => $e->getMessage(),
-                    ]);
-                    $errors[] = [
-                        'type' => 'HOWTOS_IMPORT_ERROR',
-                        'sku' => 'N/A',
-                        'message' => $e->getMessage(),
-                    ];
-                }
 
                 // Import Variants (Sheet 5)
                 try {

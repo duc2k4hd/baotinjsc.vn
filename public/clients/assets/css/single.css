@@ -28,7 +28,7 @@
 /* Product Section */
 .product-section {
     display: grid;
-    grid-template-columns: 500px 1fr;
+    grid-template-columns: minmax(320px, 500px) minmax(0, 1fr);
     gap: 30px;
     margin: 10px 0;
 }
@@ -51,6 +51,7 @@
 .main-image img {
     width: 100%;
     display: block;
+    height: auto;
 }
 
 .zoom-btn {
@@ -86,6 +87,36 @@
     border-radius: var(--border-radius);
     cursor: pointer;
     transition: border-color 0.3s;
+}
+
+/* Editor content safety: không tràn ngang */
+.description-text,
+.product-info,
+.product-description {
+    min-width: 0;
+}
+
+.description-text img,
+.description-text video,
+.description-text iframe {
+    max-width: 100%;
+    height: auto;
+}
+
+.description-text iframe {
+    width: 100%;
+}
+
+.description-text table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.description-text table th,
+.description-text table td {
+    white-space: nowrap;
 }
 
 .thumb-img.active,
@@ -196,7 +227,7 @@
 }
 
 .variant-option {
-    padding: 10px 20px;
+    padding: 5px 10px;
     border: 2px solid var(--border-color);
     background-color: var(--text-color-light);
     border-radius: var(--border-radius);
@@ -208,7 +239,8 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 5px;
-    min-width: 120px;
+    min-width: 100px;
+    position: relative;
 }
 
 .variant-option:hover {
@@ -220,6 +252,26 @@
     border-color: var(--primary-color);
     background-color: var(--primary-color);
     color: var(--text-color-light);
+}
+
+/* Dấu tích góc trên bên phải khi variant active */
+.variant-option.active::before {
+    content: '✓';
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 20px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .variant-option.active .variant-price {
@@ -255,78 +307,160 @@
     font-weight: 600;
 }
 
+/* Variant Contact (khi giá = 0) */
+.variant-price.variant-contact {
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Khi variant active, text "Liên hệ" màu sáng */
+.variant-option.active .variant-price.variant-contact {
+    color: var(--text-color-light);
+}
+
 /* Support Staff (CSKH) */
 .support-staff-section {
-    margin-top: 20px;
-    padding: 14px 16px;
-    border-radius: var(--border-radius);
-    border: var(--border);
-    background-color: #F9FAFB;
+    margin: 30px 0;
+}
+
+.support-staff-container {
+    max-width: 100%;
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 20px;
 }
 
 .support-staff-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
-    margin-bottom: 10px;
     color: var(--text-color-dark);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.support-staff-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+.support-staff-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
 }
 
-.support-staff-card {
+.support-staff-item {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 10px;
-    border-radius: 8px;
-    background-color: #FFFFFF;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background-color: #fafafa;
+    transition: border-color 0.2s ease;
+}
+
+.support-staff-item:hover {
+    border-color: var(--primary-color);
+    background-color: #ffffff;
+}
+
+.support-staff-avatar {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
 }
 
 .support-staff-avatar img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    border: 1px solid #E5E7EB;
 }
 
-.support-staff-info {
+.support-staff-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    font-weight: 600;
+    font-size: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.support-staff-details {
     flex: 1;
+    min-width: 0;
 }
 
 .support-staff-name {
     font-size: 14px;
     font-weight: 600;
     color: var(--text-color-dark);
+    margin-bottom: 2px;
 }
 
 .support-staff-role {
     font-size: 12px;
-    color: #6B7280;
-    margin-top: 2px;
+    color: #6b7280;
 }
 
-.support-staff-contact {
-    margin-top: 4px;
+.support-staff-actions {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.support-staff-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--text-color-dark);
+    text-decoration: none;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    background-color: #ffffff;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.support-staff-link:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background-color: #f9fafb;
+}
+
+.support-staff-link i {
     font-size: 12px;
 }
 
-.support-staff-phone,
-.support-staff-zalo {
-    color: var(--primary-color);
-    text-decoration: none;
+.support-staff-phone i {
+    color: #10b981;
 }
 
-.support-staff-phone:hover,
-.support-staff-zalo:hover {
-    text-decoration: underline;
+.support-staff-zalo i {
+    color: #0068ff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .support-staff-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .support-staff-container {
+        padding: 16px;
+    }
+    
+    .support-staff-actions {
+        flex-direction: row;
+    }
 }
 
 .product-price {
@@ -1301,38 +1435,79 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
+    .product-section {
+        grid-template-columns: minmax(280px, 420px) minmax(0, 1fr);
+        gap: 20px;
+    }
+
+    .thumb-img {
+        width: 64px;
+        height: 64px;
+    }
+
     .product-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
 @media (max-width: 768px) {
-    .variants-list {
-        flex-direction: column;
-    }
-
     .variant-option {
-        width: 100%;
-        min-width: auto;
-    }
-
-    .action-buttons-row {
-        flex-direction: row;
-}
-
-    .btn-add-cart {
-        flex: 1;
-}
-
-    .btn-favorite {
-        width: 50px;
-        min-width: 50px;
-        padding: 12px;
+        width: fit-content;
+        min-width: 120px;
     }
 
     .product-section {
         grid-template-columns: 1fr;
 }
+
+    /* Mobile: bỏ sticky để không bị kẹt layout */
+    .product-images {
+        position: static;
+        top: auto;
+    }
+
+    .thumbnail {
+        gap: 8px;
+    }
+
+    .thumb-img {
+        width: 56px;
+        height: 56px;
+    }
+
+    .product-info h1 {
+        font-size: 20px;
+        line-height: 1.3;
+    }
+
+    .product-info-details .info-item {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .product-info-details .info-label {
+        min-width: 88px;
+    }
+
+    .action-buttons-row {
+        flex-direction: column;
+    }
+
+    .btn-favorite {
+        width: 100%;
+        min-width: 0;
+    }
+    
+    .support-staff-actions {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .support-staff-link {
+        white-space: normal;
+        width: 100%;
+        justify-content: center;
+    }
     
     .product-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1340,6 +1515,15 @@
 }
 
 @media (max-width: 480px) {
+    .product-price,
+    .product-price .sale-price {
+        font-size: 20px;
+    }
+
+    .variants-list {
+        gap: 8px;
+    }
+
     .product-grid {
         grid-template-columns: 1fr;
     }

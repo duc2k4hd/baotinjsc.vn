@@ -370,7 +370,7 @@
                     `,
                     branding: false,
                     plugins: 'link lists image table code autoresize',
-                    toolbar: 'undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist | link table baotinjsc_gallery | code',
+                    toolbar: 'undo redo | styles | bold italic underline baotinjsc_gallery | alignleft aligncenter alignright | bullist numlist | link table | code',
                     relative_urls: false,
                     remove_script_host: false,
                     convert_urls: true,
@@ -1520,124 +1520,6 @@
 
         <div class="card">
             <div class="repeater-header">
-                <h3>FAQs</h3>
-                <button type="button" class="btn btn-secondary" data-add="#faq-list" data-template="#faq-template">+ Thêm FAQ</button>
-            </div>
-            <div class="repeater-list" id="faq-list">
-                @foreach(old('faqs', $product->faqs->toArray() ?? []) as $index => $faq)
-                    <div class="repeater-item">
-                        <div class="repeater-header">
-                            <strong>FAQ #{{ $index + 1 }}</strong>
-                            <button type="button" class="btn-link" data-remove data-item=".repeater-item">Xóa</button>
-                        </div>
-                        <input type="hidden" name="faqs[{{ $index }}][id]" value="{{ $faq['id'] ?? null }}">
-                        <div>
-                            <label>Câu hỏi</label>
-                            <input type="text" class="form-control" name="faqs[{{ $index }}][question]" value="{{ $faq['question'] ?? '' }}" required>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <label>Trả lời</label>
-                            <textarea class="form-control" name="faqs[{{ $index }}][answer]" rows="2">{{ $faq['answer'] ?? '' }}</textarea>
-                        </div>
-                        <input type="hidden" name="faqs[{{ $index }}][order]" value="{{ $faq['order'] ?? $index }}">
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="repeater-header">
-                <h3>How-To</h3>
-                <button type="button" class="btn btn-secondary" data-add="#howto-list" data-template="#howto-template">+ Thêm hướng dẫn</button>
-            </div>
-            <div class="repeater-list" id="howto-list">
-                @foreach(old('how_tos', $product->howTos->toArray() ?? []) as $index => $howTo)
-                    @php
-                        $steps = $howTo['steps'] ?? [];
-                        if (is_string($steps)) {
-                            $steps = json_decode($steps, true) ?? [];
-                        }
-                        if (!is_array($steps)) {
-                            $steps = [];
-                        }
-                        $supplies = $howTo['supplies'] ?? [];
-                        if (is_string($supplies)) {
-                            $supplies = json_decode($supplies, true) ?? [];
-                        }
-                        if (!is_array($supplies)) {
-                            $supplies = [];
-                        }
-                    @endphp
-                    <div class="repeater-item">
-                        <div class="repeater-header">
-                            <strong>How-To #{{ $index + 1 }}</strong>
-                            <button type="button" class="btn-link" data-remove data-item=".repeater-item">Xóa</button>
-                        </div>
-                        <input type="hidden" name="how_tos[{{ $index }}][id]" value="{{ $howTo['id'] ?? null }}">
-                        <div class="grid-2">
-                            <div>
-                                <label>Tiêu đề</label>
-                                <input type="text" class="form-control" name="how_tos[{{ $index }}][title]" value="{{ $howTo['title'] ?? '' }}" required>
-                            </div>
-                            <div>
-                                <label>Hoạt động</label>
-                                <select class="form-control" name="how_tos[{{ $index }}][is_active]">
-                                    <option value="1" {{ !empty($howTo['is_active']) ? 'selected' : '' }}>Hiển thị</option>
-                                    <option value="0" {{ empty($howTo['is_active']) ? 'selected' : '' }}>Ẩn</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <label>Mô tả</label>
-                            <textarea class="form-control" name="how_tos[{{ $index }}][description]" rows="2">{{ $howTo['description'] ?? '' }}</textarea>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <label>Danh sách bước</label>
-                                <button type="button" class="btn btn-secondary btn-sm" data-add-step>+ Thêm bước</button>
-                            </div>
-                            <div class="steps-list" data-index="{{ $index }}">
-                                @foreach($steps as $step)
-                                    <div class="step-item">
-                                        <input type="text" class="form-control" name="how_tos[{{ $index }}][steps][]" value="{{ $step }}" placeholder="Bước">
-                                        <button type="button" data-remove-step>&times;</button>
-                                    </div>
-                                @endforeach
-                                @if(empty($steps))
-                                    <div class="step-item">
-                                        <input type="text" class="form-control" name="how_tos[{{ $index }}][steps][]" placeholder="Bước 1">
-                                        <button type="button" data-remove-step>&times;</button>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                        <div style="margin-top:10px;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;">
-                                <label>Dụng cụ cần thiết</label>
-                                <button type="button" class="btn btn-secondary btn-sm" data-add-supply>+ Thêm dụng cụ</button>
-                            </div>
-                            <div class="supplies-list" data-index="{{ $index }}">
-                                @foreach($supplies as $supply)
-                                    <div class="supply-item">
-                                        <input type="text" class="form-control" name="how_tos[{{ $index }}][supplies][]" value="{{ $supply }}" placeholder="Dụng cụ">
-                                        <button type="button" data-remove-supply>&times;</button>
-                                    </div>
-                                @endforeach
-                                @if(empty($supplies))
-                                    <div class="supply-item">
-                                        <input type="text" class="form-control" name="how_tos[{{ $index }}][supplies][]" placeholder="Dụng cụ 1">
-                                        <button type="button" data-remove-supply>&times;</button>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="repeater-header">
                 <h3>Biến thể sản phẩm (Variants)</h3>
                 <button type="button" class="btn btn-secondary" data-add="#variant-list" data-template="#variant-template">+ Thêm biến thể</button>
             </div>
@@ -1840,25 +1722,6 @@
         </div>
     </template>
 
-    <template id="faq-template">
-        <div class="repeater-item">
-            <div class="repeater-header">
-                <strong>FAQ mới</strong>
-                <button type="button" class="btn-link" data-remove data-item=".repeater-item">Xóa</button>
-            </div>
-            <input type="hidden" name="faqs[__INDEX__][id]">
-            <div>
-                <label>Câu hỏi</label>
-                <input type="text" class="form-control" name="faqs[__INDEX__][question]" required>
-            </div>
-            <div style="margin-top:10px;">
-                <label>Trả lời</label>
-                <textarea class="form-control" name="faqs[__INDEX__][answer]" rows="2"></textarea>
-            </div>
-            <input type="hidden" name="faqs[__INDEX__][order]" value="__INDEX__">
-        </div>
-    </template>
-
     <template id="variant-template">
         <div class="repeater-item">
             <div class="repeater-header">
@@ -1925,54 +1788,4 @@
         </div>
     </template>
 
-    <template id="howto-template">
-        <div class="repeater-item">
-            <div class="repeater-header">
-                <strong>How-To mới</strong>
-                <button type="button" class="btn-link" data-remove data-item=".repeater-item">Xóa</button>
-            </div>
-            <input type="hidden" name="how_tos[__INDEX__][id]">
-            <div class="grid-2">
-                <div>
-                    <label>Tiêu đề</label>
-                    <input type="text" class="form-control" name="how_tos[__INDEX__][title]" required>
-                </div>
-                <div>
-                    <label>Hoạt động</label>
-                    <select class="form-control" name="how_tos[__INDEX__][is_active]">
-                        <option value="1" selected>Hiển thị</option>
-                        <option value="0">Ẩn</option>
-                    </select>
-                </div>
-            </div>
-            <div style="margin-top:10px;">
-                <label>Mô tả</label>
-                <textarea class="form-control" name="how_tos[__INDEX__][description]" rows="2"></textarea>
-            </div>
-            <div style="margin-top:10px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <label>Danh sách bước</label>
-                    <button type="button" class="btn btn-secondary btn-sm" data-add-step>+ Thêm bước</button>
-                </div>
-                <div class="steps-list" data-index="__INDEX__">
-                    <div class="step-item">
-                        <input type="text" class="form-control" name="how_tos[__INDEX__][steps][]" placeholder="Bước 1">
-                        <button type="button" data-remove-step>&times;</button>
-                    </div>
-                </div>
-            </div>
-            <div style="margin-top:10px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;">
-                    <label>Dụng cụ cần thiết</label>
-                    <button type="button" class="btn btn-secondary btn-sm" data-add-supply>+ Thêm dụng cụ</button>
-                </div>
-                <div class="supplies-list" data-index="__INDEX__">
-                    <div class="supply-item">
-                        <input type="text" class="form-control" name="how_tos[__INDEX__][supplies][]" placeholder="Dụng cụ 1">
-                        <button type="button" data-remove-supply>&times;</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
 @endsection

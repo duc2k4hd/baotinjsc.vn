@@ -4,8 +4,6 @@ namespace App\Services\Admin;
 
 use App\Models\Image;
 use App\Models\Product;
-use App\Models\ProductFaq;
-use App\Models\ProductHowTo;
 use App\Models\ProductVariant;
 use App\Models\Setting;
 use App\Models\Tag;
@@ -35,14 +33,14 @@ class ProductService
             // Sync images (tạo images và lưu IDs vào image_ids)
             $this->syncImages($product, Arr::get($data, 'images', []));
 
-            // Sync FAQs
-            $this->syncFaqs($product, Arr::get($data, 'faqs', []));
-
-            // Sync How-Tos
-            $this->syncHowTos($product, Arr::get($data, 'how_tos', []));
-
             // Sync Variants
-            $this->syncVariants($product, Arr::get($data, 'variants', []));
+            $variantsData = Arr::get($data, 'variants', []);
+            Log::info('🔵 [DEBUG ProductService] create - Before syncVariants', [
+                'product_id' => $product->id,
+                'variants_data' => $variantsData,
+                'variants_count' => is_array($variantsData) ? count($variantsData) : 0,
+            ]);
+            $this->syncVariants($product, $variantsData);
 
             return $product->fresh();
         });
@@ -130,15 +128,15 @@ class ProductService
                 $this->syncImages($product, $data['images']);
             }
 
-            // Sync FAQs
-            $this->syncFaqs($product, Arr::get($data, 'faqs', []));
-
-            // Sync How-Tos
-            $this->syncHowTos($product, Arr::get($data, 'how_tos', []));
-
             // Sync Variants
             // Luôn sync để đảm bảo xóa các biến thể đã bị remove trên UI admin.
-            $this->syncVariants($product, Arr::get($data, 'variants', []));
+            $variantsData = Arr::get($data, 'variants', []);
+            Log::info('🔵 [DEBUG ProductService] update - Before syncVariants', [
+                'product_id' => $product->id,
+                'variants_data' => $variantsData,
+                'variants_count' => is_array($variantsData) ? count($variantsData) : 0,
+            ]);
+            $this->syncVariants($product, $variantsData);
 
             // Invalidate cache sau khi update (bao gồm cả slug_type_ và product_detail_)
             $this->clearProductDetailCache($product->slug);
@@ -178,13 +176,7 @@ class ProductService
                 ->where('entity_id', $product->id)
                 ->delete();
 
-            // 2. Xóa FAQs
-            $faqsDeleted = ProductFaq::where('product_id', $product->id)->delete();
-
-            // 3. Xóa How-Tos
-            $howTosDeleted = ProductHowTo::where('product_id', $product->id)->delete();
-
-            // 4. Giữ nguyên image_ids để không mất ảnh khi xóa mềm
+            // 3. Giữ nguyên image_ids để không mất ảnh khi xóa mềm
 
             // 5. Xóa editing lock
             $product->locked_by = null;
@@ -202,8 +194,6 @@ class ProductService
                 'product_name' => $product->name,
                 'product_sku' => $product->sku,
                 'tags_deleted' => $tagsDeleted,
-                'faqs_deleted' => $faqsDeleted,
-                'how_tos_deleted' => $howTosDeleted,
                 'deleted_by' => Auth::id(),
                 'deleted_at' => now()->toDateTimeString(),
             ]);
@@ -588,103 +578,23 @@ class ProductService
         $product->refresh();
     }
 
-    private function syncFaqs(Product $product, array $faqs): void
-    {
-        $keepIds = [];
-
-        foreach ($faqs as $faq) {
-            $faqId = Arr::get($faq, 'id');
-            $question = Arr::get($faq, 'question');
-            $answer = Arr::get($faq, 'answer');
-            $order = Arr::get($faq, 'order', 0);
-
-            if (empty($question)) {
-                continue;
-            }
-
-            $payload = [
-                'product_id' => $product->id,
-                'question' => $question,
-                'answer' => $answer ?: null,
-                'order' => $order,
-                'updated_at' => now(),
-            ];
-
-            if ($faqId && ProductFaq::where('product_id', $product->id)->where('id', $faqId)->exists()) {
-                ProductFaq::where('id', $faqId)->update($payload);
-                $keepIds[] = $faqId;
-            } else {
-                $newId = ProductFaq::create(array_merge($payload, [
-                    'created_at' => now(),
-                ]))->id;
-                $keepIds[] = $newId;
-            }
-        }
-
-        // Xóa FAQs không còn được sử dụng
-        if (! empty($keepIds)) {
-            ProductFaq::where('product_id', $product->id)
-                ->whereNotIn('id', $keepIds)
-                ->delete();
-        } else {
-            // Nếu không có FAQs nào, xóa tất cả
-            ProductFaq::where('product_id', $product->id)->delete();
-        }
-    }
-
-    private function syncHowTos(Product $product, array $howTos): void
-    {
-        $keepIds = [];
-
-        foreach ($howTos as $howTo) {
-            $howToId = Arr::get($howTo, 'id');
-            $title = Arr::get($howTo, 'title');
-            $description = Arr::get($howTo, 'description');
-            $steps = $this->normalizeArrayField(Arr::get($howTo, 'steps'));
-            $supplies = $this->normalizeArrayField(Arr::get($howTo, 'supplies'));
-            $isActive = Arr::get($howTo, 'is_active', true);
-
-            if (empty($title)) {
-                continue;
-            }
-
-            $payload = [
-                'product_id' => $product->id,
-                'title' => $title,
-                'description' => $description ?: null,
-                'steps' => $steps,
-                'supplies' => $supplies,
-                'is_active' => $isActive,
-                'updated_at' => now(),
-            ];
-
-            if ($howToId && ProductHowTo::where('product_id', $product->id)->where('id', $howToId)->exists()) {
-                ProductHowTo::where('id', $howToId)->update($payload);
-                $keepIds[] = $howToId;
-            } else {
-                $newId = ProductHowTo::create(array_merge($payload, [
-                    'created_at' => now(),
-                ]))->id;
-                $keepIds[] = $newId;
-            }
-        }
-
-        // Xóa How-Tos không còn được sử dụng
-        if (! empty($keepIds)) {
-            ProductHowTo::where('product_id', $product->id)
-                ->whereNotIn('id', $keepIds)
-                ->delete();
-        } else {
-            // Nếu không có How-Tos nào, xóa tất cả
-            ProductHowTo::where('product_id', $product->id)->delete();
-        }
-    }
 
     private function syncVariants(Product $product, array $variants): void
     {
+        Log::info('🔵 [DEBUG ProductService] syncVariants - Starting', [
+            'product_id' => $product->id,
+            'variants_count' => count($variants),
+            'variants' => $variants,
+        ]);
+        
         $keepIds = [];
 
-        foreach ($variants as $variant) {
+        foreach ($variants as $index => $variant) {
+            Log::info('🔵 [DEBUG ProductService] syncVariants - Processing variant', [
+                'product_id' => $product->id,
+                'variant_index' => $index,
+                'variant_data' => $variant,
+            ]);
             $variantId = Arr::get($variant, 'id');
             $name = trim(Arr::get($variant, 'name', ''));
             $sku = trim(Arr::get($variant, 'sku', ''));
@@ -696,9 +606,21 @@ class ProductService
             $sortOrder = (int) Arr::get($variant, 'sort_order', 0);
             $note = trim((string) (Arr::get($variant, 'note', Arr::get($variant, 'notes', ''))));
 
-            // Bỏ qua nếu không có tên hoặc giá <= 0
-            if (empty($name) || $price <= 0) {
+            // Bỏ qua nếu không có tên (cho phép giá = 0 để hiển thị "Liên hệ")
+            if (empty($name)) {
+                Log::warning('⚠️ [DEBUG ProductService] syncVariants - Skipping variant (empty name)', [
+                    'product_id' => $product->id,
+                    'variant_index' => $index,
+                    'name' => $name,
+                    'price' => $price,
+                ]);
                 continue;
+            }
+            
+            // Cho phép giá = 0 (sẽ hiển thị "Liên hệ" ở frontend)
+            // Chỉ đảm bảo price là số >= 0
+            if ($price < 0) {
+                $price = 0;
             }
 
             // Validate sale_price phải nhỏ hơn price
@@ -813,23 +735,49 @@ class ProductService
             if ($variantId && ProductVariant::where('product_id', $product->id)->where('id', $variantId)->exists()) {
                 ProductVariant::where('id', $variantId)->update($payload);
                 $keepIds[] = $variantId;
+                Log::info('🟢 [DEBUG ProductService] syncVariants - Updated variant', [
+                    'product_id' => $product->id,
+                    'variant_id' => $variantId,
+                    'variant_name' => $name,
+                ]);
             } else {
                 $newId = ProductVariant::create(array_merge($payload, [
                     'created_at' => now(),
                 ]))->id;
                 $keepIds[] = $newId;
+                Log::info('🟢 [DEBUG ProductService] syncVariants - Created variant', [
+                    'product_id' => $product->id,
+                    'variant_id' => $newId,
+                    'variant_name' => $name,
+                ]);
             }
         }
 
         // Xóa variants không còn được sử dụng
         if (! empty($keepIds)) {
-            ProductVariant::where('product_id', $product->id)
+            $deletedCount = ProductVariant::where('product_id', $product->id)
                 ->whereNotIn('id', $keepIds)
                 ->delete();
+            Log::info('🟢 [DEBUG ProductService] syncVariants - Deleted unused variants', [
+                'product_id' => $product->id,
+                'deleted_count' => $deletedCount,
+                'kept_ids' => $keepIds,
+            ]);
         } else {
             // Nếu không có variants nào, xóa tất cả
-            ProductVariant::where('product_id', $product->id)->delete();
+            $deletedCount = ProductVariant::where('product_id', $product->id)->delete();
+            Log::info('🟢 [DEBUG ProductService] syncVariants - Deleted all variants (no valid variants)', [
+                'product_id' => $product->id,
+                'deleted_count' => $deletedCount,
+            ]);
         }
+        
+        Log::info('🟢 [DEBUG ProductService] syncVariants - Completed', [
+            'product_id' => $product->id,
+            'total_variants_processed' => count($variants),
+            'variants_kept' => count($keepIds),
+            'kept_ids' => $keepIds,
+        ]);
     }
 
     private function normalizeArrayField($value): ?array

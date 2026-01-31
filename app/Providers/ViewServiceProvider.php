@@ -7,6 +7,7 @@ use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Favorite;
 use App\Models\Setting;
+use App\Models\SupportStaff;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -86,6 +87,25 @@ class ViewServiceProvider extends ServiceProvider
                 'line' => $e->getLine(),
             ]);
             View::share('categories', collect([]));
+        }
+
+        // --- SUPPORT STAFF (CSKH) ---
+        try {
+            if (Schema::hasTable('support_staff')) {
+                $supportStaff = Cache::remember('support_staff_active', now()->addDay(), function () {
+                    return SupportStaff::where('is_active', true)->orderBy('sort_order')->get();
+                });
+                View::share('supportStaff', $supportStaff);
+            } else {
+                View::share('supportStaff', collect([]));
+            }
+        } catch (Throwable $e) {
+            Log::warning('ViewServiceProvider: Failed to load support staff', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            View::share('supportStaff', collect([]));
         }
 
         // --- ACCOUNT + CART (Global composer) ---
