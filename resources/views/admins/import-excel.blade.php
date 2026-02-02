@@ -125,7 +125,7 @@
         <div style="display:flex; justify-content: space-between; align-items:center; gap:15px;">
             <div>
                 <h1>📥 Import Sản Phẩm từ Excel</h1>
-                <p class="subtitle">Upload file Excel để import sản phẩm, hình ảnh, biến thể, FAQs và hướng dẫn</p>
+                <p class="subtitle">Upload file Excel để import sản phẩm, hình ảnh và biến thể</p>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                 <a href="{{ route('admin.products.index') }}"
@@ -210,14 +210,6 @@
             <div class="sheet-info">
                 <h4>Sheet 3: <code>product_variants</code> (tùy chọn)</h4>
                 <p>sku | price | stock_quantity | attributes_color | attributes_size | image_key</p>
-            </div>
-            <div class="sheet-info">
-                <h4>Sheet 4: <code>product_faqs</code> (tùy chọn)</h4>
-                <p>sku | question | answer | order</p>
-            </div>
-            <div class="sheet-info">
-                <h4>Sheet 5: <code>product_how_tos</code> (tùy chọn)</h4>
-                <p>sku | title | description | steps | supplies</p>
             </div>
         </div>
         <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107; margin-top: 20px;">

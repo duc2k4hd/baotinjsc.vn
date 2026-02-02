@@ -1553,8 +1553,6 @@ class ImportExcelController extends Controller
                 ->with([
                     'primaryCategory',
                     'brand',
-                    'faqs',
-                    'howTos',
                     'variants',
                 ])
                 ->get();
@@ -3014,7 +3012,7 @@ class ImportExcelController extends Controller
         }
         
         try {
-            // Import các sheet khác (images, faqs, how_tos, variants) từ file gốc
+            // Import các sheet khác (images, variants) từ file gốc
             if (file_exists($groupData['file_path'])) {
                 $spreadsheet = IOFactory::load($groupData['file_path']);
                 
@@ -3117,7 +3115,7 @@ class ImportExcelController extends Controller
         $errors = $importData['errors'] ?? [];
 
         try {
-            // Import các sheet khác (images, faqs, how_tos, variants) từ file gốc
+            // Import các sheet khác (images, variants) từ file gốc
             if (file_exists($importData['file_path'])) {
                 $spreadsheet = IOFactory::load($importData['file_path']);
                 

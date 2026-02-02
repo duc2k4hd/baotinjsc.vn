@@ -591,12 +591,6 @@
                                 <span>Sản phẩm phổ biến</span>
                             </a>
                         @endif
-                        @if(Route::has('admin.products.import'))
-                            <a href="{{ route('admin.products.import') }}" class="menu-item {{ request()->routeIs('admin.products.import*') ? 'active' : '' }}">
-                                <span class="menu-item-icon">📥</span>
-                                <span>Import Sản Phẩm</span>
-                            </a>
-                        @endif
                     @else
                         <div class="menu-item" style="color: #999; cursor: not-allowed;">
                             Sản phẩm (Chưa khả dụng)

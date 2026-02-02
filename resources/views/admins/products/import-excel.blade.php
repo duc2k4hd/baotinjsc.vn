@@ -189,7 +189,7 @@
         <div style="display:flex; justify-content: space-between; align-items:center; gap:15px;">
             <div>
                 <h1>📥 Import Sản Phẩm từ Excel</h1>
-                <p class="subtitle">Upload file Excel để import sản phẩm, hình ảnh, biến thể, FAQs và hướng dẫn</p>
+                <p class="subtitle">Upload file Excel để import sản phẩm, hình ảnh và biến thể</p>
             </div>
             <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
                 <a href="{{ route('admin.products.index') }}"
@@ -252,7 +252,7 @@
 
         <div class="info-box">
             <h3>📋 Cấu trúc file Excel yêu cầu:</h3>
-            <p style="margin-bottom: 15px; color: #666;">File Excel phải có <strong>4 sheets</strong> với tên chính xác như sau:</p>
+            <p style="margin-bottom: 15px; color: #666;">File Excel phải có <strong>2 sheets</strong> với tên chính xác như sau:</p>
             
             <div class="sheet-info">
                 <h4>📦 Sheet 1: <code>products</code> (Bắt buộc)</h4>
@@ -298,37 +298,6 @@
                 </div>
             </div>
             
-            <div class="sheet-info">
-                <h4>❓ Sheet 3: <code>faqs</code> (Tùy chọn)</h4>
-                <p style="font-family: monospace; background: #f1f3f5; padding: 10px; border-radius: 4px; margin: 8px 0; font-size: 12px;">
-                    sku | question | answer | order
-                </p>
-                <div style="margin-top: 10px; font-size: 13px; color: #555;">
-                    <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li><strong>sku</strong>: Mã SKU của sản phẩm.</li>
-                        <li><strong>question</strong>: Câu hỏi (bắt buộc).</li>
-                        <li><strong>answer</strong>: Câu trả lời (tùy chọn).</li>
-                        <li><strong>order</strong>: Thứ tự hiển thị.</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="sheet-info">
-                <h4>📖 Sheet 4: <code>how_tos</code> (Tùy chọn)</h4>
-                <p style="font-family: monospace; background: #f1f3f5; padding: 10px; border-radius: 4px; margin: 8px 0; font-size: 12px;">
-                    sku | title | description | steps | supplies | is_active
-                </p>
-                <div style="margin-top: 10px; font-size: 13px; color: #555;">
-                    <ul style="margin-left: 20px; line-height: 1.8;">
-                        <li><strong>sku</strong>: Mã SKU của sản phẩm.</li>
-                        <li><strong>title</strong>: Tiêu đề hướng dẫn (bắt buộc).</li>
-                        <li><strong>description</strong>: Mô tả tổng quan (tùy chọn).</li>
-                        <li><strong>steps</strong>: Danh sách bước (JSON array), ví dụ: <code>["Bước 1", "Bước 2"]</code> hoặc để trống.</li>
-                        <li><strong>supplies</strong>: Dụng cụ cần thiết (JSON array), ví dụ: <code>["Kéo", "Kim"]</code> hoặc để trống.</li>
-                        <li><strong>is_active</strong>: 1 = hiển thị, 0 = ẩn.</li>
-                    </ul>
-                </div>
-            </div>
         </div>
         <div class="info-box" style="background: #fff3cd; border-left-color: #ffc107; margin-top: 20px;">
             <h3>⚠️ Lưu ý quan trọng:</h3>

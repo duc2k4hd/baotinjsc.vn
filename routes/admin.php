@@ -60,10 +60,6 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::post('products/featured/add-by-category-brand', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'addByCategoryOrBrand'])->name('featured-products.add-by-category-brand');
     Route::post('products/featured/remove', [\App\Http\Controllers\Admins\FeaturedProductController::class, 'remove'])->name('featured-products.remove');
     
-    // Product Import (Tool riêng biệt)
-    Route::get('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'index'])->name('products.import');
-    Route::post('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'import'])->name('products.import.process');
-
     // Support Staff (CSKH)
     Route::get('support-staff', [SupportStaffController::class, 'index'])->name('support-staff.index');
     Route::post('support-staff', [SupportStaffController::class, 'store'])->name('support-staff.store');
@@ -108,12 +104,6 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::get('/export-import/import/progress', [ImportExcelController::class, 'getImportProgress'])->name('export-import.import.progress');
     });
     
-    // Product Import (Tool riêng biệt - Batch processing)
-    Route::get('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'index'])->name('products.import');
-    Route::post('products/import/upload', [\App\Http\Controllers\Admins\ProductImportController::class, 'upload'])->name('products.import.upload');
-    Route::post('products/import/batch', [\App\Http\Controllers\Admins\ProductImportController::class, 'processBatch'])->name('products.import.batch');
-    Route::post('products/import', [\App\Http\Controllers\Admins\ProductImportController::class, 'import'])->name('products.import.process');
-
     // Account Actions
     Route::post('accounts/{account}/lock', [AccountController::class, 'lock'])->name('accounts.lock');
     Route::post('accounts/{account}/unlock', [AccountController::class, 'unlock'])->name('accounts.unlock');
