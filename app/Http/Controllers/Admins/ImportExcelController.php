@@ -596,7 +596,10 @@ class ImportExcelController extends Controller
             // Xử lý meta_keywords
             $metaKeywords = null;
             if (! empty($metaKeywordsRaw)) {
-                $metaKeywords = array_filter(array_map('trim', explode(',', $metaKeywordsRaw)));
+                $metaKeywords = implode(
+                    ', ',
+                    array_filter(array_map('trim', explode(',', $metaKeywordsRaw)))
+                );
             }
 
             // Tính lại meta_canonical luôn theo slug và site_url (bỏ qua giá trị trong file Excel)
@@ -853,12 +856,12 @@ class ImportExcelController extends Controller
 
             // Nếu là CREATE mới, cần có ít nhất name và price
             if (!$product) {
-                if (empty($name) || !isset($data['price']) || $data['price'] <= 0) {
+                if (empty($name) || !isset($data['price']) || $data['price'] < 0) {
                     // Không đủ dữ liệu để tạo mới, bỏ qua
                     $errors[] = [
                         'type' => 'INSUFFICIENT_DATA',
                         'sku' => $sku,
-                        'message' => "Không đủ dữ liệu để tạo sản phẩm mới. Cần có ít nhất name và price > 0.",
+                        'message' => "Không đủ dữ liệu để tạo sản phẩm mới. Cần có ít nhất name và price >= 0.",
                         'row' => $rowIndex + 2,
                         'sheet' => 'products',
                     ];

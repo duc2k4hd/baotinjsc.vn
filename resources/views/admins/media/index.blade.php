@@ -1143,6 +1143,7 @@
                         <div class="media-info">
                             <div class="media-name" title="${file.filename}">${file.filename}</div>
                             <div class="media-meta">${formatFileSize(file.size)}</div>
+                            <div class="media-id">IMG${file.id}</div>
                         </div>
                     `;
                 } else {
@@ -1154,6 +1155,7 @@
                         <div class="media-info">
                             <div class="media-name" title="${file.filename}">${file.filename}</div>
                             <div class="media-meta">${formatFileSize(file.size)} • ${file.extension} • ${file.created_at}</div>
+                            <div class="media-id">IMG${file.id}</div>
                         </div>
                     `;
                 }

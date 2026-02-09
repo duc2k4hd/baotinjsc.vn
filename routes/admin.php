@@ -103,7 +103,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::post('/export-import/import/cancel', [ImportExcelController::class, 'cancelImport'])->name('export-import.import.cancel');
         Route::get('/export-import/import/progress', [ImportExcelController::class, 'getImportProgress'])->name('export-import.import.progress');
     });
-    
+
     // Account Actions
     Route::post('accounts/{account}/lock', [AccountController::class, 'lock'])->name('accounts.lock');
     Route::post('accounts/{account}/unlock', [AccountController::class, 'unlock'])->name('accounts.unlock');

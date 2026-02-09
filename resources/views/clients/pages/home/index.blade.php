@@ -401,7 +401,7 @@
                                         <h2><i class="fas fa-list"></i> {{ strtoupper($category->name) }}</h2>
                                         <a href="/{{ $category->slug ?? '' }}" class="view-all">Xem Tất Cả <i
                                                 class="fas fa-chevron-right"></i></a>
-                                    </div>
+                </div>
                                     <div class="product-grid">
                                         @foreach ($categoryProducts[$category->id]->take(4) as $product)
                                             @php
@@ -433,9 +433,9 @@
                                                         })
                                                         ->toJson()
                                                     : '[]';
-                                            @endphp
+                                        @endphp
                                             <div class="product-card" data-product-id="{{ $product->id }}"
-                                                data-product-name="{{ $product->name }}"
+                                                            data-product-name="{{ $product->name }}"
                                                 data-product-slug="{{ $product->slug ?? '#' }}"
                                                 data-has-variants="{{ $hasVariants ? '1' : '0' }}"
                                                 data-variants='{{ $variantsData }}'>
@@ -453,9 +453,9 @@
                                                     <p class="price">
                                                         @if ($product->price)
                                                             {{ number_format($product->price, 0, ',', '.') }} đ
-                                                        @else
+                                @else
                                                             Liên hệ {{ $settings->contact_phone ?? '0902 223 663' }}
-                                                        @endif
+                                @endif
                                                     </p>
                                                     <a href="/{{ $product->slug ?? '#' }}" class="quick-view">
                                                         <i class="fas fa-eye"></i>
@@ -477,14 +477,14 @@
                                                         title="Thêm vào so sánh">
                                                         <i class="fas fa-balance-scale"></i>
                                                     </button>
-                                                </div>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                            @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
                         @endforeach
-                    @endif
+                                        @endif
 
                     <!-- News Section -->
                     @php
