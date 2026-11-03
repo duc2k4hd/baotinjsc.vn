@@ -61,6 +61,16 @@ class ProductRequest extends FormRequest
             'catalog_files.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,zip,rar', 'max:20480'], // 20MB
             'video_url' => ['nullable', 'string', 'max:500'],
 
+            // Primary image
+            'primary_image' => ['nullable', 'array'],
+            'primary_image.id' => ['nullable', 'integer', 'exists:images,id'],
+            'primary_image.existing_path' => ['nullable', 'string'],
+            'primary_image.path' => ['nullable', 'string'],
+            'primary_image.url' => ['nullable', 'string'],
+            'primary_image.title' => ['nullable', 'string', 'max:255'],
+            'primary_image.alt' => ['nullable', 'string', 'max:255'],
+            'primary_image.file' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif,avif', 'max:10240'],
+
             // Images data
             'images' => ['nullable', 'array'],
             'images.*.id' => ['nullable', 'integer', 'exists:images,id'],
@@ -72,7 +82,7 @@ class ProductRequest extends FormRequest
             'images.*.alt' => ['nullable', 'string', 'max:255'],
             'images.*.is_primary' => ['nullable', 'boolean'],
             'images.*.order' => ['nullable', 'integer', 'min:0'],
-            'images.*.file' => ['nullable', 'image', 'max:2048'],
+            'images.*.file' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif,avif', 'max:10240'],
 
             // Variants data
             'variants' => ['nullable', 'array'],
@@ -114,6 +124,32 @@ class ProductRequest extends FormRequest
             'tag_ids.*.exists' => 'Một trong các tag không tồn tại.',
             'image_ids.*.exists' => 'Một trong các ảnh không tồn tại.',
             'created_by.exists' => 'Người tạo không tồn tại.',
+            'primary_image.required' => 'Bắt buộc phải chọn ảnh đại diện cho sản phẩm.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $hasPrimary = !empty($this->input('primary_image.existing_path'))
+                || !empty($this->input('primary_image.path'))
+                || !empty($this->input('primary_image.id'))
+                || $this->hasFile('primary_image.file');
+
+            $hasGallery = false;
+            $images = $this->input('images');
+            if (is_array($images)) {
+                foreach ($images as $img) {
+                    if (!empty($img['existing_path']) || !empty($img['path']) || !empty($img['id']) || (isset($img['file']) && $img['file'])) {
+                        $hasGallery = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!$hasPrimary && !$hasGallery) {
+                $validator->errors()->add('primary_image', 'Bắt buộc phải chọn ảnh đại diện cho sản phẩm (hoặc thêm ít nhất một ảnh vào thư viện ảnh).');
+            }
+        });
     }
 }

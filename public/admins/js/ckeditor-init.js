@@ -41,6 +41,7 @@
         ImageStyle,
         ImageUtils,
         ImageEditing,
+        ImageResize,
         Table,
         TableToolbar,
         PlainTableOutput,
@@ -68,6 +69,160 @@
         Plugin,
         ButtonView
     } = window.CKEDITOR;
+
+    // Hàm chuẩn hóa HTML cho figure và figcaption:
+    // 1. Gỡ bỏ figure cha bị lồng ngoài figure con
+    // 2. Đưa figcaption mồ côi hoặc figcaption của figure cha vào đúng bên trong figure.image
+    // 3. Đảm bảo mọi figure chứa ảnh đều có class="image" để CKEditor 5 nhận diện đúng ImageBlock + Caption
+    function normalizeFigureHtml(html) {
+        if (!html || typeof html !== 'string') return html;
+        if (!/<figure|<figcaption/i.test(html)) return html;
+
+        let cleaned = html;
+
+        try {
+            // Bước 1: Nếu trong môi trường trình duyệt có DOMParser, chuẩn hóa cây DOM thực tế
+            if (typeof DOMParser !== 'undefined') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(cleaned, 'text/html');
+                let modified = false;
+
+                // Xử lý figure lồng nhau: <figure> ... <figure class="image"> ... </figure> ... </figure>
+                const allFigures = Array.from(doc.querySelectorAll('figure'));
+                allFigures.forEach(fig => {
+                    const parentFig = fig.parentElement ? fig.parentElement.closest('figure') : null;
+                    if (parentFig) {
+                        // Tìm figcaption ở figure cha nếu có
+                        const parentCaption = parentFig.querySelector(':scope > figcaption');
+                        if (parentCaption) {
+                            const innerCaption = fig.querySelector('figcaption');
+                            if (!innerCaption) {
+                                fig.appendChild(parentCaption);
+                            } else if (!innerCaption.textContent.trim() && parentCaption.textContent.trim()) {
+                                innerCaption.textContent = parentCaption.textContent.trim();
+                                parentCaption.remove();
+                            } else {
+                                parentCaption.remove();
+                            }
+                        }
+                        if (!fig.classList.contains('image')) {
+                            fig.classList.add('image');
+                        }
+                        parentFig.replaceWith(fig);
+                        modified = true;
+                    }
+                });
+
+                // Đảm bảo mọi figure chứa img đều có class="image"
+                doc.querySelectorAll('figure').forEach(fig => {
+                    if (fig.querySelector('img') && !fig.classList.contains('image')) {
+                        fig.classList.add('image');
+                        modified = true;
+                    }
+                });
+
+                // Đưa figcaption nằm ngay sau figure.image vào trong figure
+                doc.querySelectorAll('figure.image + figcaption').forEach(cap => {
+                    const prev = cap.previousElementSibling;
+                    if (prev && prev.tagName === 'FIGURE') {
+                        const existing = prev.querySelector('figcaption');
+                        if (!existing) {
+                            prev.appendChild(cap);
+                            modified = true;
+                        } else {
+                            if (!existing.textContent.trim() && cap.textContent.trim()) {
+                                existing.textContent = cap.textContent.trim();
+                            }
+                            cap.remove();
+                            modified = true;
+                        }
+                    }
+                });
+
+                if (modified) {
+                    cleaned = doc.body.innerHTML;
+                }
+            }
+        } catch (e) {
+            console.warn('DOMParser normalize warning:', e);
+        }
+
+        // Bước 2: Regex dự phòng quét sạch mọi trường hợp lồng figure và orphan figcaption
+        cleaned = cleaned.replace(
+            /<figure[^>]*>\s*(<figure[\s\S]*?<\/figure>)\s*(<figcaption[\s\S]*?<\/figcaption>)?\s*<\/figure>/gi,
+            (match, innerFigure, outerFigcaption) => {
+                if (outerFigcaption && !innerFigure.includes('<figcaption')) {
+                    return innerFigure.replace(/<\/figure>$/i, `${outerFigcaption}</figure>`);
+                }
+                return innerFigure;
+            }
+        );
+
+        cleaned = cleaned.replace(
+            /(<figure[^>]*class="[^"]*image[^"]*"[^>]*>[\s\S]*?)(<\/figure>)\s*(<figcaption[^>]*>[\s\S]*?<\/figcaption>)/gi,
+            (match, figOpenAndBody, figClose, figcaption) => {
+                if (!figOpenAndBody.includes('<figcaption')) {
+                    return `${figOpenAndBody}${figcaption}${figClose}`;
+                }
+                return `${figOpenAndBody}${figClose}`;
+            }
+        );
+
+        cleaned = cleaned.replace(
+            /<figure(?:\s+class="([^"]*)")?([^>]*)>([\s\S]*?)<\/figure>/gi,
+            (match, classAttr, otherAttrs, innerContent) => {
+                if (/<img[\s>]/i.test(innerContent)) {
+                    let classes = (classAttr || '').trim().split(/\s+/).filter(Boolean);
+                    if (!classes.includes('image')) {
+                        classes.push('image');
+                    }
+                    const newClass = classes.join(' ');
+                    const cleanOther = (otherAttrs || '').replace(/\s*class="[^"]*"/gi, '');
+                    return `<figure class="${newClass}"${cleanOther}>${innerContent}</figure>`;
+                }
+                return match;
+            }
+        );
+
+        return cleaned;
+    }
+
+    // Hàm chèn ảnh trực tiếp vào CKEditor 5 model (chuẩn imageBlock + caption con)
+    function insertImageToModel(editor, imageUrl, alt, caption) {
+        if (!imageUrl) return;
+        try {
+            editor.model.change(writer => {
+                const imageElement = writer.createElement('imageBlock', {
+                    src: imageUrl,
+                    alt: alt || ''
+                });
+
+                if (caption) {
+                    const captionElement = writer.createElement('caption');
+                    writer.appendText(caption, captionElement);
+                    writer.append(captionElement, imageElement);
+                }
+
+                if (typeof editor.model.insertObject === 'function') {
+                    editor.model.insertObject(imageElement, null, null, { setSelection: 'on' });
+                } else {
+                    editor.model.insertContent(imageElement);
+                }
+            });
+        } catch (err) {
+            console.error('Lỗi chèn imageBlock model, chuyển sang HTML fallback:', err);
+            let html = `<figure class="image"><img src="${imageUrl}" alt="${(alt || '').replace(/"/g, '&quot;')}">`;
+            if (caption) {
+                html += `<figcaption>${caption}</figcaption>`;
+            }
+            html += `</figure>`;
+            if (editor.data && editor.data.processor) {
+                const viewFragment = editor.data.processor.toView(html);
+                const modelFragment = editor.data.toModel(viewFragment);
+                editor.model.insertContent(modelFragment);
+            }
+        }
+    }
 
     // Custom Plugin: Media Library Button tích hợp sẵn trên thanh công cụ CKEditor 5
     class MediaLibraryPlugin extends Plugin {
@@ -108,7 +263,6 @@
                                     const items = Array.isArray(result) ? result : [result];
                                     if (!items.length) return;
 
-                                    let htmlContent = '';
                                     items.forEach(image => {
                                         const fileName = image.url || image.file_name || image.path || '';
                                         if (!fileName) return;
@@ -116,21 +270,11 @@
                                         const imageUrl = fileName.startsWith('http') 
                                             ? fileName 
                                             : (fileName.includes('/') ? `/${fileName.replace(/^\//, '')}` : `/clients/assets/img/${folder}/${fileName}`);
-                                        const alt = (image.alt || image.name || image.title || '').replace(/"/g, '&quot;');
+                                        const alt = image.alt || image.name || image.title || '';
                                         const caption = (image.description || image.title || '').trim();
 
-                                        htmlContent += `<figure class="image"><img src="${imageUrl}" alt="${alt}">`;
-                                        if (caption) {
-                                            htmlContent += `<figcaption>${caption}</figcaption>`;
-                                        }
-                                        htmlContent += `</figure>`;
+                                        insertImageToModel(editor, imageUrl, alt, caption);
                                     });
-
-                                    if (htmlContent && editor.data && editor.data.processor) {
-                                        const viewFragment = editor.data.processor.toView(htmlContent);
-                                        const modelFragment = editor.data.toModel(viewFragment);
-                                        editor.model.insertContent(modelFragment);
-                                    }
                                 } catch (err) {
                                     console.error('Lỗi khi chèn ảnh vào CKEditor:', err);
                                 }
@@ -144,10 +288,8 @@
                             folder: folder,
                             onSelect: (file) => {
                                 if (!file || !file.url) return;
-                                const html = `<figure class="image"><img src="${file.url}" alt="${file.alt || ''}"></figure>`;
-                                const viewFragment = editor.data.processor.toView(html);
-                                const modelFragment = editor.data.toModel(viewFragment);
-                                editor.model.insertContent(modelFragment);
+                                const caption = (file.caption || file.description || file.title || '').trim();
+                                insertImageToModel(editor, file.url, file.alt || file.title || '', caption);
                             }
                         });
                     } else {
@@ -182,7 +324,7 @@
             Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
             Link, AutoLink, List, Alignment, BlockQuote, CodeBlock, HorizontalLine,
             ImageBlock, ImageToolbar, ImageUpload, ImageInsertViaUrl, AutoImage,
-            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing,
+            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing, ImageResize,
             Table, TableToolbar, PlainTableOutput, TableCaption,
             SourceEditing, Fullscreen, GeneralHtmlSupport, Autoformat, TextTransformation,
             FontSize, FontFamily, FontColor, FontBackgroundColor, Highlight, Code,
@@ -213,12 +355,40 @@
                     attributes: true,
                     classes: true
                 }
+            ],
+            disallow: [
+                {
+                    name: /^(figure|figcaption)$/
+                }
             ]
         },
         image: {
+            resizeOptions: [
+                {
+                    name: 'resizeImage:original',
+                    label: 'Gốc (100%)',
+                    value: null
+                },
+                {
+                    name: 'resizeImage:25',
+                    label: '25%',
+                    value: '25'
+                },
+                {
+                    name: 'resizeImage:50',
+                    label: '50%',
+                    value: '50'
+                },
+                {
+                    name: 'resizeImage:75',
+                    label: '75%',
+                    value: '75'
+                }
+            ],
             toolbar: [
-                'toggleImageCaption', 'imageTextAlternative', '|',
-                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText'
+                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText', '|',
+                'resizeImage', '|',
+                'toggleImageCaption', 'imageTextAlternative'
             ]
         },
         link: {
@@ -263,7 +433,7 @@
             Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
             Link, AutoLink, List, Alignment, BlockQuote, HorizontalLine,
             ImageBlock, ImageToolbar, ImageUpload, ImageInsertViaUrl, AutoImage,
-            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing,
+            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing, ImageResize,
             Table, TableToolbar, PlainTableOutput, TableCaption,
             SourceEditing, Fullscreen, GeneralHtmlSupport, Autoformat, TextTransformation,
             FontSize, FontFamily, FontColor, FontBackgroundColor, Highlight, Code,
@@ -290,12 +460,40 @@
                     attributes: true,
                     classes: true
                 }
+            ],
+            disallow: [
+                {
+                    name: /^(figure|figcaption)$/
+                }
             ]
         },
         image: {
+            resizeOptions: [
+                {
+                    name: 'resizeImage:original',
+                    label: 'Gốc (100%)',
+                    value: null
+                },
+                {
+                    name: 'resizeImage:25',
+                    label: '25%',
+                    value: '25'
+                },
+                {
+                    name: 'resizeImage:50',
+                    label: '50%',
+                    value: '50'
+                },
+                {
+                    name: 'resizeImage:75',
+                    label: '75%',
+                    value: '75'
+                }
+            ],
             toolbar: [
-                'toggleImageCaption', 'imageTextAlternative', '|',
-                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText'
+                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText', '|',
+                'resizeImage', '|',
+                'toggleImageCaption', 'imageTextAlternative'
             ]
         },
         link: {
@@ -382,13 +580,101 @@
         } catch (e) {}
     }
 
+    // Thiết lập hành vi cuộn mượt mà:
+    // Khi để chuột trong trình soạn thảo và cuộn xuống:
+    // 1. Nếu trình soạn thảo chưa dính hẳn lên top -> cuộn trang web xuống trước cho đến khi editor chạm đỉnh màn hình.
+    // 2. Khi editor đã dính lên top -> cuộn tiếp nội dung bên trong editor.
+    // 3. Khi cuộn hết nội dung bên trong editor -> cuộn tiếp trang web xuống dưới các phần còn lại.
+    // 4. Khi cuộn lên và nội dung editor đã về đỉnh -> cuộn trang web lên trên để xem các phần phía trên.
+    function setupEditorScrollChaining(editor) {
+        if (!editor || !editor.ui || !editor.ui.view) return;
+        const editable = editor.ui.view.editable && editor.ui.view.editable.element;
+        const editorElement = editor.ui.view.element;
+        if (!editable || !editorElement) return;
+
+        if (editorElement.dataset.scrollChainingAttached === 'true') return;
+        editorElement.dataset.scrollChainingAttached = 'true';
+
+        editorElement.addEventListener('wheel', (e) => {
+            // Bỏ qua chế độ fullscreen hoặc cuộn ngang
+            if (document.body.classList.contains('ck-fullscreen') || 
+                editorElement.classList.contains('ck-fullscreen') ||
+                Math.abs(e.deltaY) < Math.abs(e.deltaX)) {
+                return;
+            }
+
+            const rect = editorElement.getBoundingClientRect();
+            const topThreshold = 10; // Khoảng cách tới mép trên viewport (px)
+
+            // 1. CUỘN XUỐNG (deltaY > 0)
+            if (e.deltaY > 0) {
+                const distToTop = rect.top - topThreshold;
+
+                // Nếu đỉnh editor chưa chạm top màn hình
+                if (distToTop > 0) {
+                    e.preventDefault();
+                    const windowScroll = Math.min(e.deltaY, distToTop);
+                    window.scrollBy({ top: windowScroll, behavior: 'auto' });
+
+                    const remaining = e.deltaY - windowScroll;
+                    if (remaining > 0) {
+                        editable.scrollTop += remaining;
+                    }
+                    return;
+                }
+
+                // Khi editor ĐÃ chạm/dính lên top
+                const maxScrollTop = editable.scrollHeight - editable.clientHeight;
+                const remainingScroll = maxScrollTop - editable.scrollTop;
+
+                if (remainingScroll <= 0) {
+                    // Đã cuộn hết nội dung bên trong -> cuộn trang web xuống tiếp
+                    e.preventDefault();
+                    window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+                    return;
+                }
+
+                if (e.deltaY > remainingScroll) {
+                    e.preventDefault();
+                    editable.scrollTop = maxScrollTop;
+                    const overflow = e.deltaY - remainingScroll;
+                    window.scrollBy({ top: overflow, behavior: 'auto' });
+                    return;
+                }
+
+                // Còn lại để trình duyệt cuộn nội dung bên trong editor
+            }
+            // 2. CUỘN LÊN (deltaY < 0)
+            else if (e.deltaY < 0) {
+                const deltaUp = Math.abs(e.deltaY);
+
+                if (editable.scrollTop <= 0) {
+                    // Nội dung editor đã ở đỉnh -> cuộn trang web lên trên
+                    e.preventDefault();
+                    window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+                    return;
+                }
+
+                if (deltaUp > editable.scrollTop) {
+                    e.preventDefault();
+                    const overflow = deltaUp - editable.scrollTop;
+                    editable.scrollTop = 0;
+                    window.scrollBy({ top: -overflow, behavior: 'auto' });
+                    return;
+                }
+
+                // Còn lại để trình duyệt cuộn nội dung editor lên
+            }
+        }, { passive: false });
+    }
+
     // Khởi tạo editor cho Posts
     function initPostsEditor() {
         const textarea = document.getElementById('post-content-editor');
         if (!textarea || textarea.dataset.ckeditorInitialized === 'true') return;
 
         textarea.setAttribute('spellcheck', 'false');
-        const initialData = textarea.value || '';
+        const initialData = normalizeFigureHtml(textarea.value || '');
 
         ClassicEditor
             .create(textarea, {
@@ -397,6 +683,19 @@
             })
             .then(editor => {
                 disableEditorSpellcheck(editor);
+                setupEditorScrollChaining(editor);
+
+                // Chuẩn hóa mọi HTML được chèn/dán vào editor (qua setData, clipboard paste, v.v.)
+                if (editor.data && editor.data.processor && typeof editor.data.processor.toView === 'function') {
+                    const originalToView = editor.data.processor.toView.bind(editor.data.processor);
+                    editor.data.processor.toView = function(data) {
+                        if (typeof data === 'string') {
+                            data = normalizeFigureHtml(data);
+                        }
+                        return originalToView(data);
+                    };
+                }
+
                 textarea.dataset.ckeditorInitialized = 'true';
                 window.ckeditorInstances = window.ckeditorInstances || {};
                 window.ckeditorInstances['post-content-editor'] = editor;
@@ -405,6 +704,7 @@
                 if (form) {
                     form.addEventListener('submit', () => {
                         let htmlContent = editor.getData();
+                        htmlContent = normalizeFigureHtml(htmlContent);
                         htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
                         textarea.value = htmlContent;
                     });
@@ -429,7 +729,7 @@
             }
 
             textarea.setAttribute('spellcheck', 'false');
-            const initialData = textarea.value || '';
+            const initialData = normalizeFigureHtml(textarea.value || '');
             const editorId = textarea.id || 'ckeditor-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
             if (!textarea.id) {
                 textarea.id = editorId;
@@ -445,6 +745,19 @@
                 })
                 .then(editor => {
                     disableEditorSpellcheck(editor);
+                    setupEditorScrollChaining(editor);
+
+                    // Chuẩn hóa mọi HTML được chèn/dán vào editor (qua setData, clipboard paste, v.v.)
+                    if (editor.data && editor.data.processor && typeof editor.data.processor.toView === 'function') {
+                        const originalToView = editor.data.processor.toView.bind(editor.data.processor);
+                        editor.data.processor.toView = function(data) {
+                            if (typeof data === 'string') {
+                                data = normalizeFigureHtml(data);
+                            }
+                            return originalToView(data);
+                        };
+                    }
+
                     textarea.dataset.ckeditorInitialized = 'true';
                     window.ckeditorInstances = window.ckeditorInstances || {};
                     window.ckeditorInstances[editorId] = editor;
@@ -453,6 +766,7 @@
                     if (form) {
                         form.addEventListener('submit', () => {
                             let htmlContent = editor.getData();
+                            htmlContent = normalizeFigureHtml(htmlContent);
                             htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
                             textarea.value = htmlContent;
                         });
@@ -473,13 +787,14 @@
             const editor = this.get(editorId);
             if (!editor) return '';
             let htmlContent = editor.getData();
+            htmlContent = normalizeFigureHtml(htmlContent);
             htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
             return htmlContent;
         },
         setContent: function(editorId, content) {
             const editor = this.get(editorId);
             if (editor) {
-                editor.setData(content);
+                editor.setData(normalizeFigureHtml(content || ''));
             }
         }
     };

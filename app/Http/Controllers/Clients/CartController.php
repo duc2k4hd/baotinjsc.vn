@@ -115,9 +115,25 @@ class CartController extends Controller
                     : 'Không thể thêm thêm vì đã hết tồn kho cho sản phẩm này.';
             }
 
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 422);
+            }
+
             return redirect()
                 ->back()
                 ->with('warning', $message);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Đã thêm sản phẩm vào giỏ hàng.',
+                'cart_total_items' => $result['cart_total_items'],
+                'cart_total_amount' => $result['cart_total_amount'],
+            ]);
         }
 
         return redirect()

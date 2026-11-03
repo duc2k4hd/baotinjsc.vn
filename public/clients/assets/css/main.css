@@ -39,12 +39,31 @@
     box-sizing: border-box;
 }
 
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
 body {
-    font-family: var(--font-family, Arial, Helvetica, sans-serif);
-    font-size: var(--font-size, 14px);
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-size: var(--font-size, 15px);
     line-height: 1.6;
-    color: var(--text-color-dark, #333);
-    background-color: var(--background-color, #f5f5f5);
+    color: var(--text-color-dark, #1E293B);
+    background-color: var(--background-color, #f8fafc);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+button, input, select, textarea, optgroup {
+    font-family: inherit;
+}
+
+/* Bảo toàn icon Font Awesome */
+.fa, .fas, .far, .fal, .fad, [class*="fa-"], [class^="fa-"] {
+    font-family: "Font Awesome 6 Free", "Font Awesome 5 Free", "FontAwesome" !important;
+}
+.fab {
+    font-family: "Font Awesome 6 Brands", "Font Awesome 5 Brands", "FontAwesome" !important;
 }
 
 a {
@@ -130,84 +149,105 @@ img {
 }
 
 /* ============================================
-   CHAT WIDGET - Common for all pages
+   FLOATING CTA WIDGET (3 Nút to chuẩn: Top, Hotline, Zalo)
    ============================================ */
 
 .chat-widget {
     position: fixed;
-    bottom: 80px;
-    right: 20px;
-    z-index: 1000;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    align-items: center;
+    gap: 12px;
 }
 
 .back-to-top {
-    width: 60px;
-    height: 60px;
-    background-color: var(--primary-color);
+    display: none;
+    width: 54px;
+    height: 54px;
+    background-color: var(--misutech_home_primary, #2563EB);
     border: none;
     border-radius: 50%;
-    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    color: var(--text-color-light);
+    font-size: 20px;
+    color: #ffffff;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: var(--transition);
-    opacity: 0;
-    visibility: hidden;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: all 0.25s ease;
 }
 
 .back-to-top.show {
-    opacity: 1;
-    visibility: visible;
+    display: flex;
 }
 
 .back-to-top:hover {
-    background-color: var(--secondary-color);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background-color: #1d4ed8;
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
 }
 
 .chat-button {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    width: 54px;
+    height: 54px;
+    background: #2563EB;
     border: none;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 30px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: var(--transition);
-    color: var(--text-color-light);
-    margin-bottom: 10px;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: all 0.25s ease;
+    color: #ffffff;
+    margin: 0;
+    position: relative;
+    animation: cta-pulse-blue 2s infinite;
 }
 
 .chat-button:hover {
-    transform: scale(1.1);
+    transform: scale(1.08);
+    background-color: #1d4ed8;
+}
+
+.zalo-widget {
+    position: static !important;
+    width: 54px;
+    height: 54px;
+    background-color: #0068FF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0, 104, 255, 0.35);
+    text-decoration: none;
+    transition: all 0.25s ease;
+    animation: cta-pulse-blue 2s infinite 1s;
+}
+
+.zalo-widget:hover {
+    transform: scale(1.08);
+    background-color: #0052CC;
 }
 
 /* Contact Info Box */
 .contact-info-box {
     position: fixed;
-    bottom: 160px;
-    right: 20px;
-    max-width: 500px;
-    background-color: var(--text-color-light);
-    border-radius: var(--border-radius);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    z-index: 1001;
+    bottom: 24px;
+    right: 90px;
+    max-width: 420px;
+    width: calc(100vw - 40px);
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+    z-index: 10001;
     opacity: 0;
     visibility: hidden;
     transform: translateY(20px);
-    transition: var(--transition);
-    border: var(--border);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #e2e8f0;
 }
 
 .contact-info-box.show {
@@ -220,50 +260,50 @@ img {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    border-bottom: var(--border);
-    background-color: var(--light-color);
-    border-radius: var(--border-radius) var(--border-radius) 0 0;
+    padding: 14px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+    border-radius: 8px 8px 0 0;
 }
 
 .contact-info-header h4 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-color-dark);
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .close-contact-box {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border: none;
     background-color: transparent;
-    font-size: 24px;
-    color: var(--text-color-dark);
+    font-size: 22px;
+    color: #64748b;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    transition: var(--transition);
+    transition: all 0.15s ease;
     line-height: 1;
 }
 
 .close-contact-box:hover {
-    background-color: var(--background-color);
-    color: var(--primary-color);
+    background-color: #e2e8f0;
+    color: #0f172a;
 }
 
 .contact-info-content {
-    padding: 20px;
-    max-height: 400px;
+    padding: 16px 18px;
+    max-height: 380px;
     overflow-y: auto;
 }
 
 .contact-item {
-    margin-bottom: 15px;
-    font-size: 14px;
-    line-height: 1.6;
+    margin-bottom: 12px;
+    font-size: 13.5px;
+    line-height: 1.5;
 }
 
 .contact-item:last-child {
@@ -272,122 +312,71 @@ img {
 
 .contact-item strong {
     display: block;
-    font-size: 16px;
-    color: var(--text-color-dark);
-    margin-bottom: 10px;
-    font-weight: 600;
+    font-size: 15px;
+    color: #0f172a;
+    margin-bottom: 8px;
+    font-weight: 700;
 }
 
 .contact-label {
     display: inline-block;
-    min-width: 100px;
-    color: var(--text-color-dark);
-    font-weight: 500;
-    margin-right: 8px;
+    color: #475569;
+    font-weight: 600;
+    margin-right: 6px;
 }
 
 .contact-item a {
-    color: var(--primary-color);
+    color: #2563EB;
     text-decoration: none;
-    transition: var(--transition);
+    font-weight: 600;
+    transition: all 0.15s ease;
 }
 
 .contact-item a:hover {
-    color: var(--secondary-color);
+    color: #1d4ed8;
     text-decoration: underline;
 }
 
 .contact-item span:not(.contact-label) {
-    color: var(--text-color-dark);
+    color: #334155;
 }
 
-.phone-widget {
-        position: fixed;
-    bottom: 100px;
-        right: 20px;
-    width: 60px;
-    height: 60px;
-        background-color: var(--primary-color);
-    border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    font-size: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    animation: pulse 2s infinite;
-        text-decoration: none;
-    color: var(--text-color-light);
-    transition: var(--transition);
-}
-
-.phone-widget:hover {
-    transform: scale(1.1);
-}
-
-.zalo-widget {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background-color: #0068FF;
-    border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    font-size: 30px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    animation: pulse 2s infinite;
-        text-decoration: none;
-    color: var(--text-color-light);
-    transition: var(--transition);
-}
-
-.zalo-widget:hover {
-    transform: scale(1.1);
-    background-color: #0052CC;
-}
-
-@media (max-width: 768px) {
-    .zalo-widget {
-        right: 15px !important;
-        width: 50px !important;
-        height: 50px !important;
-    }
-}
-
-@keyframes pulse {
+@keyframes cta-pulse-blue {
     0% {
-        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.7);
+        box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
     }
     70% {
-        box-shadow: 0 0 0 15px rgba(37, 99, 235, 0);
+        box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
     }
     100% {
         box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
     }
 }
 
-/* Responsive Chat Widget */
-@media (max-width: 480px) {
-    .contact-info-box {
-        width: calc(100vw - 40px);
-        right: 20px;
-        left: 20px;
-        max-width: 320px;
-    }
-    
+/* Responsive Floating CTA */
+@media (max-width: 767px) {
     .chat-widget {
-        bottom: 70px;
-        right: 15px;
+        bottom: 20px !important;
+        right: 14px !important;
+        gap: 10px !important;
+        z-index: 99999 !important;
     }
-    
     .back-to-top,
-    .chat-button {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
+    .chat-button,
+    .zalo-widget {
+        width: 46px !important;
+        height: 46px !important;
+    }
+    .chat-button svg,
+    .zalo-widget svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .contact-info-box {
+        bottom: 20px !important;
+        right: 14px !important;
+        left: 14px !important;
+        width: auto !important;
+        max-width: calc(100vw - 28px) !important;
     }
 }

@@ -4,150 +4,311 @@ namespace App\Http\Controllers\Clients;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
-use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
-use App\Models\Voucher;
+use App\Models\Post;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
+    /**
+     * Display the Homepage
+     */
     public function index()
     {
-        $banners_home_parent = Cache::remember('banners_home_parent', now()->addDays(30), function () {
-            return Banner::active()->where('position', 'homepage_banner_parent')->get();
+        // 1. Banners: Gom nhóm theo vị trí (1: Hero Slider, 2: Sidebar Top, 3: Sidebar Bottom, 4-6: Strip)
+        $banners = Banner::active()
+            ->orderBy('order', 'asc')
+            ->get()
+            ->groupBy('position');
+
+        // 2. Categories cho Hero Menu và Shop By Categories
+        $mainCategories = Category::active()
+            ->whereNull('parent_id')
+            ->with(['children.children'])
+            ->orderBy('order', 'asc')
+            ->orderBy('name', 'asc')
+            ->take(9)
+            ->get();
+
+        $allCategories = Category::active()
+            ->whereNull('parent_id')
+            ->with(['children.children'])
+            ->orderBy('order', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        // 3. Flash Sale: 5 sản phẩm mỗi ngày
+        $secondsUntilMidnight = max(60, now()->diffInSeconds(now()->endOfDay()));
+        $flashSaleProductIds = Cache::remember('home_flash_sale_product_ids', $secondsUntilMidnight, function () {
+            return Product::active()->inRandomOrder()->take(5)->pluck('id')->toArray();
         });
-        $banners_home_children = Cache::remember('banners_home_children', now()->addDays(30), function () {
-            return Banner::active()->where('position', 'homepage_banner_children')->get();
-        });
-        $vouchers = Cache::remember('vouchers_home', now()->addDays(30), function () {
-            return Voucher::active()->limit(3)->get();
-        });
-        $productsFeatured = Cache::remember('products_featured_home', now()->addDays(30), function () {
-            $products = Product::active()
+
+        // 4. Featured Products: 17 sản phẩm nổi bật
+        $featuredProductIds = Cache::remember('home_featured_product_ids', 1800, function () {
+            $ids = Product::active()
                 ->featured()
-                ->withApprovedCommentsMeta()
-                ->with('variants')
-                ->take(18)
-                ->get() ?? collect();
-            Product::preloadImages($products);
+                ->latest('id')
+                ->take(17)
+                ->pluck('id')
+                ->toArray();
 
-            return $products;
-        });
-        // Không cần gọi lại preloadImages vì đã được preload trong cache callback
-
-        $productRandom = Cache::remember('products_random_home', now()->addDays(30), function () {
-            $products = Product::active()
-                ->withApprovedCommentsMeta()
-                ->with('variants')
-                ->when(
-                    $category = Category::where('slug', 'cay-phong-thuy')->first(),
-                    function ($query) use ($category) {
-                        $query->inCategory([$category->id]);
-                    }
-                )->inRandomOrder()->limit(20)->get();
-
-            Product::preloadImages($products);
-
-            return $products;
-        });
-        // Không cần gọi lại preloadImages vì đã được preload trong cache callback
-
-        // Lấy danh sách brands (đối tác) để hiển thị
-        $partners = Cache::remember('partners_home', now()->addDays(30), function () {
-            return Brand::where('is_active', true)
-                ->whereNotNull('image')
-                ->where('image', '!=', '')
-                ->orderBy('order')
-                ->orderBy('name')
-                ->get();
-        });
-
-        // Lấy 5 danh mục đầu tiên và sản phẩm của mỗi danh mục cho tabs
-        $categoriesForTabs = Cache::remember('categories_tabs_home', now()->addDays(7), function () {
-            return Category::active()
-                ->whereNull('parent_id')
-                ->orderBy('order')
-                ->orderBy('name')
-                ->take(5)
-                ->get();
-        });
-
-        $categoryProducts = [];
-        foreach ($categoriesForTabs as $category) {
-            $categoryProducts[$category->id] = Cache::remember("category_products_tab_{$category->id}", now()->addDays(7), function () use ($category) {
-                $products = Product::active()
-                    ->inCategory([$category->id])
-                    ->withApprovedCommentsMeta()
-                    ->with('variants')
-                    ->orderBy('created_at', 'desc')
-                    ->take(10)
-                    ->get();
-                Product::preloadImages($products);
-                return $products;
-            });
-        }
-
-        // Tính product counts cho tất cả category children để tránh N+1 query trong view
-        $categoryProductCounts = Cache::remember('category_product_counts_home', now()->addHours(6), function () {
-            // Lấy tất cả category children IDs từ $categories (đã được share trong ViewServiceProvider)
-            $categories = \Illuminate\Support\Facades\View::shared('categories') ?? collect();
-            $childCategoryIds = [];
-            
-            foreach ($categories as $category) {
-                if ($category->children && $category->children->isNotEmpty()) {
-                    foreach ($category->children as $child) {
-                        $childCategoryIds[] = $child->id;
-                    }
-                }
+            if (count($ids) < 10) {
+                $extra = Product::active()->latest('id')->take(17)->pluck('id')->toArray();
+                $ids = array_values(array_unique(array_merge($ids, $extra)));
             }
-            
-            if (empty($childCategoryIds)) {
+            return $ids;
+        });
+
+        // 5. Category Sections: 5 danh mục nổi bật kèm sản phẩm
+        $categorySectionsData = Cache::remember('home_category_sections_map', 1800, function () {
+            $allCats = Category::active()
+                ->select(['id', 'name', 'slug', 'parent_id', 'image', 'order'])
+                ->orderBy('order', 'asc')
+                ->orderBy('name', 'asc')
+                ->get();
+
+            if ($allCats->isEmpty()) {
                 return [];
             }
-            
-            // Tính counts cho tất cả categories một lần bằng cách query database hiệu quả
-            $counts = [];
-            
-            // Query counts cho primary_category_id
-            $primaryCounts = Product::active()
-                ->whereIn('primary_category_id', $childCategoryIds)
-                ->groupBy('primary_category_id')
-                ->selectRaw('primary_category_id, COUNT(*) as count')
-                ->pluck('count', 'primary_category_id')
-                ->toArray();
-            
-            // Query counts cho category_ids (JSON array)
-            // Lấy tất cả products có category_ids chứa bất kỳ child category nào
-            $productsWithCategoryIds = Product::active()
-                ->whereNotNull('category_ids')
-                ->where('category_ids', '!=', '[]')
-                ->select('id', 'category_ids')
-                ->get();
-            
-            // Tính counts cho category_ids
-            $categoryIdsCounts = [];
-            foreach ($productsWithCategoryIds as $product) {
-                $productCategoryIds = $product->category_ids ?? [];
-                if (is_array($productCategoryIds)) {
-                    foreach ($productCategoryIds as $catId) {
-                        $catId = (int)$catId; // Normalize to int
-                        if (in_array($catId, $childCategoryIds)) {
-                            $categoryIdsCounts[$catId] = ($categoryIdsCounts[$catId] ?? 0) + 1;
-                        }
+
+            $childrenMap = [];
+            foreach ($allCats as $c) {
+                $pId = $c->parent_id ?: 0;
+                $childrenMap[$pId][] = $c->id;
+            }
+
+            $getDescendantIds = function ($parentId) use (&$getDescendantIds, &$childrenMap) {
+                $ids = [$parentId];
+                if (isset($childrenMap[$parentId])) {
+                    foreach ($childrenMap[$parentId] as $childId) {
+                        $ids = array_merge($ids, $getDescendantIds($childId));
                     }
                 }
+                return $ids;
+            };
+
+            $productCounts = Product::active()
+                ->selectRaw('primary_category_id, COUNT(*) as aggregate')
+                ->groupBy('primary_category_id')
+                ->pluck('aggregate', 'primary_category_id')
+                ->toArray();
+
+            $candidates = [];
+            foreach ($allCats as $cat) {
+                $allCatIds = $getDescendantIds($cat->id);
+                $pCount = 0;
+                foreach ($allCatIds as $cid) {
+                    $pCount += $productCounts[$cid] ?? 0;
+                }
+
+                if ($pCount > 0) {
+                    $candidates[] = [
+                        'category' => $cat,
+                        'category_id' => $cat->id,
+                        'cat_ids' => $allCatIds,
+                        'count' => $pCount,
+                        'is_root' => is_null($cat->parent_id),
+                    ];
+                }
             }
-            
-            // Merge counts (một product có thể thuộc nhiều categories)
-            foreach ($childCategoryIds as $categoryId) {
-                $count = ($primaryCounts[$categoryId] ?? 0) + ($categoryIdsCounts[$categoryId] ?? 0);
-                $counts[$categoryId] = $count;
+
+            usort($candidates, function ($a, $b) {
+                if ($a['is_root'] === $b['is_root']) {
+                    return $b['count'] <=> $a['count'];
+                }
+                return $a['is_root'] ? -1 : 1;
+            });
+
+            $selected = array_slice($candidates, 0, 5);
+            if (empty($selected)) {
+                return [];
             }
-            
-            return $counts;
+
+            $allTargetCatIds = [];
+            foreach ($selected as $s) {
+                $allTargetCatIds = array_merge($allTargetCatIds, $s['cat_ids']);
+            }
+            $allTargetCatIds = array_values(array_unique($allTargetCatIds));
+
+            $rawProducts = Product::active()
+                ->select(['id', 'primary_category_id', 'created_at'])
+                ->whereIn('primary_category_id', $allTargetCatIds)
+                ->latest('id')
+                ->get();
+
+            $result = [];
+            foreach ($selected as $item) {
+                $targetIdsLookup = array_flip($item['cat_ids']);
+                $pIds = $rawProducts->filter(function ($p) use ($targetIdsLookup) {
+                    return isset($targetIdsLookup[$p->primary_category_id]);
+                })->take(10)->pluck('id')->toArray();
+
+                if (!empty($pIds)) {
+                    $catModel = $item['category'];
+                    $result[] = [
+                        'category_id' => $catModel->id,
+                        'category' => [
+                            'id' => $catModel->id,
+                            'name' => $catModel->name,
+                            'slug' => $catModel->slug,
+                            'image' => $catModel->image,
+                        ],
+                        'product_ids' => $pIds
+                    ];
+                }
+            }
+
+            return $result;
         });
 
-        return view('clients.pages.home.index', compact('banners_home_parent', 'banners_home_children', 'vouchers', 'productsFeatured', 'productRandom', 'partners', 'categoriesForTabs', 'categoryProducts', 'categoryProductCounts'));
+        // 6. Gom toàn bộ Product IDs cần hiển thị để query 1 lần (Batch Fetching)
+        $allSectionProductIds = [];
+        if (!empty($categorySectionsData)) {
+            foreach ($categorySectionsData as $sec) {
+                if (!empty($sec['product_ids'])) {
+                    $allSectionProductIds = array_merge($allSectionProductIds, $sec['product_ids']);
+                }
+            }
+        }
+
+        $allNeededProductIds = array_values(array_unique(array_merge(
+            $flashSaleProductIds,
+            $featuredProductIds,
+            $allSectionProductIds
+        )));
+
+        $allProductsKeyed = !empty($allNeededProductIds)
+            ? Product::active()
+                ->whereIn('id', $allNeededProductIds)
+                ->get()
+                ->keyBy('id')
+            : collect();
+
+        // Nạp trước hình ảnh vào cache pool của HasImageIds
+        Product::preloadImages($allProductsKeyed);
+
+        // Gán Flash Sale
+        $flashSaleProducts = collect();
+        foreach ($flashSaleProductIds as $id) {
+            if (isset($allProductsKeyed[$id])) {
+                $flashSaleProducts->push($allProductsKeyed[$id]);
+            }
+        }
+
+        // Gán Featured Products
+        $featuredProducts = collect();
+        foreach ($featuredProductIds as $id) {
+            if (isset($allProductsKeyed[$id])) {
+                $featuredProducts->push($allProductsKeyed[$id]);
+            }
+        }
+
+        // Gán Category Sections
+        $categorySections = collect();
+        if (!empty($categorySectionsData)) {
+            foreach ($categorySectionsData as $sec) {
+                $secProducts = collect();
+                $pIds = $sec['product_ids'] ?? [];
+                foreach ($pIds as $pid) {
+                    if (isset($allProductsKeyed[$pid])) {
+                        $secProducts->push($allProductsKeyed[$pid]);
+                    }
+                }
+                if ($secProducts->isNotEmpty()) {
+                    $cData = is_array($sec['category']) ? $sec['category'] : (array)$sec['category'];
+                    $categorySections->push((object)[
+                        'category' => (object)$cData,
+                        'products' => $secProducts
+                    ]);
+                }
+            }
+        }
+
+        // 7. Blog Sections: Gom nhóm bài viết cẩm nang theo chuyên mục
+        $blogSectionsData = Cache::remember('home_blog_sections_map', 3600, function () {
+            $catIdsWithPosts = Post::where('status', 'published')
+                ->pluck('category_id')
+                ->unique()
+                ->filter()
+                ->take(4)
+                ->toArray();
+
+            $postCats = Category::active()
+                ->whereIn('id', $catIdsWithPosts)
+                ->select(['id', 'name', 'slug'])
+                ->get();
+
+            $result = [];
+            foreach ($postCats as $cat) {
+                $postIds = Post::where('category_id', $cat->id)
+                    ->where('status', 'published')
+                    ->latest('published_at')
+                    ->take(3)
+                    ->pluck('id')
+                    ->toArray();
+
+                if (!empty($postIds)) {
+                    $result[] = [
+                        'category' => [
+                            'id' => $cat->id,
+                            'name' => $cat->name,
+                            'slug' => $cat->slug
+                        ],
+                        'post_ids' => $postIds
+                    ];
+                }
+            }
+            return $result;
+        });
+
+        $blogSections = collect();
+        if (!empty($blogSectionsData)) {
+            $allPostIds = [];
+            foreach ($blogSectionsData as $bSec) {
+                if (!empty($bSec['post_ids'])) {
+                    $allPostIds = array_merge($allPostIds, $bSec['post_ids']);
+                }
+            }
+            $allPostIds = array_values(array_unique($allPostIds));
+
+            $allPosts = !empty($allPostIds)
+                ? Post::whereIn('id', $allPostIds)
+                    ->select(['id', 'title', 'slug', 'excerpt', 'published_at', 'category_id', 'created_at', 'thumbnail', 'image_ids'])
+                    ->get()
+                    ->keyBy('id')
+                : collect();
+
+            Post::preloadImages($allPosts);
+
+            foreach ($blogSectionsData as $bSec) {
+                $catPosts = collect();
+                $pIds = $bSec['post_ids'] ?? [];
+                foreach ($pIds as $pid) {
+                    if (isset($allPosts[$pid])) {
+                        $catPosts->push($allPosts[$pid]);
+                    }
+                }
+                if ($catPosts->isNotEmpty()) {
+                    $catData = is_array($bSec['category']) ? $bSec['category'] : (array)$bSec['category'];
+                    $blogSections->push((object)[
+                        'id' => $catData['id'] ?? 0,
+                        'name' => $catData['name'] ?? '',
+                        'slug' => $catData['slug'] ?? '',
+                        'posts' => $catPosts
+                    ]);
+                }
+            }
+        }
+
+        return view('clients.pages.home.index', compact(
+            'banners',
+            'mainCategories',
+            'allCategories',
+            'flashSaleProducts',
+            'featuredProducts',
+            'categorySections',
+            'blogSections'
+        ));
     }
 }

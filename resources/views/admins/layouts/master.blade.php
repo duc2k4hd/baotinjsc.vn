@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Admin Panel') | {{ $settings->site_name }}</title>
+    <title>@yield('title', 'Admin Panel') | {{ $settings->site_name ?? config('app.name', 'Bảo Tín JSC') }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ asset('admins/css/custom.css') }}">
@@ -587,8 +587,63 @@
         }
         .ck-editor__main > .ck-editor__editable,
         .ck-editor__editable_inline:not(.ck-editor__nested-editable) {
-            min-height: 450px;
+            min-height: 1000px !important;
+            max-height: 1000px !important;
+            height: 1000px !important;
+            overflow-y: auto !important;
             outline: none !important;
+            padding: 18px 24px !important;
+        }
+        /* Sticky Toolbar cho CKEditor 5 khi cuộn trang */
+        .ck.ck-editor__top {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 100 !important;
+            background: #ffffff !important;
+        }
+        /* Khi ở chế độ Fullscreen */
+        .ck-fullscreen .ck-editor__editable,
+        .ck-fullscreen .ck-editor__editable_inline:not(.ck-editor__nested-editable) {
+            min-height: calc(100vh - 120px) !important;
+            max-height: calc(100vh - 120px) !important;
+            height: calc(100vh - 120px) !important;
+        }
+        /* Scrollbar mượt mà cho trình soạn thảo */
+        .ck-editor__editable::-webkit-scrollbar {
+            width: 8px;
+        }
+        .ck-editor__editable::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+        .ck-editor__editable::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .ck-editor__editable::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Giới hạn hình ảnh khi mới chèn vào để không chiếm toàn bộ khung soạn thảo */
+        .ck-content .image {
+            max-width: 100% !important;
+            margin: 14px auto !important;
+            clear: both;
+        }
+        .ck-content .image img {
+            max-height: 480px !important;
+            width: auto !important;
+            max-width: 100% !important;
+            object-fit: contain !important;
+            display: block !important;
+            margin: 0 auto !important;
+        }
+        /* Khi ảnh được người dùng chọn resize cụ thể */
+        .ck-content .image.image_resized img,
+        .ck-content .image[style*="width"] img,
+        .ck-content .image img[style*="width"],
+        .ck-content .image img[style*="height"] {
+            max-height: none !important;
+            width: 100% !important;
         }
         .ck-editor__editable *,
         .ck-editor__editable_inline *,
@@ -601,23 +656,47 @@
             text-decoration: underline;
         }
         
-        /* Fit content cho figcaption của ảnh trong CKEditor 5 */
+        /* Fit content cho figcaption của ảnh trong CKEditor 5 và hỗ trợ click sửa chữ dễ dàng */
         .ck-content .image > figcaption,
         .ck-editor__editable figcaption,
         figcaption.ck-editor__nested-editable,
         figcaption.ck-editor__editable {
-            min-height: auto !important;
+            min-height: 24px !important;
             height: auto !important;
             max-height: none !important;
             width: fit-content !important;
             max-width: 100% !important;
             margin: 6px auto 0 !important;
-            padding: 3px 8px !important;
-            display: table !important;
+            padding: 4px 10px !important;
+            display: block !important;
             caption-side: bottom !important;
             font-size: 13px !important;
-            color: #64748b !important;
+            color: #475569 !important;
             text-align: center !important;
+            cursor: text !important;
+            pointer-events: auto !important;
+            user-select: text !important;
+            -webkit-user-select: text !important;
+            outline: none !important;
+            border-radius: 4px !important;
+            transition: background-color 0.15s ease;
+        }
+
+        /* Hover và Focus trên figcaption để người dùng biết có thể bấm vào sửa */
+        figcaption.ck-editor__nested-editable:hover,
+        figcaption.ck-editor__nested-editable:focus,
+        .ck-content .image > figcaption:hover,
+        .ck-content .image > figcaption:focus {
+            background-color: #f1f5f9 !important;
+            box-shadow: 0 0 0 1px #cbd5e1 !important;
+        }
+
+        /* Đảm bảo nếu có thẻ figure bao ngoài cũng không làm vỡ giao diện */
+        .ck-content figure:has(> figure.image) {
+            display: contents !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
         }
         
         /* Notification Bell */
@@ -780,7 +859,7 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <div><img src="{{ asset('clients/assets/img/business/'. $settings->site_logo) }}" alt="{{ $settings->site_name }}" style="width: 100%; height: 100%;"></div>
+            <div><img src="{{ asset('clients/assets/img/business/'. ($settings->site_logo ?? 'logo.webp')) }}" alt="{{ $settings->site_name ?? config('app.name', 'Bảo Tín JSC') }}" style="width: 100%; height: 100%;"></div>
         </div>
         <nav class="sidebar-menu">
             <div class="menu-section">Tổng Quan</div>

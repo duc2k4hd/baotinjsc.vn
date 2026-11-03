@@ -55,20 +55,35 @@
         'to' => 0,
     ];
 
-    // Dữ liệu ảnh gallery
+    // Dữ liệu ảnh đại diện (ảnh đầu tiên)
+    $primaryImage = null;
+    if (old('primary_image')) {
+        $primaryImage = old('primary_image');
+    } elseif ($product->exists && $product->images && $product->images->isNotEmpty()) {
+        $firstImg = $product->images->first();
+        $primaryImage = [
+            'id' => $firstImg->id,
+            'existing_path' => $firstImg->path ?? $firstImg->url,
+            'url' => $firstImg->url ?? '',
+            'title' => $firstImg->name ?? $firstImg->title ?? '',
+            'alt' => $firstImg->alt ?? $firstImg->name ?? '',
+        ];
+    }
+
+    // Dữ liệu thư viện ảnh phụ (từ ảnh thứ 2 trở đi)
     $existingImages = [];
     if (old('images')) {
         $existingImages = old('images');
-    } elseif ($product->exists && $product->images) {
-        $existingImages = $product->images->map(function ($img, $idx) {
+    } elseif ($product->exists && $product->images && $product->images->count() > 1) {
+        $existingImages = $product->images->slice(1)->values()->map(function ($img, $idx) {
             return [
                 'id' => $img->id,
                 'title' => $img->name ?? $img->title ?? '',
                 'notes' => $img->context ?? '',
-                'alt' => $img->name ?? '',
-                'order' => $idx,
+                'alt' => $img->alt ?? $img->name ?? '',
+                'order' => $idx + 1,
                 'existing_path' => $img->path ?? $img->url,
-                'is_primary' => $idx === 0 ? 1 : 0,
+                'is_primary' => 0,
             ];
         })->toArray();
     }
@@ -83,10 +98,28 @@
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css">
     <link rel="stylesheet" href="{{ asset('admins/css/media-manager.css') }}?v={{ env('APP_VERSION', '1.0') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" integrity="sha512-cyzxRvewl+FOKTtpBzYjW6x6IAYDX23wfwwzs2UmQxF9sj4r2CKvV3QUF1Ssub24DWqy8/TUvScuLFZYnxdrJA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 @endpush
 
 @push('styles')
 <style>
+    /* Cropper 1:1 Modal Styling */
+    .cropper-modal-wrapper {
+        width: 100%;
+        height: 440px;
+        max-height: 55vh;
+        background-color: #0f172a;
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .cropper-modal-wrapper img {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+    }
     /* 2 COLUMN LAYOUT - WordPress Style */
     #product-form .row.g-4 {
         display: flex !important;
@@ -222,15 +255,68 @@
     }
 
     .image-preview {
-        margin-top: 10px;
+        margin-top: 5px;
     }
 
     .image-preview img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
+        max-width: 140px;
+        max-height: 100px;
+        object-fit: contain;
         border-radius: 6px;
         border: 1px solid #cbd5e1;
+        background: #fff;
+    }
+
+    .primary-image-preview {
+        min-height: 200px;
+        max-height: 280px;
+        background: #f8fafc;
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease-in-out;
+        user-select: none;
+    }
+
+    .primary-image-preview:hover {
+        border-color: #3b82f6;
+        background-color: #f1f5f9;
+    }
+
+    .primary-image-preview.drag-over {
+        border-color: #2563eb !important;
+        background-color: #eff6ff !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+        transform: scale(1.01);
+    }
+
+    .gallery-dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 8px;
+        background: #f8fafc;
+        cursor: pointer;
+        min-height: 90px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease-in-out;
+        user-select: none;
+    }
+
+    .gallery-dropzone:hover {
+        border-color: #3b82f6;
+        background-color: #f1f5f9;
+    }
+
+    .gallery-dropzone.drag-over {
+        border-color: #2563eb !important;
+        background-color: #eff6ff !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
     }
 
     .product-image-picker-actions {
@@ -262,37 +348,66 @@
         border: 1px solid #cbd5e1 !important;
     }
 
-    /* CKEditor 5 Styles: Mô tả chi tiết min-height 800px, tự động mở rộng theo content (loại trừ figcaption) */
+    /* CKEditor 5 Styles: Mô tả chi tiết min-height 1000px, cuộn nếu nhiều content */
     .product-detail-editor-wrap .ck-editor__main > .ck-editor__editable,
     .product-detail-editor-wrap .ck-editor__editable_inline:not(.ck-editor__nested-editable) {
-        min-height: 800px !important;
-        height: auto !important;
+        min-height: 1000px !important;
+        max-height: 1000px !important;
+        height: 1000px !important;
+        overflow-y: auto !important;
+        padding: 18px 24px !important;
     }
 
-    /* CKEditor 5 Styles: Mô tả ngắn gọn gàng */
+    /* CKEditor 5 Styles: Mô tả ngắn gọn gàng, cuộn nếu nhiều content */
     .product-short-editor-wrap .ck-editor__main > .ck-editor__editable,
     .product-short-editor-wrap .ck-editor__editable_inline:not(.ck-editor__nested-editable) {
         min-height: 220px !important;
+        max-height: 350px !important;
         height: auto !important;
+        overflow-y: auto !important;
     }
 
-    /* figcaption của ảnh luôn fit-content, không bị ăn min-height của editor chính */
+    /* figcaption của ảnh luôn fit-content, không bị ăn min-height của editor chính và hỗ trợ click sửa chữ */
     .ck-content .image > figcaption,
     .ck-editor__editable figcaption,
     figcaption.ck-editor__nested-editable,
     figcaption.ck-editor__editable {
-        min-height: auto !important;
+        min-height: 24px !important;
         height: auto !important;
         max-height: none !important;
         width: fit-content !important;
         max-width: 100% !important;
         margin: 6px auto 0 !important;
-        padding: 3px 8px !important;
-        display: table !important;
+        padding: 4px 10px !important;
+        display: block !important;
         caption-side: bottom !important;
         font-size: 13px !important;
-        color: #64748b !important;
+        color: #475569 !important;
         text-align: center !important;
+        cursor: text !important;
+        pointer-events: auto !important;
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        outline: none !important;
+        border-radius: 4px !important;
+        transition: background-color 0.15s ease;
+    }
+
+    /* Hover và Focus trên figcaption để người dùng biết có thể bấm vào sửa */
+    figcaption.ck-editor__nested-editable:hover,
+    figcaption.ck-editor__nested-editable:focus,
+    .ck-content .image > figcaption:hover,
+    .ck-content .image > figcaption:focus {
+        background-color: #f1f5f9 !important;
+        box-shadow: 0 0 0 1px #cbd5e1 !important;
+    }
+
+    /* Đảm bảo nếu có thẻ figure bao ngoài cũng không làm vỡ giao diện */
+    .ck-content figure:has(> figure.image) {
+        display: contents !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }
 </style>
 @endpush
@@ -352,17 +467,22 @@
                 </div>
             </div>
 
-            {{-- Thư viện ảnh gallery --}}
+            {{-- Thư viện ảnh phụ (Gallery) --}}
             <div class="card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0"><i class="fa-solid fa-images text-primary me-2"></i>Thư viện ảnh sản phẩm</h5>
-                    <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-add="#image-list" data-template="#image-template">
-                        + Thêm ảnh
-                    </button>
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-0"><i class="fa-solid fa-images text-primary me-2"></i>Thư viện ảnh phụ</h5>
+                        <small class="text-muted">Các ảnh phụ bổ sung (hiển thị từ ảnh thứ 2 trở đi trong trang chi tiết sản phẩm).</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-primary fw-bold" id="btn-add-multiple-gallery">
+                            <i class="fa-solid fa-photo-film me-1"></i> + Chọn nhiều từ thư viện
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary fw-bold" data-add="#image-list" data-template="#image-template">
+                            + Thêm 1 ảnh phụ
+                        </button>
+                    </div>
                 </div>
-                <p class="text-muted small mb-3">
-                    Bạn có thể chọn ảnh từ thư viện media có sẵn hoặc upload ảnh mới. Tích chọn "Ảnh chính" để làm đại diện.
-                </p>
 
                 <div class="repeater-list" id="image-list">
                     @foreach($existingImages as $index => $image)
@@ -374,7 +494,7 @@
                         @endphp
                         <div class="repeater-item">
                             <div class="repeater-header">
-                                <strong>Ảnh #{{ $index + 1 }}</strong>
+                                <strong>Ảnh phụ #{{ $index + 1 }}</strong>
                                 <button type="button" class="btn-link" data-remove data-item=".repeater-item">Xóa</button>
                             </div>
                             <input type="hidden" name="images[{{ $index }}][id]" value="{{ $image['id'] ?? null }}">
@@ -394,36 +514,42 @@
                                 </div>
                                 <div>
                                     <label>Thứ tự</label>
-                                    <input type="number" class="form-control" name="images[{{ $index }}][order]" value="{{ $image['order'] ?? $index }}">
+                                    <input type="number" class="form-control" name="images[{{ $index }}][order]" value="{{ $image['order'] ?? ($index + 1) }}">
                                 </div>
                             </div>
 
                             <div class="mt-3">
-                                <label>File ảnh</label>
-                                <input type="hidden" id="image-path-{{ $index }}" name="images[{{ $index }}][existing_path]" value="{{ $storedValue }}">
-                                <div class="image-preview" id="image-preview-{{ $index }}">
-                                    @if($storedUrl)
-                                        <img src="{{ $storedUrl }}" alt="">
-                                    @endif
+                                <label class="form-label fw-semibold">File ảnh</label>
+                                <input type="hidden" class="gallery-image-path" name="images[{{ $index }}][existing_path]" value="{{ $storedValue }}">
+                                <input type="file" class="d-none gallery-image-file" name="images[{{ $index }}][file]" accept="image/*">
+                                
+                                <div class="gallery-dropzone p-2 mb-2 text-center" title="Kéo thả ảnh vào đây hoặc bấm để chọn">
+                                    <div class="gallery-preview image-preview">
+                                        @if($storedUrl)
+                                            <img src="{{ $storedUrl }}" alt="">
+                                        @else
+                                            <div class="text-muted py-2">
+                                                <i class="fa-solid fa-cloud-arrow-up fa-2x mb-1 d-block text-secondary"></i>
+                                                <span class="small">Kéo thả ảnh vào đây hoặc bấm chọn</span>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
+
                                 <div class="product-image-picker-actions">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" data-product-media-open>
-                                        <i class="fa-solid fa-photo-film me-1"></i> Mở thư viện ảnh
+                                    <button type="button" class="btn btn-outline-primary btn-sm btn-pick-gallery-media">
+                                        <i class="fa-solid fa-photo-film me-1"></i> Chọn từ thư viện
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" data-product-media-clear>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm btn-upload-gallery-file">
+                                        <i class="fa-solid fa-upload me-1"></i> Tải từ máy tính
+                                    </button>
+                                    <button type="button" class="btn btn-outline-danger btn-sm btn-clear-gallery-item {{ $storedValue ? '' : 'd-none' }}">
                                         Bỏ chọn
                                     </button>
                                 </div>
-                                <div class="product-image-picker-status {{ $storedValue ? '' : 'is-empty' }}" data-product-media-status>
-                                    {{ $storedValue ? 'Đang chọn: ' . $storedValue : 'Chưa chọn ảnh từ thư viện.' }}
+                                <div class="product-image-picker-status {{ $storedValue ? '' : 'is-empty' }}">
+                                    {{ $storedValue ? 'Đang chọn: ' . $storedValue : 'Chưa chọn ảnh.' }}
                                 </div>
-                            </div>
-
-                            <div class="mt-2">
-                                <label class="form-check-label">
-                                    <input type="checkbox" class="form-check-input me-1" name="images[{{ $index }}][is_primary]" value="1" {{ !empty($image['is_primary']) ? 'checked' : '' }}>
-                                    Đặt làm ảnh chính
-                                </label>
                             </div>
                         </div>
                     @endforeach
@@ -551,6 +677,59 @@
                 </div>
             </div>
 
+            {{-- Hộp Ảnh đại diện sản phẩm --}}
+            <div class="card" id="primary-image-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0"><i class="fa-solid fa-image text-primary me-2"></i>Ảnh đại diện <span class="text-danger">*</span></h5>
+                </div>
+                <p class="text-muted small mb-3">
+                    Ảnh đại diện chính hiển thị trên danh sách sản phẩm và đầu trang chi tiết.
+                </p>
+
+                <div class="primary-image-wrapper text-center">
+                    @php
+                        $primaryImgValue = old('primary_image.existing_path', $primaryImage['existing_path'] ?? null);
+                        $primaryImgId = old('primary_image.id', $primaryImage['id'] ?? null);
+                        $primaryImgUrl = $primaryImgValue
+                            ? (str_starts_with($primaryImgValue, 'http') ? $primaryImgValue : asset($primaryImgValue))
+                            : null;
+                    @endphp
+                    <input type="hidden" id="primary-image-id" name="primary_image[id]" value="{{ $primaryImgId }}">
+                    <input type="hidden" id="primary-image-path" name="primary_image[existing_path]" value="{{ $primaryImgValue }}">
+                    <input type="file" id="primary-image-file" name="primary_image[file]" accept="image/*" class="d-none">
+
+                    <div class="primary-image-preview mb-3" id="primary-image-preview" title="Bấm để chọn ảnh từ thư viện hoặc kéo thả file từ máy tính">
+                        @if($primaryImgUrl)
+                            <img src="{{ $primaryImgUrl }}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;">
+                        @else
+                            <div class="drop-zone-placeholder text-muted p-4">
+                                <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2 d-block text-primary"></i>
+                                <span class="fw-bold d-block text-dark">Kéo & thả ảnh vào đây</span>
+                                <small class="text-muted d-block mt-1">hoặc bấm vào đây để chọn ảnh</small>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button type="button" class="btn btn-primary btn-sm fw-bold" id="btn-pick-primary-media">
+                            <i class="fa-solid fa-photo-film me-1"></i> Chọn từ thư viện
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" id="btn-upload-primary-file">
+                            <i class="fa-solid fa-upload me-1"></i> Tải từ máy tính
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm {{ ($primaryImgValue || $primaryImgId) ? '' : 'd-none' }}" id="btn-clear-primary-image">
+                            <i class="fa-solid fa-trash me-1"></i> Xóa
+                        </button>
+                    </div>
+                    <div id="primary-image-source-info" class="small text-muted mt-2 {{ $primaryImgValue ? '' : 'd-none' }}" style="font-size: 11.5px; word-break: break-all;">
+                        Đang chọn: <span id="primary-image-source-text" class="fw-semibold text-primary">{{ $primaryImgValue }}</span>
+                    </div>
+                    <small class="text-muted d-block mt-2" style="font-size: 11px;">
+                        <i class="fa-solid fa-circle-info me-1"></i>Bắt buộc có ảnh đại diện. Nếu để trống, hệ thống sẽ tự lấy ảnh đầu tiên từ Thư viện ảnh sản phẩm.
+                    </small>
+                </div>
+            </div>
+
             {{-- Hộp Giá & Tồn kho --}}
             <div class="card">
                 <h5><i class="fa-solid fa-coins text-primary me-2"></i>Giá & Kho hàng</h5>
@@ -671,27 +850,33 @@
         </div>
 
         <div class="mt-3">
-            <label>File ảnh</label>
-            <input type="hidden" id="image-path-__INDEX__" name="images[__INDEX__][existing_path]">
-            <div class="image-preview" id="image-preview-__INDEX__"></div>
+            <label class="form-label fw-semibold">File ảnh</label>
+            <input type="hidden" class="gallery-image-path" name="images[__INDEX__][existing_path]">
+            <input type="file" class="d-none gallery-image-file" name="images[__INDEX__][file]" accept="image/*">
+            
+            <div class="gallery-dropzone p-2 mb-2 text-center" title="Kéo thả ảnh vào đây hoặc bấm để chọn">
+                <div class="gallery-preview image-preview">
+                    <div class="text-muted py-2">
+                        <i class="fa-solid fa-cloud-arrow-up fa-2x mb-1 d-block text-secondary"></i>
+                        <span class="small">Kéo thả ảnh vào đây hoặc bấm chọn</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="product-image-picker-actions">
-                <button type="button" class="btn btn-outline-primary btn-sm" data-product-media-open>
-                    <i class="fa-solid fa-photo-film me-1"></i> Mở thư viện ảnh
+                <button type="button" class="btn btn-outline-primary btn-sm btn-pick-gallery-media">
+                    <i class="fa-solid fa-photo-film me-1"></i> Chọn từ thư viện
                 </button>
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-product-media-clear>
+                <button type="button" class="btn btn-outline-secondary btn-sm btn-upload-gallery-file">
+                    <i class="fa-solid fa-upload me-1"></i> Tải từ máy tính
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm btn-clear-gallery-item d-none">
                     Bỏ chọn
                 </button>
             </div>
-            <div class="product-image-picker-status is-empty" data-product-media-status>
-                Chưa chọn ảnh từ thư viện.
+            <div class="product-image-picker-status is-empty">
+                Chưa chọn ảnh.
             </div>
-        </div>
-
-        <div class="mt-2">
-            <label class="form-check-label">
-                <input type="checkbox" class="form-check-input me-1" name="images[__INDEX__][is_primary]" value="1">
-                Đặt làm ảnh chính
-            </label>
         </div>
     </div>
 </template>
@@ -741,47 +926,70 @@
     </div>
 </template>
 
+{{-- Modal Bắt buộc cắt ảnh vuông 1:1 khi upload --}}
+<div class="modal fade" id="cropImageModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="cropImageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-2 px-3">
+                <h6 class="modal-title d-flex align-items-center gap-2 mb-0" id="cropImageModalLabel">
+                    <i class="fa-solid fa-crop-simple text-warning"></i>
+                    <span>Cắt ảnh sản phẩm (Bắt buộc tỷ lệ vuông 1:1)</span>
+                </h6>
+                <span class="badge bg-warning text-dark fw-bold ms-auto">Chuẩn tỷ lệ 1:1</span>
+            </div>
+            <div class="modal-body p-3">
+                <div class="alert alert-warning py-2 px-3 small mb-2 d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation fs-5 text-warning"></i>
+                    <div>
+                        Ảnh bạn vừa tải lên có kích thước <strong id="cropDimText">...</strong> (chưa phải hình vuông).
+                        Hệ thống yêu cầu <strong>căn chỉnh và cắt thành hình vuông 1:1</strong> để ảnh hiển thị chuẩn đẹp trên website.
+                    </div>
+                </div>
+
+                <div class="cropper-modal-wrapper">
+                    <img id="cropperTargetImg" src="" alt="Cắt ảnh sản phẩm">
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-3 flex-wrap gap-2">
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-outline-secondary" id="btnCropperZoomIn" title="Phóng to">
+                            <i class="fa-solid fa-magnifying-glass-plus"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCropperZoomOut" title="Thu nhỏ">
+                            <i class="fa-solid fa-magnifying-glass-minus"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCropperRotateLeft" title="Xoay trái 90°">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCropperRotateRight" title="Xoay phải 90°">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="btnCropperReset" title="Đặt lại góc cắt">
+                            <i class="fa-solid fa-arrows-rotate"></i> Đặt lại
+                        </button>
+                    </div>
+                    <span class="text-muted small">
+                        <i class="fa-solid fa-hand-pointer me-1"></i> Kéo các góc khung lưới để căn chỉnh vùng ảnh đẹp nhất.
+                    </span>
+                </div>
+            </div>
+            <div class="modal-footer py-2 px-3 bg-light d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary btn-sm px-3" id="btnCropperCancel">
+                    <i class="fa-solid fa-xmark me-1"></i> Hủy tải lên
+                </button>
+                <button type="button" class="btn btn-primary btn-sm px-4 fw-bold" id="btnCropperApply">
+                    <i class="fa-solid fa-check me-1"></i> Cắt ảnh & Sử dụng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
-@include('admins.partials.media-library-modal')
-<script src="{{ asset('admins/js/media-library.js') }}?v={{ env('APP_VERSION', '1.0') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<script>
-    window.mediaManagerConfig = {
-        csrfToken: @json(csrf_token()),
-        fallbackImage: @json(asset('clients/assets/no-image.webp')),
-        limits: {
-            upload: {
-                maxFilesPerRequest: 20,
-                maxBatchBytes: '16M',
-                appMaxSingleFileKb: 5120,
-                batchSafetyRatio: 0.9,
-            },
-            delete: { maxItemsPerRequest: 200 }
-        },
-        routes: {
-            search: @json(route('admin.media.search')),
-            upload: @json(route('admin.media.upload')),
-            updateBase: @json(url('/admin/media/update')),
-            assign: @json(route('admin.media.assign')),
-            bulkDelete: @json(route('admin.media.bulk-delete')),
-            targets: @json(route('admin.media.targets')),
-        },
-        initialState: {
-            items: [],
-            meta: @json($productMediaInitialPagination),
-            stats: @json($productMediaInitialStats),
-        },
-    };
-
-    window.productMediaPickerConfig = {
-        defaultFolder: 'clothes',
-        modalTitleBase: 'Chọn ảnh cho sản phẩm',
-    };
-</script>
-<script src="{{ asset('admins/js/media-manager.js') }}?v={{ env('APP_VERSION', '1.0') }}"></script>
-<script src="{{ asset('admins/js/product-media-picker.js') }}?v={{ env('APP_VERSION', '1.0') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" integrity="sha512-6lplKLe1tT/Qgqt1ezde4M45+Z51x5eS5e57147b19895c102a9e96f13bcf04051b72a39281e7d0251" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -827,7 +1035,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Repeater Add / Remove
+    // Repeater Add / Remove Counters
     const counters = {
         '#image-list': document.querySelectorAll('#image-list .repeater-item').length,
         '#variant-list': document.querySelectorAll('#variant-list .repeater-item').length,
@@ -856,6 +1064,608 @@ document.addEventListener('DOMContentLoaded', function () {
             if (item) item.remove();
         }
     });
+
+    // ========================================================
+    // 1. Quản lý Ảnh đại diện (Primary Image)
+    // ========================================================
+    const primaryPreview = document.getElementById('primary-image-preview');
+    const primaryFileInput = document.getElementById('primary-image-file');
+    const primaryPathInput = document.getElementById('primary-image-path');
+    const primaryIdInput = document.getElementById('primary-image-id');
+    const btnPickPrimaryMedia = document.getElementById('btn-pick-primary-media');
+    const btnUploadPrimaryFile = document.getElementById('btn-upload-primary-file');
+    const btnClearPrimary = document.getElementById('btn-clear-primary-image');
+    const primarySourceInfo = document.getElementById('primary-image-source-info');
+    const primarySourceText = document.getElementById('primary-image-source-text');
+
+    function renderPrimaryPreview(imgUrl, sourceLabel) {
+        if (!primaryPreview) return;
+        primaryPreview.innerHTML = `<img src="${imgUrl}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;">`;
+        if (btnClearPrimary) btnClearPrimary.classList.remove('d-none');
+        if (sourceLabel && primarySourceInfo && primarySourceText) {
+            primarySourceInfo.classList.remove('d-none');
+            primarySourceText.textContent = sourceLabel;
+        }
+    }
+
+    function clearPrimaryImage() {
+        if (primaryFileInput) primaryFileInput.value = '';
+        if (primaryPathInput) primaryPathInput.value = '';
+        if (primaryIdInput) primaryIdInput.value = '';
+        if (primaryPreview) {
+            primaryPreview.innerHTML = `
+                <div class="drop-zone-placeholder text-muted p-4">
+                    <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2 d-block text-primary"></i>
+                    <span class="fw-bold d-block text-dark">Kéo & thả ảnh vào đây</span>
+                    <small class="text-muted d-block mt-1">hoặc bấm vào đây để chọn ảnh</small>
+                </div>`;
+        }
+        if (btnClearPrimary) btnClearPrimary.classList.add('d-none');
+        if (primarySourceInfo) primarySourceInfo.classList.add('d-none');
+        if (primarySourceText) primarySourceText.textContent = '';
+    }
+
+    // ========================================================
+    // CROPPER 1:1 CONTROLLER (Bắt buộc tỷ lệ vuông 1:1 khi upload ảnh)
+    // ========================================================
+    let currentCropper = null;
+    let cropperResolve = null;
+    let cropperReject = null;
+    const cropModalEl = document.getElementById('cropImageModal');
+    const cropperTargetImg = document.getElementById('cropperTargetImg');
+    const cropDimText = document.getElementById('cropDimText');
+    let cropModalInstance = null;
+
+    if (cropModalEl && typeof bootstrap !== 'undefined') {
+        cropModalInstance = new bootstrap.Modal(cropModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+    }
+
+    function checkAndCropImage(file) {
+        return new Promise((resolve, reject) => {
+            if (!file || !file.type || !file.type.startsWith('image/')) {
+                return resolve(file);
+            }
+
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+
+            img.onload = function () {
+                const w = img.naturalWidth;
+                const h = img.naturalHeight;
+                const diff = Math.abs(w - h);
+
+                // Cho phép sai lệch tối đa 2px
+                if (diff <= 2) {
+                    URL.revokeObjectURL(objectUrl);
+                    return resolve(file);
+                }
+
+                // Không đúng hình vuông -> Buộc mở Cropper popup
+                openCropperPopup(objectUrl, file, w, h)
+                    .then(croppedFile => {
+                        URL.revokeObjectURL(objectUrl);
+                        resolve(croppedFile);
+                    })
+                    .catch(err => {
+                        URL.revokeObjectURL(objectUrl);
+                        reject(err);
+                    });
+            };
+
+            img.onerror = function () {
+                URL.revokeObjectURL(objectUrl);
+                resolve(file);
+            };
+
+            img.src = objectUrl;
+        });
+    }
+
+    function openCropperPopup(imageSrc, file, width, height) {
+        return new Promise((resolve, reject) => {
+            cropperResolve = resolve;
+            cropperReject = reject;
+
+            if (cropDimText) {
+                cropDimText.textContent = `${width} × ${height}px`;
+            }
+
+            if (cropperTargetImg) {
+                cropperTargetImg.src = imageSrc;
+                cropperTargetImg.alt = file.name || 'product_image';
+            }
+
+            if (cropModalInstance) {
+                cropModalInstance.show();
+            }
+
+            const onShown = function () {
+                cropModalEl.removeEventListener('shown.bs.modal', onShown);
+                if (currentCropper) {
+                    currentCropper.destroy();
+                }
+                if (typeof Cropper !== 'undefined' && cropperTargetImg) {
+                    currentCropper = new Cropper(cropperTargetImg, {
+                        aspectRatio: 1, // BẮT BUỘC TỶ LỆ VUÔNG 1:1
+                        viewMode: 1,
+                        autoCropArea: 0.95,
+                        responsive: true,
+                        restore: false,
+                        guides: true,
+                        center: true,
+                        highlight: false,
+                        cropBoxMovable: true,
+                        cropBoxResizable: true,
+                        toggleDragModeOnDblclick: false,
+                    });
+                }
+            };
+            cropModalEl.addEventListener('shown.bs.modal', onShown);
+        });
+    }
+
+    document.getElementById('btnCropperZoomIn')?.addEventListener('click', () => currentCropper?.zoom(0.1));
+    document.getElementById('btnCropperZoomOut')?.addEventListener('click', () => currentCropper?.zoom(-0.1));
+    document.getElementById('btnCropperRotateLeft')?.addEventListener('click', () => currentCropper?.rotate(-90));
+    document.getElementById('btnCropperRotateRight')?.addEventListener('click', () => currentCropper?.rotate(90));
+    document.getElementById('btnCropperReset')?.addEventListener('click', () => currentCropper?.reset());
+
+    document.getElementById('btnCropperApply')?.addEventListener('click', () => {
+        if (!currentCropper) return;
+        const canvas = currentCropper.getCroppedCanvas({
+            maxWidth: 2000,
+            maxHeight: 2000,
+            fillColor: '#ffffff',
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: 'high'
+        });
+
+        if (!canvas) {
+            alert('Không thể cắt ảnh. Vui lòng thử lại.');
+            return;
+        }
+
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                alert('Lỗi tạo dữ liệu sau khi cắt ảnh.');
+                return;
+            }
+            const origName = cropperTargetImg?.alt || 'product_image.jpg';
+            const fileName = origName.replace(/\.[^.]+$/, '') + '.jpg';
+            const croppedFile = new File([blob], fileName, { type: 'image/jpeg', lastModified: Date.now() });
+
+            if (cropModalInstance) cropModalInstance.hide();
+            if (currentCropper) {
+                currentCropper.destroy();
+                currentCropper = null;
+            }
+            if (typeof cropperResolve === 'function') {
+                cropperResolve(croppedFile);
+                cropperResolve = null;
+            }
+        }, 'image/jpeg', 0.92);
+    });
+
+    document.getElementById('btnCropperCancel')?.addEventListener('click', () => {
+        if (cropModalInstance) cropModalInstance.hide();
+        if (currentCropper) {
+            currentCropper.destroy();
+            currentCropper = null;
+        }
+        if (typeof cropperReject === 'function') {
+            cropperReject(new Error('Hủy cắt ảnh'));
+            cropperReject = null;
+        }
+    });
+
+    function handlePrimaryFile(file) {
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('image/')) {
+            alert('Vui lòng chọn hoặc kéo thả file định dạng hình ảnh (JPG, PNG, WEBP, GIF...).');
+            return;
+        }
+
+        checkAndCropImage(file).then(validFile => {
+            try {
+                const dt = new DataTransfer();
+                dt.items.add(validFile);
+                primaryFileInput.files = dt.files;
+            } catch (err) {
+                console.warn('DataTransfer assignment not supported:', err);
+            }
+
+            if (primaryPathInput) primaryPathInput.value = '';
+            if (primaryIdInput) primaryIdInput.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                renderPrimaryPreview(e.target.result, `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn 1:1`);
+            };
+            reader.readAsDataURL(validFile);
+        }).catch(err => {
+            if (primaryFileInput) primaryFileInput.value = '';
+            console.log('Hủy cắt ảnh đại diện.');
+        });
+    }
+
+    function openPrimaryMediaPicker() {
+        if (typeof window.openMediaPicker === 'function') {
+            window.openMediaPicker({
+                mode: 'single',
+                scope: 'client',
+                folder: 'clothes',
+                onSelect: (file) => {
+                    if (file) {
+                        if (primaryFileInput) primaryFileInput.value = '';
+                        const chosenPath = file.relative_path || file.path || file.filename || file.url;
+                        if (primaryPathInput) primaryPathInput.value = chosenPath;
+                        if (primaryIdInput) primaryIdInput.value = file.id || '';
+                        const previewUrl = file.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+                        renderPrimaryPreview(previewUrl, `Thư viện: ${file.filename || chosenPath}`);
+                    }
+                }
+            });
+        } else {
+            alert('Popup thư viện ảnh chưa sẵn sàng. Vui lòng tải lại trang.');
+        }
+    }
+
+    if (btnPickPrimaryMedia) {
+        btnPickPrimaryMedia.addEventListener('click', openPrimaryMediaPicker);
+    }
+    if (btnUploadPrimaryFile) {
+        btnUploadPrimaryFile.addEventListener('click', () => {
+            if (primaryFileInput) primaryFileInput.click();
+        });
+    }
+    if (primaryFileInput) {
+        primaryFileInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                handlePrimaryFile(this.files[0]);
+            }
+        });
+    }
+    if (btnClearPrimary) {
+        btnClearPrimary.addEventListener('click', clearPrimaryImage);
+    }
+
+    if (primaryPreview) {
+        primaryPreview.addEventListener('click', function (e) {
+            if (e.target.closest('button')) return;
+            const hasImg = (primaryPathInput && primaryPathInput.value) || (primaryFileInput && primaryFileInput.files && primaryFileInput.files.length);
+            if (!hasImg) {
+                openPrimaryMediaPicker();
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            primaryPreview.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                primaryPreview.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'dragend'].forEach(evt => {
+            primaryPreview.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                primaryPreview.classList.remove('drag-over');
+            });
+        });
+
+        primaryPreview.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            primaryPreview.classList.remove('drag-over');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                handlePrimaryFile(e.dataTransfer.files[0]);
+            }
+        });
+    }
+
+    // ========================================================
+    // 2. Quản lý Thư viện ảnh phụ (Gallery Repeater)
+    // ========================================================
+    const imageListContainer = document.getElementById('image-list');
+    const imageTemplate = document.getElementById('image-template');
+    const btnAddMultipleGallery = document.getElementById('btn-add-multiple-gallery');
+
+    function createGalleryItemWithData(fileData) {
+        if (!imageListContainer || !imageTemplate) return;
+        const idx = counters['#image-list']++;
+        const html = imageTemplate.innerHTML.replace(/__INDEX__/g, idx);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html.trim();
+        const itemEl = tempDiv.firstElementChild;
+        imageListContainer.appendChild(itemEl);
+
+        if (fileData) {
+            const pathInput = itemEl.querySelector('.gallery-image-path');
+            const previewWrap = itemEl.querySelector('.gallery-preview');
+            const statusEl = itemEl.querySelector('.product-image-picker-status');
+            const btnClear = itemEl.querySelector('.btn-clear-gallery-item');
+            const titleInput = itemEl.querySelector('input[name*="[title]"]');
+            const altInput = itemEl.querySelector('input[name*="[alt]"]');
+
+            const chosenPath = fileData.relative_path || fileData.path || fileData.filename || fileData.url;
+            const previewUrl = fileData.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+
+            if (pathInput) pathInput.value = chosenPath;
+            if (previewWrap) {
+                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+            }
+            if (statusEl) {
+                statusEl.classList.remove('is-empty');
+                statusEl.textContent = 'Đang chọn: ' + (fileData.filename || chosenPath);
+            }
+            if (btnClear) btnClear.classList.remove('d-none');
+            if (titleInput && !titleInput.value && fileData.title) titleInput.value = fileData.title;
+            if (altInput && !altInput.value && fileData.alt) altInput.value = fileData.alt;
+        }
+        return itemEl;
+    }
+
+    if (btnAddMultipleGallery) {
+        btnAddMultipleGallery.addEventListener('click', function () {
+            if (typeof window.openMediaPicker === 'function') {
+                window.openMediaPicker({
+                    mode: 'multiple',
+                    scope: 'client',
+                    folder: 'clothes',
+                    onSelect: (files) => {
+                        const selectedList = Array.isArray(files) ? files : [files];
+                        selectedList.forEach(file => {
+                            if (file) createGalleryItemWithData(file);
+                        });
+                    }
+                });
+            } else {
+                alert('Popup thư viện ảnh chưa sẵn sàng. Vui lòng tải lại trang.');
+            }
+        });
+    }
+
+    function updateGalleryRowWithFile(row, file) {
+        if (!row || !file || !file.type.startsWith('image/')) return;
+        const fileInput = row.querySelector('.gallery-image-file');
+        const pathInput = row.querySelector('.gallery-image-path');
+        const previewWrap = row.querySelector('.gallery-preview');
+        const statusEl = row.querySelector('.product-image-picker-status');
+        const btnClear = row.querySelector('.btn-clear-gallery-item');
+
+        checkAndCropImage(file).then(validFile => {
+            try {
+                const dt = new DataTransfer();
+                dt.items.add(validFile);
+                if (fileInput) fileInput.files = dt.files;
+            } catch (e) {
+                console.warn(e);
+            }
+
+            if (pathInput) pathInput.value = '';
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                if (previewWrap) {
+                    previewWrap.innerHTML = `<img src="${e.target.result}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+                }
+                if (statusEl) {
+                    statusEl.classList.remove('is-empty');
+                    statusEl.textContent = `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn 1:1`;
+                }
+                if (btnClear) btnClear.classList.remove('d-none');
+            };
+            reader.readAsDataURL(validFile);
+        }).catch(err => {
+            if (fileInput) fileInput.value = '';
+            console.log('Hủy cắt ảnh gallery.');
+        });
+    }
+
+    function clearGalleryRow(row) {
+        if (!row) return;
+        const fileInput = row.querySelector('.gallery-image-file');
+        const pathInput = row.querySelector('.gallery-image-path');
+        const previewWrap = row.querySelector('.gallery-preview');
+        const statusEl = row.querySelector('.product-image-picker-status');
+        const btnClear = row.querySelector('.btn-clear-gallery-item');
+
+        if (fileInput) fileInput.value = '';
+        if (pathInput) pathInput.value = '';
+        if (previewWrap) {
+            previewWrap.innerHTML = `
+                <div class="text-muted py-2">
+                    <i class="fa-solid fa-cloud-arrow-up fa-2x mb-1 d-block text-secondary"></i>
+                    <span class="small">Kéo thả ảnh vào đây hoặc bấm chọn</span>
+                </div>`;
+        }
+        if (statusEl) {
+            statusEl.classList.add('is-empty');
+            statusEl.textContent = 'Chưa chọn ảnh.';
+        }
+        if (btnClear) btnClear.classList.add('d-none');
+    }
+
+    // Event delegation cho các hàng ảnh phụ
+    document.addEventListener('click', function (e) {
+        const btnPickMedia = e.target.closest('.btn-pick-gallery-media');
+        if (btnPickMedia) {
+            const row = btnPickMedia.closest('.repeater-item');
+            if (row && typeof window.openMediaPicker === 'function') {
+                window.openMediaPicker({
+                    mode: 'single',
+                    scope: 'client',
+                    folder: 'clothes',
+                    onSelect: (file) => {
+                        if (file) {
+                            const fileInput = row.querySelector('.gallery-image-file');
+                            const pathInput = row.querySelector('.gallery-image-path');
+                            const previewWrap = row.querySelector('.gallery-preview');
+                            const statusEl = row.querySelector('.product-image-picker-status');
+                            const btnClear = row.querySelector('.btn-clear-gallery-item');
+                            const titleInput = row.querySelector('input[name*="[title]"]');
+                            const altInput = row.querySelector('input[name*="[alt]"]');
+
+                            if (fileInput) fileInput.value = '';
+                            const chosenPath = file.relative_path || file.path || file.filename || file.url;
+                            if (pathInput) pathInput.value = chosenPath;
+
+                            const previewUrl = file.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+                            if (previewWrap) {
+                                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+                            }
+                            if (statusEl) {
+                                statusEl.classList.remove('is-empty');
+                                statusEl.textContent = 'Đang chọn: ' + (file.filename || chosenPath);
+                            }
+                            if (btnClear) btnClear.classList.remove('d-none');
+                            if (titleInput && !titleInput.value && file.title) titleInput.value = file.title;
+                            if (altInput && !altInput.value && file.alt) altInput.value = file.alt;
+                        }
+                    }
+                });
+            }
+            return;
+        }
+
+        const btnUploadFile = e.target.closest('.btn-upload-gallery-file');
+        if (btnUploadFile) {
+            const row = btnUploadFile.closest('.repeater-item');
+            const fileInput = row?.querySelector('.gallery-image-file');
+            if (fileInput) fileInput.click();
+            return;
+        }
+
+        const dropzone = e.target.closest('.gallery-dropzone');
+        if (dropzone && !e.target.closest('button')) {
+            const row = dropzone.closest('.repeater-item');
+            const pathInput = row?.querySelector('.gallery-image-path');
+            const fileInput = row?.querySelector('.gallery-image-file');
+            if (!pathInput?.value && (!fileInput?.files || !fileInput?.files.length)) {
+                row?.querySelector('.btn-pick-gallery-media')?.click();
+            }
+            return;
+        }
+
+        const btnClear = e.target.closest('.btn-clear-gallery-item');
+        if (btnClear) {
+            clearGalleryRow(btnClear.closest('.repeater-item'));
+            return;
+        }
+    });
+
+    document.addEventListener('change', function (e) {
+        if (e.target.matches('.gallery-image-file')) {
+            const row = e.target.closest('.repeater-item');
+            if (row && e.target.files && e.target.files.length > 0) {
+                updateGalleryRowWithFile(row, e.target.files[0]);
+            }
+        }
+    });
+
+    document.addEventListener('dragover', function (e) {
+        const dropzone = e.target.closest('.gallery-dropzone');
+        if (dropzone) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.add('drag-over');
+        }
+    });
+
+    document.addEventListener('dragleave', function (e) {
+        const dropzone = e.target.closest('.gallery-dropzone');
+        if (dropzone) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+        }
+    });
+
+    document.addEventListener('drop', function (e) {
+        const dropzone = e.target.closest('.gallery-dropzone');
+        if (dropzone) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropzone.classList.remove('drag-over');
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                const row = dropzone.closest('.repeater-item');
+                if (row) {
+                    updateGalleryRowWithFile(row, e.dataTransfer.files[0]);
+                }
+            }
+        }
+    });
+
+    // ========================================================
+    // 3. Form Submit Validation & Primary Image Fallback
+    // ========================================================
+    const productForm = document.getElementById('product-form');
+    if (productForm) {
+        productForm.addEventListener('submit', function (e) {
+            const primaryPath = document.getElementById('primary-image-path')?.value?.trim();
+            const primaryId = document.getElementById('primary-image-id')?.value?.trim();
+            const primaryHasFile = document.getElementById('primary-image-file')?.files?.length > 0;
+
+            if (!primaryPath && !primaryId && !primaryHasFile) {
+                const galleryItems = document.querySelectorAll('#image-list .repeater-item');
+                let foundPath = '';
+                let foundId = '';
+                let foundFile = null;
+                let foundItem = null;
+
+                for (let item of galleryItems) {
+                    const pathInput = item.querySelector('.gallery-image-path');
+                    const fileInput = item.querySelector('.gallery-image-file');
+                    const idInput = item.querySelector('input[name*="[id]"]');
+
+                    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+                        foundFile = fileInput.files[0];
+                        foundItem = item;
+                        break;
+                    }
+                    if (pathInput && pathInput.value && pathInput.value.trim()) {
+                        foundPath = pathInput.value.trim();
+                        foundId = idInput?.value || '';
+                        foundItem = item;
+                        break;
+                    }
+                }
+
+                if (foundFile) {
+                    try {
+                        const dt = new DataTransfer();
+                        dt.items.add(foundFile);
+                        document.getElementById('primary-image-file').files = dt.files;
+                    } catch (err) {
+                        console.warn(err);
+                    }
+                    if (foundItem) foundItem.remove();
+                } else if (foundPath || foundId) {
+                    if (document.getElementById('primary-image-path')) {
+                        document.getElementById('primary-image-path').value = foundPath;
+                    }
+                    if (document.getElementById('primary-image-id')) {
+                        document.getElementById('primary-image-id').value = foundId;
+                    }
+                    if (foundItem) foundItem.remove();
+                } else {
+                    e.preventDefault();
+                    alert('Bắt buộc phải chọn ảnh đại diện cho sản phẩm (hoặc thêm ít nhất một ảnh vào thư viện ảnh).');
+                    const card = document.getElementById('primary-image-card');
+                    if (card) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.style.border = '2px solid #ef4444';
+                        setTimeout(() => card.style.border = '', 3000);
+                    }
+                    return false;
+                }
+            }
+        });
+    }
 
     // Release Editing Lock on exit
     @if($isEdit)

@@ -1760,12 +1760,6 @@
         width: 100%;
         padding: 10px;
     }
-
-    .zalo-widget {
-        right: 15px !important;
-        width: 50px !important;
-        height: 50px !important;
-    }
 }
 
 /* Mobile nhỏ (max-width: 480px) */

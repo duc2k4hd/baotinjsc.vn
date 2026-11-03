@@ -37,7 +37,7 @@
             document.addEventListener('click', (event) => {
                 const openButton = event.target.closest('[data-product-media-open]');
                 if (openButton) {
-                    const row = openButton.closest('.repeater-item');
+                    const row = openButton.closest('.repeater-item') || openButton.closest('#primary-image-card');
                     if (row) {
                         this.open(row);
                     }
@@ -46,7 +46,7 @@
 
                 const clearButton = event.target.closest('[data-product-media-clear]');
                 if (clearButton) {
-                    const row = clearButton.closest('.repeater-item');
+                    const row = clearButton.closest('.repeater-item') || clearButton.closest('#primary-image-card');
                     if (row) {
                         this.clearRow(row);
                     }
@@ -174,12 +174,20 @@
 
         async open(row) {
             this.activeRow = row;
-            this.enhanceRow(row);
+            if (row.id !== 'primary-image-card') {
+                this.enhanceRow(row);
+            }
             this.modal.hidden = false;
             document.body.classList.add('product-media-picker-open');
 
-            const titleBase = this.config.modalTitleBase || 'Chọn ảnh cho gallery sản phẩm';
-            const rowLabel = row.querySelector('.repeater-header strong')?.textContent?.trim();
+            const titleBase = this.config.modalTitleBase || 'Chọn ảnh cho sản phẩm';
+            let rowLabel = '';
+            if (row.id === 'primary-image-card') {
+                rowLabel = 'Ảnh đại diện';
+            } else {
+                rowLabel = row.querySelector('.repeater-header strong')?.textContent?.trim() || '';
+            }
+
             if (this.titleEl) {
                 this.titleEl.textContent = rowLabel ? `${titleBase} - ${rowLabel}` : titleBase;
             }
@@ -219,7 +227,34 @@
             }
 
             if (!item.relative_path) {
-                this.notify('Ảnh này không có đường dẫn file nội bộ nên không thể dùng cho gallery sản phẩm.', 'warning');
+                this.notify('Ảnh này không có đường dẫn file nội bộ nên không thể dùng cho sản phẩm.', 'warning');
+                return;
+            }
+
+            // Xử lý riêng cho hộp Ảnh đại diện
+            if (this.activeRow.id === 'primary-image-card') {
+                const hiddenPath = this.activeRow.querySelector('#primary-image-path');
+                const hiddenId = this.activeRow.querySelector('#primary-image-id');
+                const preview = this.activeRow.querySelector('#primary-image-preview');
+                const clearBtn = document.getElementById('btn-clear-primary-image');
+
+                if (hiddenPath) {
+                    hiddenPath.value = item.relative_path || '';
+                }
+                if (hiddenId) {
+                    hiddenId.value = item.id || '';
+                }
+                if (preview) {
+                    const previewUrl = this.escapeHtml(item.original || item.preview || '');
+                    const previewAlt = this.escapeHtml(item.alt || item.title || item.file_name || 'Ảnh đại diện');
+                    preview.innerHTML = previewUrl 
+                        ? `<img src="${previewUrl}" alt="${previewAlt}" style="max-width: 100%; max-height: 250px; object-fit: contain;">` 
+                        : '';
+                }
+                if (clearBtn) {
+                    clearBtn.classList.remove('d-none');
+                }
+                this.close();
                 return;
             }
 
@@ -256,6 +291,29 @@
         }
 
         clearRow(row) {
+            // Xử lý riêng cho hộp Ảnh đại diện
+            if (row.id === 'primary-image-card') {
+                const hiddenPath = row.querySelector('#primary-image-path');
+                const hiddenId = row.querySelector('#primary-image-id');
+                const preview = row.querySelector('#primary-image-preview');
+                const clearBtn = document.getElementById('btn-clear-primary-image');
+
+                if (hiddenPath) hiddenPath.value = '';
+                if (hiddenId) hiddenId.value = '';
+                if (preview) {
+                    preview.innerHTML = `
+                        <div class="text-muted p-4">
+                            <i class="fa-regular fa-image fa-3x mb-2 d-block text-secondary"></i>
+                            <span class="small">Chưa có ảnh đại diện<br>(Bấm để chọn từ thư viện)</span>
+                        </div>
+                    `;
+                }
+                if (clearBtn) {
+                    clearBtn.classList.add('d-none');
+                }
+                return;
+            }
+
             const hiddenInput = row.querySelector('input[name$="[existing_path]"]');
             const fileInput = row.querySelector('.image-file-input');
             const preview = row.querySelector('.image-preview');

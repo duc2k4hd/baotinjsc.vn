@@ -31,7 +31,8 @@ class ProductService
             $this->syncTags($product, is_array($tagIds) ? $tagIds : [], $tagNames);
 
             // Sync images (tạo images và lưu IDs vào image_ids)
-            $this->syncImages($product, Arr::get($data, 'images', []));
+            $allImages = $this->prepareAllImages(Arr::get($data, 'primary_image'), Arr::get($data, 'images', []));
+            $this->syncImages($product, $allImages);
 
             // Sync Variants
             $variantsData = Arr::get($data, 'variants', []);
@@ -122,10 +123,12 @@ class ProductService
             }
             // Nếu không có tag_ids và tag_names hoặc rỗng, hoặc không có thay đổi, không sync (giữ nguyên tags cũ)
 
-            // Sync images (chỉ sync nếu có dữ liệu images trong request và không rỗng)
-            // Nếu không có images trong request hoặc mảng rỗng, giữ nguyên ảnh cũ
-            if (isset($data['images']) && is_array($data['images']) && ! empty($data['images'])) {
-                $this->syncImages($product, $data['images']);
+            // Sync images (kết hợp ảnh đại diện và thư viện ảnh phụ)
+            if (isset($data['primary_image']) || isset($data['images'])) {
+                $allImages = $this->prepareAllImages(Arr::get($data, 'primary_image'), Arr::get($data, 'images', []));
+                if (! empty($allImages)) {
+                    $this->syncImages($product, $allImages);
+                }
             }
 
             // Sync Variants
@@ -435,6 +438,62 @@ class ProductService
             array_map('trim', explode(',', $tagNames)),
             fn ($name) => ! empty($name)
         );
+    }
+
+    /**
+     * Chuẩn bị danh sách ảnh gồm ảnh đại diện (đầu tiên) và thư viện ảnh (từ ảnh thứ 2 trở đi)
+     * Bắt buộc có ảnh đại diện; nếu không chọn, tự động lấy ảnh đầu tiên của thư viện làm ảnh đại diện.
+     */
+    private function prepareAllImages(?array $primaryImage, array $galleryImages): array
+    {
+        $hasPrimary = false;
+        $primaryItem = null;
+
+        if (! empty($primaryImage)) {
+            $hasPath = ! empty(Arr::get($primaryImage, 'existing_path')) || ! empty(Arr::get($primaryImage, 'path'));
+            $hasId = ! empty(Arr::get($primaryImage, 'id'));
+            $hasFile = isset($primaryImage['file']) && $primaryImage['file'] instanceof UploadedFile;
+
+            if ($hasPath || $hasId || $hasFile) {
+                $hasPrimary = true;
+                $primaryItem = $primaryImage;
+                $primaryItem['is_primary'] = 1;
+                $primaryItem['order'] = 0;
+            }
+        }
+
+        $validGallery = [];
+        foreach ($galleryImages as $idx => $img) {
+            $hasPath = ! empty(Arr::get($img, 'existing_path')) || ! empty(Arr::get($img, 'path'));
+            $hasId = ! empty(Arr::get($img, 'id'));
+            $hasFile = isset($img['file']) && $img['file'] instanceof UploadedFile;
+            if ($hasPath || $hasId || $hasFile) {
+                $img['is_primary'] = 0;
+                $img['order'] = count($validGallery) + 1;
+                $validGallery[] = $img;
+            }
+        }
+
+        $allImages = [];
+
+        if ($hasPrimary) {
+            $allImages[] = $primaryItem;
+            foreach ($validGallery as $g) {
+                $allImages[] = $g;
+            }
+        } elseif (! empty($validGallery)) {
+            // Tự động lấy ảnh đầu tiên từ thư viện làm ảnh đại diện
+            $promoted = array_shift($validGallery);
+            $promoted['is_primary'] = 1;
+            $promoted['order'] = 0;
+            $allImages[] = $promoted;
+
+            foreach ($validGallery as $g) {
+                $allImages[] = $g;
+            }
+        }
+
+        return $allImages;
     }
 
     /**

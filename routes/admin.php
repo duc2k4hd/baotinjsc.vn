@@ -398,4 +398,3 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     });
 });
 
-Route::fallback(fn () => response()->view('clients.pages.errors.404', [], 404));

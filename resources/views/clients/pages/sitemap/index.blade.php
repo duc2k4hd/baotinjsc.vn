@@ -48,7 +48,7 @@
 @section('schema')
     <script type="application/ld+json">
     {
-        "@context": "https://schema.org",
+        "@@context": "https://schema.org",
         "@type": "WebPage",
         "name": "{{ $metaTitle ?? 'Sitemap - ' . config('app.name') }}",
         "description": "{{ $metaDescription ?? 'Sitemap của ' . config('app.name') }}",

@@ -206,7 +206,7 @@ Route::get('/{categorySlug}-{brandSlug}', [ClientShopController::class, 'categor
 // Product detail và Category - cùng pattern, ProductController sẽ xử lý logic phân biệt
 // Đặt SAU category-brand nhưng ProductController sẽ forward về categoryBrand nếu cần
 Route::get('/{slug}', [ClientProductController::class, 'detail'])
-    ->where('slug', '[a-z0-9\-]+')
+    ->where('slug', '^(?!admin$)[a-z0-9\-]+$')
     ->name('client.product.detail');
 
 // 404 fallback
