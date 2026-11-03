@@ -46,3 +46,9 @@ crawler_data_xanhworld/
 /public/**/*.BMP
 /public/**/*.ICO
 /public/**/*.AVIF
+
+# Giữ cấu trúc tất cả folder trong public/clients/assets/img nhưng loại bỏ toàn bộ file
+/public/clients/assets/img/**/*
+!/public/clients/assets/img/**/
+!/public/clients/assets/img/**/.gitkeep
+
