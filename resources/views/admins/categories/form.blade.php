@@ -547,6 +547,7 @@
                                 openMediaPicker({
                                     mode: 'single',
                                     scope: 'client',
+                                    folder: 'categories',
                                     onSelect: (file) => {
                                         if (file && file.url) {
                                             callback(file.url, {
@@ -645,6 +646,7 @@
                     openMediaPicker({
                         mode: 'single',
                         scope: 'client',
+                        folder: 'categories',
                         onSelect: (file) => {
                             if (file && file.url) {
                                 editor.selection.moveToBookmark(bookmark);

@@ -77,7 +77,9 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     // Product Actions
     Route::post('products/bulk-action', [ProductController::class, 'bulkAction'])->name('products.bulk-action');
     Route::post('products/{product}/release-lock', [ProductController::class, 'releaseLock'])->name('products.release-lock');
-    Route::post('products/{product}/restore', [ProductController::class, 'restore'])->name('products.restore');
+    Route::match(['post', 'patch'], 'products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');
+    Route::delete('products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('products.force-delete');
+    Route::post('products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
     Route::get('products/{product}/inventory', [ProductController::class, 'inventory'])->name('products.inventory');
     Route::post('products/{product}/inventory-adjust', [ProductController::class, 'inventoryAdjust'])->name('products.inventory-adjust');
     Route::post('products/upload-cropped-image', [ProductController::class, 'uploadCroppedImage'])->name('products.upload-cropped-image');
@@ -198,19 +200,32 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::get('/', [MediaController::class, 'index'])->name('index');
         Route::get('/list', [MediaController::class, 'list'])->name('list');
         Route::get('/folder-tree', [MediaController::class, 'folderTree'])->name('folder-tree');
-        Route::get('/search', [MediaController::class, 'search'])->name('search');
+        Route::get('/search', \App\Http\Controllers\Admins\AdminMediaSearchController::class)->name('search');
+        Route::get('/targets', \App\Http\Controllers\Admins\AdminMediaTargetController::class)->name('targets');
         Route::get('/info', [MediaController::class, 'info'])->name('info');
         Route::get('/find-id', [MediaController::class, 'findId'])->name('find-id');
-        Route::post('/upload', [MediaController::class, 'upload'])->name('upload');
+        Route::post('/upload', [\App\Http\Controllers\Admins\AdminMediaUploadController::class, 'store'])->name('upload');
+        Route::post('/update/{id}', [\App\Http\Controllers\Admins\AdminMediaController::class, 'update'])->name('update');
+        Route::post('/assign-to-model', \App\Http\Controllers\Admins\AdminMediaAssignController::class)->name('assign');
+        Route::post('/delete/{id}', \App\Http\Controllers\Admins\AdminMediaDeleteController::class)->name('delete-item');
+        Route::post('/fast-delete-scope', [\App\Http\Controllers\Admins\AdminMediaController::class, 'fastDeleteScope'])->name('fast-delete-scope');
+        Route::post('/cleanup', [\App\Http\Controllers\Admins\AdminMediaController::class, 'cleanup'])->name('cleanup');
         Route::post('/rename', [MediaController::class, 'rename'])->name('rename');
         Route::post('/move', [MediaController::class, 'move'])->name('move');
         Route::post('/copy', [MediaController::class, 'copy'])->name('copy');
         Route::post('/delete', [MediaController::class, 'delete'])->name('delete');
-        Route::post('/bulk-delete', [MediaController::class, 'bulkDelete'])->name('bulk-delete');
+        Route::post('/bulk-delete', [\App\Http\Controllers\Admins\AdminMediaController::class, 'bulkDelete'])->name('bulk-delete');
         Route::post('/update-meta', [MediaController::class, 'updateMeta'])->name('update-meta');
         Route::post('/folder/create', [MediaController::class, 'createFolder'])->name('folder.create');
         Route::post('/folder/rename', [MediaController::class, 'renameFolder'])->name('folder.rename');
         Route::post('/folder/delete', [MediaController::class, 'deleteFolder'])->name('folder.delete');
+
+        // Media Library routes (WordPress-style)
+        Route::get('/library', [\App\Http\Controllers\Admins\MediaLibraryController::class, 'index'])->name('library.index');
+        Route::post('/library', [\App\Http\Controllers\Admins\MediaLibraryController::class, 'store'])->name('library.store');
+        Route::put('/library/{id}', [\App\Http\Controllers\Admins\MediaLibraryController::class, 'update'])->name('library.update');
+        Route::delete('/library/bulk-delete', [\App\Http\Controllers\Admins\MediaLibraryController::class, 'bulkDelete'])->name('library.bulk-delete');
+        Route::delete('/library/{id}', [\App\Http\Controllers\Admins\MediaLibraryController::class, 'destroy'])->name('library.destroy');
     });
 
     // Voucher Management

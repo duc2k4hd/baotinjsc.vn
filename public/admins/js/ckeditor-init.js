@@ -1,0 +1,549 @@
+/**
+ * CKEditor 5 Initialization for BAOTINJSC
+ * Đồng bộ toàn bộ tính năng trình soạn thảo CKEditor 5 từ nobifashion.vn
+ */
+
+(function() {
+    'use strict';
+
+    // License key từ CKEditor 5 builder (đã cấu hình cho localhost/127.0.0.1)
+    const LICENSE_KEY = 'eyJhbGciOiJFUzI1NiJ9.eyJleHAiOjE3Nzk0OTQzOTksImp0aSI6Ijc3Zjk5MzViLTRlYTgtNDM1MS05NmNmLWViNGE4OTRmMTgzNyIsInVzYWdlRW5kcG9pbnQiOiJodHRwczovL3Byb3h5LWV2ZW50LmNrZWRpdG9yLmNvbSIsImRpc3RyaWJ1dGlvbkNoYW5uZWwiOlsiY2xvdWQiLCJkcnVwYWwiXSwiZmVhdHVyZXMiOlsiRFJVUCIsIkUyUCIsIkUyVyJdLCJ2YyI6ImIzMDI0MDZmIn0.JWi5b64o2vzVfSMBEvCrXVvRquFklSgqxCxcjHYatP9SGI6AaonCt8tQHbh7Y399iwg6Tvbb0q883NyWjXHJ3Q';
+
+    // Kiểm tra CKEditor 5 đã load chưa
+    if (typeof window.CKEDITOR === 'undefined') {
+        console.error('CKEditor 5 chưa được load. Vui lòng đảm bảo script CKEditor 5 đã được include.');
+        return;
+    }
+
+    const {
+        ClassicEditor,
+        Essentials,
+        Paragraph,
+        Heading,
+        Bold,
+        Italic,
+        Underline,
+        Strikethrough,
+        Link,
+        AutoLink,
+        List,
+        Alignment,
+        BlockQuote,
+        CodeBlock,
+        HorizontalLine,
+        ImageBlock,
+        ImageToolbar,
+        ImageUpload,
+        ImageInsertViaUrl,
+        AutoImage,
+        ImageTextAlternative,
+        ImageCaption,
+        ImageStyle,
+        ImageUtils,
+        ImageEditing,
+        Table,
+        TableToolbar,
+        PlainTableOutput,
+        TableCaption,
+        SourceEditing,
+        Fullscreen,
+        GeneralHtmlSupport,
+        Autoformat,
+        TextTransformation,
+        FontSize,
+        FontFamily,
+        FontColor,
+        FontBackgroundColor,
+        Highlight,
+        Code,
+        Subscript,
+        Superscript,
+        TodoList,
+        Indent,
+        IndentBlock,
+        Style,
+        ShowBlocks,
+        BalloonToolbar,
+        BlockToolbar,
+        Plugin,
+        ButtonView
+    } = window.CKEDITOR;
+
+    // Custom Plugin: Media Library Button tích hợp sẵn trên thanh công cụ CKEditor 5
+    class MediaLibraryPlugin extends Plugin {
+        static get pluginName() {
+            return 'MediaLibrary';
+        }
+
+        init() {
+            const editor = this.editor;
+            const context = editor.config.get('mediaLibraryContext') || 'product';
+
+            if (editor.model.schema.isRegistered('imageBlock')) {
+                editor.model.schema.extend('imageBlock', { allowAttributes: 'title' });
+            }
+            if (editor.model.schema.isRegistered('imageInline')) {
+                editor.model.schema.extend('imageInline', { allowAttributes: 'title' });
+            }
+
+            editor.conversion.attributeToAttribute({ model: 'title', view: 'title' });
+
+            editor.ui.componentFactory.add('mediaLibrary', locale => {
+                const view = new ButtonView(locale);
+
+                view.set({
+                    label: 'Thư viện ảnh',
+                    icon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 503.746 503.746"><path style="fill:#2563eb;" d="M465.346,503.319h-358.4c-21.333,0-38.4-17.067-38.4-38.4v-358.4c0-21.333,17.067-38.4,38.4-38.4h358.4c21.333,0,38.4,17.067,38.4,38.4v358.4C503.746,486.253,486.679,503.319,465.346,503.319z"/><rect x="105.946" y="105.519" style="fill:#ECF4F7;" width="358.4" height="358.4"/><circle cx="208.346" cy="207.919" r="34.133" style="fill:#FFE079;"/><path style="fill:#50DD8E;" d="M379.012,368.346c14.507-4.267,31.573-6.827,51.2-6.827c0,0,17.067,0,34.133,8.533v93.867h-358.4c0,0,42.667-68.267,102.4-68.267s93.867,34.133,93.867,34.133S319.279,385.412,379.012,368.346z"/></svg>',
+                    tooltip: true,
+                    withText: false
+                });
+
+                view.on('execute', () => {
+                    const folder = context === 'post' ? 'posts' : 'clothes';
+                    if (window.mediaLibrary) {
+                        window.mediaLibrary.open({
+                            context: context,
+                            onInsert: (result) => {
+                                try {
+                                    const items = Array.isArray(result) ? result : [result];
+                                    if (!items.length) return;
+
+                                    let htmlContent = '';
+                                    items.forEach(image => {
+                                        const fileName = image.url || image.file_name || image.path || '';
+                                        if (!fileName) return;
+
+                                        const imageUrl = fileName.startsWith('http') 
+                                            ? fileName 
+                                            : (fileName.includes('/') ? `/${fileName.replace(/^\//, '')}` : `/clients/assets/img/${folder}/${fileName}`);
+                                        const alt = (image.alt || image.name || image.title || '').replace(/"/g, '&quot;');
+                                        const caption = (image.description || image.title || '').trim();
+
+                                        htmlContent += `<figure class="image"><img src="${imageUrl}" alt="${alt}">`;
+                                        if (caption) {
+                                            htmlContent += `<figcaption>${caption}</figcaption>`;
+                                        }
+                                        htmlContent += `</figure>`;
+                                    });
+
+                                    if (htmlContent && editor.data && editor.data.processor) {
+                                        const viewFragment = editor.data.processor.toView(htmlContent);
+                                        const modelFragment = editor.data.toModel(viewFragment);
+                                        editor.model.insertContent(modelFragment);
+                                    }
+                                } catch (err) {
+                                    console.error('Lỗi khi chèn ảnh vào CKEditor:', err);
+                                }
+                            },
+                            insertMode: 'single'
+                        });
+                    } else if (typeof window.openMediaPicker === 'function') {
+                        window.openMediaPicker({
+                            mode: 'single',
+                            scope: 'client',
+                            folder: folder,
+                            onSelect: (file) => {
+                                if (!file || !file.url) return;
+                                const html = `<figure class="image"><img src="${file.url}" alt="${file.alt || ''}"></figure>`;
+                                const viewFragment = editor.data.processor.toView(html);
+                                const modelFragment = editor.data.toModel(viewFragment);
+                                editor.model.insertContent(modelFragment);
+                            }
+                        });
+                    } else {
+                        alert('Thư viện ảnh chưa sẵn sàng.');
+                    }
+                });
+
+                return view;
+            });
+        }
+    }
+
+    // Cấu hình editor cho Posts (Đầy đủ tính năng cao cấp)
+    const postsEditorConfig = {
+        licenseKey: LICENSE_KEY,
+        language: 'vi',
+        toolbar: {
+            shouldNotGroupWhenFull: true,
+            items: [
+                'undo', 'redo', '|',
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                'alignment', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'link', 'mediaLibrary', 'insertTable', '|',
+                'blockQuote', 'codeBlock', 'horizontalLine', '|',
+                'sourceEditing', 'fullscreen'
+            ]
+        },
+        plugins: [
+            Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
+            Link, AutoLink, List, Alignment, BlockQuote, CodeBlock, HorizontalLine,
+            ImageBlock, ImageToolbar, ImageUpload, ImageInsertViaUrl, AutoImage,
+            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing,
+            Table, TableToolbar, PlainTableOutput, TableCaption,
+            SourceEditing, Fullscreen, GeneralHtmlSupport, Autoformat, TextTransformation,
+            FontSize, FontFamily, FontColor, FontBackgroundColor, Highlight, Code,
+            Subscript, Superscript, TodoList, Indent, IndentBlock, Style, ShowBlocks,
+            BalloonToolbar, BlockToolbar, MediaLibraryPlugin
+        ],
+        heading: {
+            options: [
+                { model: 'paragraph', title: 'Đoạn văn', class: 'ck-heading_paragraph' },
+                { model: 'heading1', view: 'h1', title: 'Tiêu đề 1 (H1)', class: 'ck-heading_heading1' },
+                { model: 'heading2', view: 'h2', title: 'Tiêu đề 2 (H2)', class: 'ck-heading_heading2' },
+                { model: 'heading3', view: 'h3', title: 'Tiêu đề 3 (H3)', class: 'ck-heading_heading3' },
+                { model: 'heading4', view: 'h4', title: 'Tiêu đề 4 (H4)', class: 'ck-heading_heading4' }
+            ]
+        },
+        fontSize: {
+            options: [10, 12, 14, 'default', 18, 20, 22, 26, 30],
+            supportAllValues: true
+        },
+        fontFamily: {
+            supportAllValues: true
+        },
+        htmlSupport: {
+            allow: [
+                {
+                    name: /^.*$/,
+                    styles: true,
+                    attributes: true,
+                    classes: true
+                }
+            ]
+        },
+        image: {
+            toolbar: [
+                'toggleImageCaption', 'imageTextAlternative', '|',
+                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText'
+            ]
+        },
+        link: {
+            addTargetToExternalLinks: true,
+            defaultProtocol: 'https://',
+            decorators: {
+                openInNewTab: {
+                    mode: 'manual',
+                    label: 'Mở trong tab mới',
+                    attributes: {
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                    }
+                }
+            }
+        },
+        table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+        },
+        mediaLibraryContext: 'post'
+    };
+
+    // Cấu hình editor cho Products
+    const productsEditorConfig = {
+        licenseKey: LICENSE_KEY,
+        language: 'vi',
+        toolbar: {
+            items: [
+                'undo', 'redo', '|',
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', '|',
+                'fontSize', 'fontColor', 'fontBackgroundColor', '|',
+                'alignment', '|',
+                'bulletedList', 'numberedList', '|',
+                'link', 'mediaLibrary', 'insertTable', '|',
+                'blockQuote', 'horizontalLine', '|',
+                'sourceEditing', 'fullscreen'
+            ],
+            shouldNotGroupWhenFull: true
+        },
+        plugins: [
+            Essentials, Paragraph, Heading, Bold, Italic, Underline, Strikethrough,
+            Link, AutoLink, List, Alignment, BlockQuote, HorizontalLine,
+            ImageBlock, ImageToolbar, ImageUpload, ImageInsertViaUrl, AutoImage,
+            ImageTextAlternative, ImageCaption, ImageStyle, ImageUtils, ImageEditing,
+            Table, TableToolbar, PlainTableOutput, TableCaption,
+            SourceEditing, Fullscreen, GeneralHtmlSupport, Autoformat, TextTransformation,
+            FontSize, FontFamily, FontColor, FontBackgroundColor, Highlight, Code,
+            MediaLibraryPlugin
+        ],
+        heading: {
+            options: [
+                { model: 'paragraph', title: 'Đoạn văn', class: 'ck-heading_paragraph' },
+                { model: 'heading1', view: 'h1', title: 'Tiêu đề 1 (H1)', class: 'ck-heading_heading1' },
+                { model: 'heading2', view: 'h2', title: 'Tiêu đề 2 (H2)', class: 'ck-heading_heading2' },
+                { model: 'heading3', view: 'h3', title: 'Tiêu đề 3 (H3)', class: 'ck-heading_heading3' },
+                { model: 'heading4', view: 'h4', title: 'Tiêu đề 4 (H4)', class: 'ck-heading_heading4' }
+            ]
+        },
+        fontSize: {
+            options: [10, 12, 14, 'default', 18, 20, 22, 26],
+            supportAllValues: true
+        },
+        htmlSupport: {
+            allow: [
+                {
+                    name: /^.*$/,
+                    styles: true,
+                    attributes: true,
+                    classes: true
+                }
+            ]
+        },
+        image: {
+            toolbar: [
+                'toggleImageCaption', 'imageTextAlternative', '|',
+                'imageStyle:inline', 'imageStyle:wrapText', 'imageStyle:breakText'
+            ]
+        },
+        link: {
+            addTargetToExternalLinks: true,
+            defaultProtocol: 'https://',
+            decorators: {
+                openInNewTab: {
+                    mode: 'manual',
+                    label: 'Mở trong tab mới',
+                    attributes: {
+                        target: '_blank',
+                        rel: 'noopener noreferrer'
+                    }
+                }
+            }
+        },
+        table: {
+            contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells']
+        },
+        mediaLibraryContext: 'product'
+    };
+
+    // Hàm tắt tính năng kiểm tra chính tả (bỏ gạch chân đỏ lượn sóng)
+    function disableEditorSpellcheck(editor) {
+        if (!editor) return;
+
+        const applyAttributes = (el) => {
+            if (!el) return;
+            el.spellcheck = false;
+            el.setAttribute('spellcheck', 'false');
+            el.setAttribute('autocorrect', 'off');
+            el.setAttribute('autocomplete', 'off');
+            el.setAttribute('autocapitalize', 'off');
+            if (el.querySelectorAll) {
+                el.querySelectorAll('[contenteditable]').forEach(child => {
+                    child.spellcheck = false;
+                    child.setAttribute('spellcheck', 'false');
+                });
+            }
+        };
+
+        try {
+            editor.editing.view.change(writer => {
+                const root = editor.editing.view.document.getRoot();
+                if (root) {
+                    writer.setAttribute('spellcheck', 'false', root);
+                    writer.setAttribute('autocorrect', 'off', root);
+                    writer.setAttribute('autocomplete', 'off', root);
+                }
+                if (editor.editing.view.document.roots) {
+                    for (const r of editor.editing.view.document.roots) {
+                        writer.setAttribute('spellcheck', 'false', r);
+                        writer.setAttribute('autocorrect', 'off', r);
+                        writer.setAttribute('autocomplete', 'off', r);
+                    }
+                }
+            });
+        } catch (e) {}
+
+        const updateDom = () => {
+            try {
+                if (editor.ui && editor.ui.view && editor.ui.view.editable) {
+                    applyAttributes(editor.ui.view.editable.element);
+                }
+                if (editor.editing && editor.editing.view) {
+                    applyAttributes(editor.editing.view.getDomRoot());
+                }
+            } catch (e) {}
+        };
+
+        updateDom();
+
+        try {
+            if (editor.editing && editor.editing.view && editor.editing.view.document) {
+                editor.editing.view.document.on('render', updateDom);
+            }
+            if (editor.ui && editor.ui.focusTracker) {
+                editor.ui.focusTracker.on('change:isFocused', (evt, name, isFocused) => {
+                    if (isFocused) {
+                        updateDom();
+                    }
+                });
+            }
+        } catch (e) {}
+    }
+
+    // Khởi tạo editor cho Posts
+    function initPostsEditor() {
+        const textarea = document.getElementById('post-content-editor');
+        if (!textarea || textarea.dataset.ckeditorInitialized === 'true') return;
+
+        textarea.setAttribute('spellcheck', 'false');
+        const initialData = textarea.value || '';
+
+        ClassicEditor
+            .create(textarea, {
+                ...postsEditorConfig,
+                initialData: initialData
+            })
+            .then(editor => {
+                disableEditorSpellcheck(editor);
+                textarea.dataset.ckeditorInitialized = 'true';
+                window.ckeditorInstances = window.ckeditorInstances || {};
+                window.ckeditorInstances['post-content-editor'] = editor;
+
+                const form = textarea.closest('form');
+                if (form) {
+                    form.addEventListener('submit', () => {
+                        let htmlContent = editor.getData();
+                        htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
+                        textarea.value = htmlContent;
+                    });
+                }
+
+                editor.model.document.on('change:data', () => {
+                    if (window.scheduleAutosave) {
+                        window.scheduleAutosave();
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Lỗi khởi tạo CKEditor 5 cho bài viết:', error);
+            });
+    }
+
+    // Khởi tạo editor cho Products
+    function initProductsEditors() {
+        document.querySelectorAll('.tinymce-editor').forEach(textarea => {
+            if (textarea.dataset.ckeditorInitialized === 'true') {
+                return;
+            }
+
+            textarea.setAttribute('spellcheck', 'false');
+            const initialData = textarea.value || '';
+            const editorId = textarea.id || 'ckeditor-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+            if (!textarea.id) {
+                textarea.id = editorId;
+            }
+
+            const isProductForm = textarea.closest('form#product-form');
+            const config = isProductForm ? productsEditorConfig : postsEditorConfig;
+
+            ClassicEditor
+                .create(textarea, {
+                    ...config,
+                    initialData: initialData
+                })
+                .then(editor => {
+                    disableEditorSpellcheck(editor);
+                    textarea.dataset.ckeditorInitialized = 'true';
+                    window.ckeditorInstances = window.ckeditorInstances || {};
+                    window.ckeditorInstances[editorId] = editor;
+
+                    const form = textarea.closest('form');
+                    if (form) {
+                        form.addEventListener('submit', () => {
+                            let htmlContent = editor.getData();
+                            htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
+                            textarea.value = htmlContent;
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi khởi tạo CKEditor 5:', error);
+                });
+        });
+    }
+
+    // API tương thích toàn cầu
+    window.CKEditor5API = {
+        get: function(editorId) {
+            return window.ckeditorInstances && window.ckeditorInstances[editorId] || null;
+        },
+        getContent: function(editorId) {
+            const editor = this.get(editorId);
+            if (!editor) return '';
+            let htmlContent = editor.getData();
+            htmlContent = htmlContent.replace(/\s*data-list-item-id="[^"]*"/gi, '');
+            return htmlContent;
+        },
+        setContent: function(editorId, content) {
+            const editor = this.get(editorId);
+            if (editor) {
+                editor.setData(content);
+            }
+        }
+    };
+
+    // Auto-init khi DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initPostsEditor();
+            initProductsEditors();
+        });
+    } else {
+        initPostsEditor();
+        initProductsEditors();
+    }
+
+    // Observer tự động bắt các textarea mới
+    if (typeof MutationObserver !== 'undefined') {
+        const editorObserver = new MutationObserver((mutations) => {
+            let shouldInit = false;
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1) {
+                        if (node.tagName === 'TEXTAREA' && 
+                            (node.id === 'post-content-editor' || node.classList.contains('tinymce-editor'))) {
+                            shouldInit = true;
+                        } else if (node.querySelectorAll) {
+                            const textareas = node.querySelectorAll('#post-content-editor, .tinymce-editor');
+                            if (textareas.length > 0) {
+                                shouldInit = true;
+                            }
+                        }
+                    }
+                });
+            });
+            if (shouldInit) {
+                setTimeout(() => {
+                    initPostsEditor();
+                    initProductsEditors();
+                }, 100);
+            }
+        });
+
+        if (document.body) {
+            editorObserver.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    // Tắt kiểm tra chính tả toàn cục
+    function enforceDisableSpellcheck() {
+        document.querySelectorAll('.ck-editor__editable, .ck-editor__editable_inline, .ck-content, [contenteditable="true"], textarea, .tinymce-editor, form').forEach(el => {
+            el.spellcheck = false;
+            if (el.getAttribute('spellcheck') !== 'false') {
+                el.setAttribute('spellcheck', 'false');
+                el.setAttribute('autocorrect', 'off');
+                el.setAttribute('autocomplete', 'off');
+                el.setAttribute('autocapitalize', 'off');
+            }
+        });
+    }
+
+    document.addEventListener('focusin', enforceDisableSpellcheck, true);
+    document.addEventListener('input', enforceDisableSpellcheck, true);
+    document.addEventListener('DOMContentLoaded', enforceDisableSpellcheck);
+    setTimeout(enforceDisableSpellcheck, 300);
+    setTimeout(enforceDisableSpellcheck, 1000);
+})();
+

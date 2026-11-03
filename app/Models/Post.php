@@ -27,6 +27,8 @@ class Post extends Model
         'tag_ids',
         'excerpt',
         'content',
+        'thumbnail',
+        'thumbnail_alt_text',
         'image_ids',
         'status',
         'is_featured',

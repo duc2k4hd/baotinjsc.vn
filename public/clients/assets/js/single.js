@@ -95,9 +95,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 inStock = false;
             }
                 } else {
-            // Không có variants, check product stock
-            const stockStatus = document.querySelector('.info-value.in-stock');
-            inStock = stockStatus !== null;
+            // Không có variants, check product stock từ data attribute của button
+            const stockValue = addToCartBtn.getAttribute('data-in-stock');
+            inStock = stockValue === '1';
         }
         
         if (hasVariants && !variantId) {
@@ -323,9 +323,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                 }
-        } else {
+            } else {
                 // Check stock của product
-                const stockStatus = document.querySelector('.info-value.in-stock');
+                const inStockAttr = addToCartBtn ? addToCartBtn.getAttribute('data-in-stock') : '0';
+                const stockStatus = document.querySelector('.info-value.in-stock') || (inStockAttr === '1');
                 if (!stockStatus) {
                     if (typeof showCustomToast === 'function') {
                         showCustomToast('Sản phẩm đã hết hàng', 'error');

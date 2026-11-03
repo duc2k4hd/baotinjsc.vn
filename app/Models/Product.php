@@ -6,12 +6,14 @@ use App\Models\Concerns\HasImageIds;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
 class Product extends Model
 {
     use HasFactory;
     use HasImageIds;
+    use SoftDeletes;
 
     protected $table = 'products';
 
@@ -434,6 +436,14 @@ class Product extends Model
         });
 
         static::updating(function (self $product) {
+            // Luôn xóa cache của product khi có bất kỳ cập nhật nào
+            $slug = $product->slug ?? $product->getOriginal('slug');
+            if ($slug) {
+                Cache::forget('product_detail_'.$slug);
+                // Xóa luôn cache loại slug
+                Cache::forget('slug_type_'.$slug);
+            }
+
             if ($product->isDirty('slug')) {
                 $oldSlug = $product->getOriginal('slug');
                 if ($oldSlug) {
@@ -444,14 +454,6 @@ class Product extends Model
                     // Invalidate cache cho slug cũ
                     Cache::forget('product_detail_'.$oldSlug);
                     Cache::forget('slug_type_'.$oldSlug);
-                }
-            }
-            // Invalidate cache khi is_active thay đổi
-            if ($product->isDirty('is_active')) {
-                $slug = $product->slug ?? $product->getOriginal('slug');
-                if ($slug) {
-                    Cache::forget('product_detail_'.$slug);
-                    Cache::forget('slug_type_'.$slug);
                 }
             }
         });

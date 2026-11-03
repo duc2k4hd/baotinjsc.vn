@@ -32,41 +32,103 @@ class ProductController extends Controller
 
     public function index(Request $request): View
     {
-        $products = Product::query()
-            ->with('primaryCategory')
-            ->when($request->filled('keyword'), function ($query) use ($request) {
+        $perPageOptions = [20, 50, 100, 200];
+        $perPage = (int) $request->input('per_page', 20);
+        if (!in_array($perPage, $perPageOptions, true)) {
+            $perPage = 20;
+        }
+
+        $brandId = $request->filled('brand_id') ? (int) $request->input('brand_id') : null;
+        $categoryId = $request->filled('category_id') ? (int) $request->input('category_id') : null;
+        $sortBy = (string) $request->input('sort_by', 'latest');
+
+        // Thống kê đếm siêu nhanh qua 1 truy vấn duy nhất
+        $stats = Product::withTrashed()
+            ->selectRaw("
+                COUNT(CASE WHEN deleted_at IS NULL THEN 1 END) as total,
+                COUNT(CASE WHEN deleted_at IS NULL AND is_active = 1 THEN 1 END) as active,
+                COUNT(CASE WHEN deleted_at IS NULL AND is_active = 0 THEN 1 END) as inactive,
+                COUNT(CASE WHEN deleted_at IS NULL AND stock_quantity <= 0 THEN 1 END) as out_of_stock,
+                COUNT(CASE WHEN deleted_at IS NOT NULL THEN 1 END) as trash
+            ")
+            ->first();
+
+        $query = Product::query();
+
+        // Xử lý lọc theo trạng thái (bao gồm Thùng rác)
+        if ($request->status === 'trash') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            } elseif ($request->status === 'out_of_stock') {
+                $query->where('stock_quantity', '<=', 0);
+            }
+        }
+
+        $query->with(['primaryCategory:id,name,slug', 'brand:id,name,slug'])
+            ->when($brandId, function ($q) use ($brandId) {
+                $q->where('brand_id', $brandId);
+            })
+            ->when($categoryId, function ($q) use ($categoryId) {
+                $q->where(function ($sub) use ($categoryId) {
+                    $sub->where('primary_category_id', $categoryId)
+                        ->orWhereJsonContains('category_ids', $categoryId);
+                });
+            })
+            ->when($request->filled('stock_status') && $request->status !== 'out_of_stock', function ($q) use ($request) {
+                if ($request->stock_status === 'in_stock') {
+                    $q->where('stock_quantity', '>', 0);
+                } elseif ($request->stock_status === 'out_of_stock') {
+                    $q->where('stock_quantity', '<=', 0);
+                }
+            })
+            ->when($request->filled('is_featured'), function ($q) use ($request) {
+                $q->where('is_featured', $request->boolean('is_featured'));
+            })
+            ->when($request->filled('keyword'), function ($q) use ($request) {
                 $keyword = trim($request->keyword);
-                // Tối ưu: nếu keyword ngắn, ưu tiên search từ đầu (có thể dùng index)
-                // Nếu keyword dài, dùng full search
                 if (strlen($keyword) <= 10) {
-                    // Search từ đầu: có thể dùng index
-                    $query->where(function ($q) use ($keyword) {
-                        $q->where('name', 'like', "{$keyword}%")
+                    $q->where(function ($sub) use ($keyword) {
+                        $sub->where('name', 'like', "{$keyword}%")
                             ->orWhere('sku', 'like', "{$keyword}%");
                     });
                 } else {
-                    // Full search: không thể dùng index nhưng ít kết quả hơn
-                    $query->where(function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%")
+                    $q->where(function ($sub) use ($keyword) {
+                        $sub->where('name', 'like', "%{$keyword}%")
                             ->orWhere('sku', 'like', "%{$keyword}%");
                     });
                 }
-            })
-            ->when($request->filled('status'), function ($query) use ($request) {
-                if ($request->status === 'active') {
-                    $query->where('is_active', true);
-                } elseif ($request->status === 'inactive') {
-                    $query->where('is_active', false);
-                }
-            })
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->appends($request->query());
+            });
+
+        // Sắp xếp
+        match ($sortBy) {
+            'oldest' => $query->orderBy('id', 'asc'),
+            'price_asc' => $query->orderBy('price', 'asc'),
+            'price_desc' => $query->orderBy('price', 'desc'),
+            'name_asc' => $query->orderBy('name', 'asc'),
+            'stock_asc' => $query->orderBy('stock_quantity', 'asc'),
+            'stock_desc' => $query->orderBy('stock_quantity', 'desc'),
+            default => $query->orderBy('id', 'desc'),
+        };
+
+        $products = $query->paginate($perPage)->withQueryString();
 
         // Preload images để tránh N+1 query
         Product::preloadImages($products->items());
 
-        return view('admins.products.index', compact('products'));
+        // Categories và Brands để phục vụ filter
+        $categories = Cache::remember('admin_categories_filter', now()->addHours(6), function () {
+            return Category::select('id', 'name')->orderBy('name')->get();
+        });
+        $brands = Cache::remember('admin_brands_filter', now()->addHours(6), function () {
+            return Brand::select('id', 'name')->orderBy('name')->get();
+        });
+
+        return view('admins.products.index', compact('products', 'stats', 'categories', 'brands', 'perPage', 'sortBy'));
     }
 
     public function create(): View
@@ -235,30 +297,71 @@ class ProductController extends Controller
         }
 
         // Log activity before delete
-        $this->activityLogService->logDelete($product, 'Xóa sản phẩm: '.$product->name);
+        $this->activityLogService->logDelete($product, 'Xóa sản phẩm vào thùng rác: '.$product->name);
 
         $this->releaseEditingLock($product);
         $this->productService->delete($product);
 
         return redirect()
             ->route('admin.products.index')
-            ->with('success', 'Đã chuyển sản phẩm sang trạng thái tạm ẩn');
+            ->with('success', 'Đã chuyển sản phẩm vào thùng rác');
     }
 
-    public function restore(Request $request, Product $product): RedirectResponse
+    public function restore(Request $request, int|string $id): RedirectResponse
     {
         try {
-            // Khôi phục sản phẩm bằng cách set is_active = true
-            $product->update(['is_active' => true]);
+            $product = Product::onlyTrashed()->findOrFail($id);
+            $this->productService->restore($product);
 
             return redirect()
-                ->route('admin.products.index', ['status' => 'inactive'])
-                ->with('success', 'Đã khôi phục sản phẩm (đang ở trạng thái tạm ẩn, cần bật Đang bán nếu muốn hiển thị).');
+                ->route('admin.products.index', ['status' => 'trash'])
+                ->with('success', 'Đã khôi phục sản phẩm thành công.');
         } catch (\Throwable $e) {
             report($e);
 
-            return back()
-                ->with('error', 'Không thể khôi phục: '.$e->getMessage());
+            return back()->with('error', 'Không thể khôi phục: '.$e->getMessage());
+        }
+    }
+
+    public function forceDelete(Request $request, int|string $id): RedirectResponse
+    {
+        try {
+            $product = Product::onlyTrashed()->findOrFail($id);
+            $name = $product->name;
+            $this->productService->forceDelete($product);
+
+            return redirect()
+                ->route('admin.products.index', ['status' => 'trash'])
+                ->with('success', "Đã xóa vĩnh viễn sản phẩm: {$name}.");
+        } catch (\Throwable $e) {
+            report($e);
+
+            return back()->with('error', 'Không thể xóa vĩnh viễn: '.$e->getMessage());
+        }
+    }
+
+    public function toggleStatus(Request $request, Product $product): JsonResponse
+    {
+        try {
+            $product->is_active = !$product->is_active;
+            $product->save();
+
+            // Clear cache slug
+            if ($product->slug) {
+                Cache::forget('slug_type_'.$product->slug);
+                Cache::forget('product_detail_'.$product->slug);
+            }
+
+            return response()->json([
+                'success' => true,
+                'is_active' => $product->is_active,
+                'message' => $product->is_active ? 'Đã kích hoạt sản phẩm' : 'Đã tạm ẩn sản phẩm',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi cập nhật trạng thái: '.$e->getMessage(),
+            ], 500);
         }
     }
 
@@ -266,8 +369,7 @@ class ProductController extends Controller
     {
         $request->validate([
             'selected' => ['required', 'array'],
-            'selected.*' => ['integer', 'exists:products,id'],
-            'bulk_action' => ['required', 'in:hide,delete,restore'],
+            'bulk_action' => ['required', 'in:hide,show,delete,restore,force_delete'],
         ]);
 
         $productIds = $request->input('selected', []);
@@ -275,29 +377,33 @@ class ProductController extends Controller
 
         if ($action === 'hide') {
             Product::whereIn('id', $productIds)->update(['is_active' => false]);
-
             return back()->with('success', 'Đã chuyển '.count($productIds).' sản phẩm sang trạng thái tạm ẩn.');
         }
 
-        if ($action === 'delete') {
-            // Chunk products để tránh out of memory khi xóa nhiều sản phẩm
-            $deletedCount = 0;
-            Product::whereIn('id', $productIds)->chunk(100, function ($products) use (&$deletedCount) {
-                foreach ($products as $product) {
-                    $this->productService->delete($product);
-                    $deletedCount++;
-                }
-            });
+        if ($action === 'show') {
+            Product::whereIn('id', $productIds)->update(['is_active' => true]);
+            return back()->with('success', 'Đã kích hoạt (hiển thị) '.count($productIds).' sản phẩm.');
+        }
 
-            return back()->with('success', 'Đã xóa mềm '.$deletedCount.' sản phẩm.');
+        if ($action === 'delete') {
+            $products = Product::whereIn('id', $productIds)->get();
+            foreach ($products as $product) {
+                $this->productService->delete($product);
+            }
+            return back()->with('success', 'Đã chuyển '.count($productIds).' sản phẩm vào thùng rác.');
         }
 
         if ($action === 'restore') {
-            // Khôi phục: bật lại is_active cho các sản phẩm đã tạm ẩn (không dùng soft delete)
-            $restoredCount = Product::whereIn('id', $productIds)
-                ->update(['is_active' => true]);
+            Product::onlyTrashed()->whereIn('id', $productIds)->restore();
+            return back()->with('success', 'Đã khôi phục '.count($productIds).' sản phẩm.');
+        }
 
-            return back()->with('success', 'Đã khôi phục '.$restoredCount.' sản phẩm.');
+        if ($action === 'force_delete') {
+            $products = Product::onlyTrashed()->whereIn('id', $productIds)->get();
+            foreach ($products as $product) {
+                $this->productService->forceDelete($product);
+            }
+            return back()->with('success', 'Đã xóa vĩnh viễn '.count($productIds).' sản phẩm.');
         }
 
         return back()->with('error', 'Hành động không hợp lệ.');

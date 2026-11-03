@@ -631,13 +631,23 @@ class ProductController extends Controller
                 ]);
             }
 
-            // quantityProductDetail: tồn kho sản phẩm (không variant) sau khi trừ trong giỏ
-            if ($product->hasVariants()) {
-                $quantityProductDetail = 0;
+            // Tính số lượng tồn kho sản phẩm chính xác theo chuẩn nobifashion
+            if ($product->hasVariants() && $product->variants->isNotEmpty()) {
+                $hasUnlimited = $product->variants->contains(fn ($v) => $v->stock_quantity === null);
+                if ($hasUnlimited) {
+                    $quantityProductDetail = 999999;
+                } else {
+                    $variantStockTotal = (int) $product->variants->sum('stock_quantity');
+                    $quantityProductDetail = $variantStockTotal > 0 ? $variantStockTotal : (int) ($product->stock_quantity ?? 0);
+                }
             } else {
-                $baseStock = $product->stock_quantity ?? 0;
-                $remaining = max(0, (int) $baseStock - (int) $productCartQuantity);
-                $quantityProductDetail = $remaining;
+                if ($product->stock_quantity === null) {
+                    $quantityProductDetail = 999999; // Không giới hạn tồn kho
+                } else {
+                    $baseStock = (int) $product->stock_quantity;
+                    $remaining = max(0, $baseStock - (int) $productCartQuantity);
+                    $quantityProductDetail = $remaining;
+                }
             }
 
             // CSKH dynamic (cache 1 ngày)

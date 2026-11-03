@@ -3,7 +3,7 @@
 @section('title', ($product->meta_title ?? $product->name) . ' - ' . ($settings->site_name ?? 'Bảo Tín JSC'))
 
 @section('head')
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css') }}">
+    <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css?v='.time()) }}">
 
     @php
         $pageTitle = $product->meta_title ?? ($product->name ?? 'Sản phẩm');
@@ -400,41 +400,38 @@
                                 href="/cua-hang?brands={{ $product->brand->slug ?? '#' }}">{{ $product->brand->name ?? '' }}</a>
                         </div>
                     @endif
-                    <div class="info-item">
-                        <span class="info-label">Bảo hành:</span>
-                        <span class="info-value">12 tháng</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">CO CQ:</span>
-                        <span class="info-value">Đầy đủ</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Tình trạng:</span>
-                        <span class="info-value {{ $quantityProductDetail > 0 ? 'in-stock' : 'out-of-stock' }}">
-                            @if ($product->hasVariants() && $product->variants->count() > 0)
-                                @php
-                                    $hasStock = false;
-                                    foreach ($product->variants as $variant) {
-                                        if ($variant->stock_quantity === null || $variant->stock_quantity > 0) {
-                                            $hasStock = true;
-                                            break;
-                                        }
-                                    }
-                                @endphp
-                                @if ($hasStock)
+                    @if ($product->short_description)
+                        <div class="product-short-description">{!! $product->short_description ?? '' !!}</div>
+                    @else
+                        <div class="info-item">
+                            <span class="info-label">Bảo hành:</span>
+                            <span class="info-value">12 tháng</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">CO CQ:</span>
+                            <span class="info-value">Đầy đủ</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Tình trạng:</span>
+                            @php
+                                $isProductInStock = false;
+                                if ($product->hasVariants() && $product->variants->count() > 0) {
+                                    $isProductInStock = $product->variants->contains(function ($v) {
+                                        return $v->stock_quantity === null || $v->stock_quantity > 0;
+                                    }) || (($product->stock_quantity ?? 0) > 0);
+                                } else {
+                                    $isProductInStock = ($quantityProductDetail > 0) || ($product->stock_quantity === null) || (($product->stock_quantity ?? 0) > 0);
+                                }
+                            @endphp
+                            <span class="info-value {{ $isProductInStock ? 'in-stock' : 'out-of-stock' }}">
+                                @if ($isProductInStock)
                                     <span class="status-text">Còn hàng</span>
                                 @else
                                     <span class="status-text">Liên hệ</span>
                                 @endif
-                            @else
-                                @if ($quantityProductDetail > 0)
-                                    <span class="status-text">Còn hàng</span>
-                                @else
-                                    <span class="status-text">Liên hệ</span>
-                                @endif
-                            @endif
-                        </span>
-                    </div>
+                            </span>
+                        </div>
+                    @endif
                 </div>
 
                 <!-- Product Variants -->
@@ -522,9 +519,10 @@
                                 <input type="hidden" name="product_variant_id" value="" id="product-variant-id">
                                 <input type="hidden" name="quantity" value="1" id="cart-quantity">
                                 <button type="submit" class="btn-add-cart" id="btn-add-cart"
-                                    @if ($product->hasVariants() && $product->variants->count() > 0) disabled @elseif($quantityProductDetail <= 0) disabled @endif>
+                                    data-in-stock="{{ $isProductInStock ? '1' : '0' }}"
+                                    @if (!$isProductInStock) disabled @endif>
                                     <i class="fas fa-shopping-cart"></i>
-                                    <span id="btn-add-cart-text">Thêm vào giỏ hàng</span>
+                                    <span id="btn-add-cart-text">{{ $isProductInStock ? 'Thêm vào giỏ hàng' : 'Hết hàng' }}</span>
                                 </button>
                             </form>
                             <button class="btn-favorite" data-product-id="{{ $product->id }}"
@@ -554,8 +552,8 @@
                     <div class="feature-item">
                         <span class="icon">🚚</span>
                         <div>
-                            <strong>Giao hàng trong 24h</strong>
-                            <p>Áp dụng với đơn hàng trên 900.000 đ tại Hà Nội</p>
+                            <strong>Giao hàng nhanh</strong>
+                            <p>Nhanh chóng đến tay khách hàng</p>
                         </div>
                     </div>
                     <div class="feature-item">
@@ -850,7 +848,7 @@
 @endsection
 
 @section('foot')
-    <script src="{{ asset('clients/assets/js/single.js') }}"></script>
+    <script src="{{ asset('clients/assets/js/single.js?v='. time()) }}"></script>
     <script>
         window.phoneNumber = '{{ $settings->contact_phone ?? '0903 223 663' }}';
     </script>

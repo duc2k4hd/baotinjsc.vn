@@ -91,4 +91,19 @@ class ProductVariant extends Model
     {
         return $this->stock_quantity;
     }
+
+    protected static function booted(): void
+    {
+        $clearParentCache = function ($variant) {
+            if ($variant->product_id) {
+                $product = \App\Models\Product::find($variant->product_id);
+                if ($product && $product->slug) {
+                    \Illuminate\Support\Facades\Cache::forget('product_detail_'.$product->slug);
+                }
+            }
+        };
+
+        static::saved($clearParentCache);
+        static::deleted($clearParentCache);
+    }
 }

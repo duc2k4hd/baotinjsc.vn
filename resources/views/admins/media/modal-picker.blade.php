@@ -182,6 +182,29 @@
                 folder: '', // Folder mặc định
             };
 
+            // Dịch tên folder sang tiếng Việt cho dễ hiểu
+            const folderTranslations = {
+                'accounts': 'Tài khoản',
+                'avatars': 'Ảnh đại diện',
+                'banners': 'Banners',
+                'brands': 'Thương hiệu',
+                'business': 'Doanh nghiệp',
+                'categories': 'Danh mục',
+                'clothes': 'Sản phẩm',
+                'frame': 'Khung ảnh',
+                'icon': 'Biểu tượng',
+                'imports': 'Nhập dữ liệu',
+                'other': 'Khác',
+                'popup': 'Popup',
+                'posts': 'Bài viết',
+                'vouchers': 'Khuyến mãi',
+                'resize': 'Đã thu nhỏ'
+            };
+
+            function getTranslatedName(name) {
+                return folderTranslations[name] ? `${folderTranslations[name]} (${name})` : name;
+            }
+
             // Load folder list
             function loadFolders() {
                 fetch(`{{ route('admin.media.folder-tree') }}?scope=${state.scope}`)
@@ -194,10 +217,11 @@
                                 folders.forEach(folder => {
                                     const option = document.createElement('option');
                                     option.value = folder.path;
-                                    option.textContent = prefix + folder.name;
+                                    const translatedName = getTranslatedName(folder.name);
+                                    option.textContent = prefix + translatedName;
                                     select.appendChild(option);
                                     if (folder.children && folder.children.length > 0) {
-                                        addFolders(folder.children, prefix + folder.name + ' / ');
+                                        addFolders(folder.children, prefix + translatedName + ' / ');
                                     }
                                 });
                             }

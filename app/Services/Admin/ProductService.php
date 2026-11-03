@@ -182,14 +182,13 @@ class ProductService
             $product->locked_by = null;
             $product->locked_at = null;
 
-            // 6. Xóa mềm: chuyển sản phẩm sang trạng thái tạm ẩn
+            // 6. Xóa mềm (Soft Delete)
             $product->is_active = false;
-
-            // 7. Lưu tất cả thay đổi
             $product->save();
+            $product->delete();
 
             // 8. Logging
-            Log::info('Product deleted', [
+            Log::info('Product soft-deleted', [
                 'product_id' => $product->id,
                 'product_name' => $product->name,
                 'product_sku' => $product->sku,
@@ -204,6 +203,23 @@ class ProductService
         
         // Invalidate cache sau khi transaction commit (đảm bảo cache được clear ngay cả khi có lỗi)
         $this->clearProductDetailCache($slug);
+    }
+
+    public function restore(Product $product): void
+    {
+        $product->restore();
+        $this->clearProductDetailCache($product->slug ?? '');
+    }
+
+    public function forceDelete(int|Product $product): void
+    {
+        $prod = is_int($product) ? Product::withTrashed()->findOrFail($product) : $product;
+        
+        // Xóa biến thể liên quan
+        ProductVariant::where('product_id', $prod->id)->delete();
+
+        // Xóa sản phẩm vĩnh viễn
+        $prod->forceDelete();
     }
 
     private function extractProductPayload(array $data): array
@@ -235,7 +251,7 @@ class ProductService
             'stock_quantity' => Arr::get($data, 'stock_quantity', 0),
             'meta_title' => Arr::get($data, 'meta_title'),
             'meta_description' => Arr::get($data, 'meta_description'),
-            'meta_keywords' => $this->normalizeMetaKeywords(Arr::get($data, 'meta_keywords')),
+            'meta_keywords' => Arr::get($data, 'meta_keywords'),
             // Luôn cập nhật meta_canonical theo slug và site_url để dữ liệu chính xác
             'meta_canonical' => $canonicalUrl,
             'primary_category_id' => Arr::get($data, 'primary_category_id'),
@@ -249,24 +265,24 @@ class ProductService
         ];
     }
 
-    private function normalizeMetaKeywords($keywords): ?array
-    {
-        if (empty($keywords)) {
-            return null;
-        }
+    // private function normalizeMetaKeywords($keywords): ?array
+    // {
+    //     if (empty($keywords)) {
+    //         return null;
+    //     }
 
-        if (is_array($keywords)) {
-            return array_values(array_filter(array_map('trim', $keywords)));
-        }
+    //     if (is_array($keywords)) {
+    //         return array_values(array_filter(array_map('trim', $keywords)));
+    //     }
 
-        if (is_string($keywords)) {
-            $keywords = array_filter(array_map('trim', explode(',', $keywords)));
+    //     if (is_string($keywords)) {
+    //         $keywords = array_filter(array_map('trim', explode(',', $keywords)));
 
-            return ! empty($keywords) ? array_values($keywords) : null;
-        }
+    //         return ! empty($keywords) ? array_values($keywords) : null;
+    //     }
 
-        return null;
-    }
+    //     return null;
+    // }
 
     private function resolveCategoryIds(array $data): ?array
     {
@@ -278,7 +294,7 @@ class ProductService
             $primary ? [$primary] : []
         )));
 
-        return ! empty($ids) ? $ids : null;
+        return !empty($ids) ? $ids : null;
     }
 
     private function normalizeIncludedCategories($value): ?array
@@ -299,7 +315,7 @@ class ProductService
             ->values()
             ->all();
 
-        return ! empty($ids) ? $ids : null;
+        return !empty($ids) ? $ids : null;
     }
 
     /**
@@ -498,13 +514,21 @@ class ProductService
 
             // Đảm bảo url chỉ là tên file (basename), không có path
             $normalizedUrl = basename($filename);
+            $isPrimary = (bool) Arr::get($imageData, 'is_primary', false);
             
             $payload = [
+                'name' => $normalizedUrl,
+                'product_id' => $product->id,
+                'entity_type' => 'product',
+                'entity_id' => $product->id,
+                'role' => $isPrimary ? 'primary' : 'gallery',
+                'path' => $filename,
                 'url' => $normalizedUrl,
+                'context' => 'product',
                 'title' => Arr::get($imageData, 'title'),
                 'notes' => Arr::get($imageData, 'notes'),
                 'alt' => Arr::get($imageData, 'alt'),
-                'is_primary' => Arr::get($imageData, 'is_primary', false),
+                'is_primary' => $isPrimary,
                 'order' => Arr::get($imageData, 'order', $order),
             ];
 

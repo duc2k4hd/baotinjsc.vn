@@ -18,6 +18,8 @@ class PostStoreRequest extends FormRequest
             'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string'],
+            'thumbnail' => ['nullable', 'string', 'max:255'],
+            'thumbnail_alt_text' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:draft,pending,published,archived'],
             'category_id' => ['nullable', 'exists:categories,id'],
             'account_id' => ['nullable', 'exists:accounts,id'],

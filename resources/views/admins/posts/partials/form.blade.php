@@ -154,7 +154,38 @@
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
-                <h5 class="fw-bold mb-3">Hình ảnh</h5>
+                <h5 class="fw-bold mb-3">Hình ảnh đại diện</h5>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tên ảnh đại diện (vd: anh-bai-viet.webp)</label>
+                    <div class="input-group">
+                        <input type="text" name="thumbnail" id="thumbnail-input" class="form-control" placeholder="ten-anh.webp" value="{{ old('thumbnail', $post->thumbnail ?? '') }}">
+                        <button type="button" class="btn btn-outline-secondary" onclick="openThumbnailPicker()">Chọn ảnh</button>
+                    </div>
+                    <small class="text-muted">Chọn từ thư viện ảnh hoặc nhập tên file. Ảnh được lưu trong thư mục posts.</small>
+                    <div id="thumbnail-preview" class="mt-2">
+                        @php
+                            $thumbVal = old('thumbnail', $post->thumbnail ?? '');
+                            $adminThumb = $thumbVal ? basename($thumbVal) : null;
+                        @endphp
+                        @if(!empty($adminThumb))
+                            <img src="{{ asset('clients/assets/img/posts/' . $adminThumb) }}" 
+                                 class="img-fluid rounded shadow-sm" 
+                                 style="max-height: 180px; object-fit: cover;" 
+                                 alt="preview"
+                                 onerror="this.onerror=null; this.src='{{ asset('clients/assets/img/no-image.webp') }}';">
+                        @endif
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Alt text cho ảnh</label>
+                    <input type="text" name="thumbnail_alt_text" class="form-control" value="{{ old('thumbnail_alt_text', $post->thumbnail_alt_text ?? '') }}" placeholder="Nhập mô tả ảnh chuẩn SEO">
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Gallery ảnh phụ (Tùy chọn)</h5>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Hình ảnh</label>
                     <div id="image-gallery" class="d-flex flex-wrap gap-2 mb-2">
@@ -253,7 +284,41 @@
 </div>
 
 @push('scripts')
+    @include('admins.partials.media-library-modal')
+    <script src="{{ asset('admins/js/media-library.js') }}?v={{ file_exists(public_path('admins/js/media-library.js')) ? filemtime(public_path('admins/js/media-library.js')) : time() }}"></script>
     <script>
+        function openThumbnailPicker() {
+            if (!window.postMediaLibrary) {
+                window.postMediaLibrary = new MediaLibrary({
+                    context: 'post',
+                    insertMode: 'single',
+                    apiUrl: '{{ route('admin.media.library.index') }}',
+                    onInsert: (selected) => {
+                        const file = Array.isArray(selected) ? selected[0] : selected;
+                        if (file) {
+                            const fileName = file.url || file.name || '';
+                            const cleanName = fileName.replace(/^.*[\\\/]/, '');
+                            const inputEl = document.getElementById('thumbnail-input');
+                            if (inputEl) inputEl.value = cleanName;
+                            
+                            const preview = document.getElementById('thumbnail-preview');
+                            if (preview) {
+                                preview.innerHTML = `<img src="/clients/assets/img/posts/${cleanName}" class="img-fluid rounded shadow-sm" style="max-height: 180px; object-fit: cover;" alt="${file.alt || ''}">`;
+                            }
+                            
+                            const altInput = document.querySelector('input[name="thumbnail_alt_text"]');
+                            if (altInput && !altInput.value && file.alt) {
+                                altInput.value = file.alt;
+                            }
+                        }
+                    }
+                });
+            } else {
+                window.postMediaLibrary.context = 'post';
+            }
+            window.postMediaLibrary.open();
+        }
+
         const autosaveUrl = "{{ $isEdit ? route('admin.posts.autosave', $post) : '' }}";
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         let autosaveTimer;
@@ -297,6 +362,7 @@
                     window.openMediaPicker({
                         mode: 'single',
                         scope: 'client',
+                        folder: 'posts',
                         onSelect: (file) => {
                             if (!file) return;
                             const alt = file.alt || file.title || file.filename || file.name || '';
@@ -317,6 +383,7 @@
                             window.openMediaPicker({
                                 mode: 'single',
                                 scope: 'client',
+                                folder: 'posts',
                                 onSelect: (file) => {
                                     if (!file) return;
                                     const alt = file.alt || file.title || file.filename || file.name || '';
@@ -339,9 +406,10 @@
         // Media picker (popup mới) cho bài viết
         document.getElementById('post-media-picker-btn')?.addEventListener('click', () => {
             if (typeof window.openMediaPicker !== 'function') return;
-            openMediaPicker({
+            window.openMediaPicker({
                 mode: 'multiple',
                 scope: 'client',
+                folder: 'posts',
                 onSelect: (files) => {
                     const gallery = document.getElementById('image-gallery');
                     if (!gallery) return;
@@ -563,7 +631,12 @@
         });
 
         function addImageToGallery() {
-            openMediaPicker(function (file) {
+            if (typeof window.openMediaPicker !== 'function') return;
+            window.openMediaPicker({
+                mode: 'single',
+                scope: 'client',
+                folder: 'posts',
+                onSelect: function (file) {
                 const fileName = file.filename || file.name || (file.url ? file.url.split('/').pop() : '');
                 const gallery = document.getElementById('image-gallery');
                 const index = gallery.children.length;
@@ -606,330 +679,7 @@
             form.submit();
         }
 
-        function openMediaPicker(onSelect) {
-            if (!mediaPickerConfig.list_url) {
-                alert('Chưa cấu hình endpoint thư viện ảnh.');
-                return;
-            }
 
-            const state = {
-                files: [],
-                page: 1,
-                perPage: mediaPickerConfig.per_page || 100,
-                hasMore: true,
-                search: '',
-                loading: false,
-                folder: mediaPickerConfig.folder || '',
-            };
-
-            const overlay = document.createElement('div');
-            overlay.className = 'media-picker-overlay';
-            overlay.style.position = 'fixed';
-            overlay.style.inset = '0';
-            overlay.style.background = 'rgba(15,23,42,0.55)';
-            overlay.style.zIndex = '9999';
-            overlay.style.display = 'flex';
-            overlay.style.alignItems = 'center';
-            overlay.style.justifyContent = 'center';
-
-            const modal = document.createElement('div');
-            modal.style.background = '#fff';
-            modal.style.borderRadius = '16px';
-            modal.style.padding = '20px';
-            modal.style.width = '98%';
-            modal.style.maxHeight = '98vh';
-            modal.style.overflow = 'hidden';
-            modal.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">${mediaPickerConfig.title || 'Thư viện ảnh'}</h5>
-                    <button type="button" class="btn btn-link text-danger" data-close>&times;</button>
-                </div>
-                <div class="mb-3">
-                    <div class="alert alert-info mb-3" style="padding: 12px; background: #e0f2fe; border: 1px solid #3b82f6; border-radius: 8px;">
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                            <strong style="color: #1e40af;">📂 Chọn thư mục lưu ảnh:</strong>
-                        </div>
-                        <div class="input-group">
-                            <span class="input-group-text" style="background: #fff;">📁</span>
-                            <input type="text" class="form-control" placeholder="Nhập tên folder (ví dụ: posts, clothes, categories)" data-media-folder value="${state.folder}" style="font-weight: 500;">
-                            <button class="btn btn-primary" type="button" data-media-folder-apply style="font-weight: 600;">Áp dụng</button>
-                        </div>
-                        <div class="form-text mt-1" style="color: #1e40af; font-size: 12px;">
-                            <strong>Lưu ý:</strong> Ảnh sẽ được lưu vào <code>/clients/assets/img/[folder]</code>. Bạn <strong>PHẢI</strong> nhập folder trước khi upload!
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-8">
-                            <div class="input-group input-group-sm">
-                        <span class="input-group-text">🔍</span>
-                        <input type="text" class="form-control" placeholder="Tìm ảnh theo tên..." data-media-search>
-                    </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-media-refresh>↻ Làm mới</button>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-sm btn-primary" data-media-upload-trigger>
-                            <strong>📤 Tải ảnh mới</strong>
-                        </button>
-                        <input type="file" accept="image/*" multiple hidden data-media-upload>
-                    </div>
-                </div>
-                <div class="text-muted small mb-2" data-media-status>Đang tải dữ liệu...</div>
-                <div class="media-picker-body" style="max-height: 60vh; overflow-y: auto;">
-                    <div class="row g-3 media-picker-grid" data-media-grid></div>
-                    <div class="text-center my-3 d-none" data-media-loading>Đang tải ảnh...</div>
-                    <div class="text-center text-muted d-none" data-media-empty>Chưa có ảnh nào phù hợp.</div>
-                </div>
-                <div class="d-grid mt-3">
-                    <button type="button" class="btn btn-outline-secondary" data-media-load-more>Nạp thêm ${state.perPage} ảnh</button>
-                </div>
-            `;
-
-            const grid = modal.querySelector('[data-media-grid]');
-            const searchInput = modal.querySelector('[data-media-search]');
-            const folderInput = modal.querySelector('[data-media-folder]');
-            const folderApply = modal.querySelector('[data-media-folder-apply]');
-            const loadMoreBtn = modal.querySelector('[data-media-load-more]');
-            const loadingIndicator = modal.querySelector('[data-media-loading]');
-            const emptyState = modal.querySelector('[data-media-empty]');
-            const statusText = modal.querySelector('[data-media-status]');
-            const uploadInput = modal.querySelector('[data-media-upload]');
-            const uploadTrigger = modal.querySelector('[data-media-upload-trigger]');
-            const refreshBtn = modal.querySelector('[data-media-refresh]');
-
-            const closeModal = () => {
-                overlay.removeEventListener('click', handleOverlayClick);
-                document.body.removeChild(overlay);
-            };
-
-            const handleOverlayClick = (event) => {
-                if (event.target.dataset.close !== undefined || event.target === overlay) {
-                    closeModal();
-                }
-            };
-
-            const updateStatus = () => {
-                if (!state.files.length) {
-                    statusText.textContent = state.loading ? 'Đang tải dữ liệu...' : 'Chưa có ảnh nào.';
-                    return;
-                }
-
-                statusText.textContent = `Đang hiển thị ${state.files.length} ảnh${state.hasMore ? '' : ' - đã tải hết.'}`;
-            };
-
-            const setLoading = (value) => {
-                state.loading = value;
-                loadingIndicator.classList.toggle('d-none', !value);
-                loadMoreBtn.disabled = value || !state.hasMore;
-                loadMoreBtn.textContent = state.hasMore ? `Nạp thêm ${state.perPage} ảnh` : 'Đã tải hết ảnh';
-            };
-
-            const renderFiles = (files, { prepend = false, replace = false } = {}) => {
-                if (!files.length && replace) {
-                    grid.innerHTML = '';
-                    return;
-                }
-
-                const fragment = document.createDocumentFragment();
-
-                files.forEach((file) => {
-                    const col = document.createElement('div');
-                    col.className = 'col-1';
-                    const label = file.filename ?? file.name ?? file.path ?? 'Ảnh';
-                    const safeLabel = escapeHtml(label);
-                    const safeUrl = escapeHtml(file.url ?? '');
-                    const safeThumb = escapeHtml(file.thumbnail_url || file.url || '');
-                    const safePath = escapeHtml(file.path ?? '');
-                    col.innerHTML = `
-                        <button type="button"
-                                class="w-100 border rounded p-0 bg-white media-picker-item"
-                                data-url="${safeUrl}"
-                                data-name="${safeLabel}"
-                                data-path="${safePath}">
-                            <img src="${safeThumb}" alt="${safeLabel}"
-                                 class="img-fluid"
-                                 style="height:120px;object-fit:cover;border-top-left-radius:8px;border-top-right-radius:8px;">
-                            <div class="p-2 small text-truncate">${safeLabel}</div>
-                        </button>
-                    `;
-                    fragment.appendChild(col);
-                });
-
-                if (replace) {
-                    grid.innerHTML = '';
-                    grid.appendChild(fragment);
-                } else if (prepend && grid.firstChild) {
-                    grid.prepend(fragment);
-                } else {
-                    grid.appendChild(fragment);
-                }
-            };
-
-            const fetchFiles = async (reset = false) => {
-                if (state.loading) {
-                    return;
-                }
-                if (!state.hasMore && !reset) {
-                    return;
-                }
-
-                if (reset) {
-                    state.page = 1;
-                    state.hasMore = true;
-                    state.files = [];
-                    grid.innerHTML = '';
-                    emptyState.classList.add('d-none');
-                }
-
-                setLoading(true);
-
-                const currentFolder = (state.folder || mediaPickerConfig.folder || '').trim();
-                if (!currentFolder) {
-                    alert('Vui lòng nhập folder (ví dụ: posts, clothes) trước khi tải hoặc upload ảnh.');
-                    return;
-                }
-
-                const params = new URLSearchParams({
-                    scope: mediaPickerConfig.scope || 'client',
-                    folder: currentFolder,
-                    limit: state.perPage,
-                    page: state.page,
-                });
-
-                if (state.search) {
-                    params.append('search', state.search);
-                }
-
-                try {
-                    const response = await fetch(`${mediaPickerConfig.list_url}?${params.toString()}`, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    });
-                    const data = await response.json();
-                    const files = data.files || [];
-                    state.hasMore = data.pagination?.has_more ?? false;
-                    state.page += 1;
-                    state.files = reset ? files.slice() : state.files.concat(files);
-                    renderFiles(files, { replace: reset });
-                    emptyState.classList.toggle('d-none', state.files.length > 0);
-                    updateStatus();
-                } catch (error) {
-                    console.error('Media load error', error);
-                    alert('Không thể tải danh sách ảnh.');
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleUpload = async (fileList) => {
-                if (!fileList?.length) {
-                    return;
-                }
-                if (!mediaPickerConfig.upload_url) {
-                    alert('Chưa cấu hình endpoint upload.');
-                    return;
-                }
-
-                const formData = new FormData();
-                const currentFolder = (state.folder || mediaPickerConfig.folder || '').trim();
-                if (!currentFolder) {
-                    alert('Vui lòng nhập folder (ví dụ: posts, clothes) trước khi upload.');
-                    return;
-                }
-
-                Array.from(fileList).forEach((file) => formData.append('files[]', file));
-                formData.append('scope', mediaPickerConfig.scope || 'client');
-                formData.append('folder', currentFolder);
-
-                setLoading(true);
-
-                try {
-                    const response = await fetch(mediaPickerConfig.upload_url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                        },
-                        body: formData,
-                    });
-                    const data = await response.json();
-                    const uploaded = (data.files || []).filter((file) => file.success);
-
-                    if (!uploaded.length) {
-                        alert(data.message || 'Upload thất bại.');
-                        return;
-                    }
-
-                    // Prepend uploaded files to the beginning (newest first)
-                    renderFiles(uploaded, { prepend: true });
-                    // Update state: prepend uploaded files to maintain order
-                    state.files = uploaded.concat(state.files);
-                    // Reset search to show newly uploaded files
-                    state.search = '';
-                    searchInput.value = '';
-                    emptyState.classList.add('d-none');
-                    updateStatus();
-                } catch (error) {
-                    console.error('Upload error', error);
-                    alert('Upload ảnh thất bại.');
-                } finally {
-                    setLoading(false);
-                    uploadInput.value = '';
-                }
-            };
-
-            let searchDebounce;
-            searchInput.addEventListener('input', function () {
-                clearTimeout(searchDebounce);
-                searchDebounce = setTimeout(() => {
-                    state.search = this.value.trim();
-                    fetchFiles(true);
-                }, 400);
-            });
-
-            folderApply.addEventListener('click', () => {
-                state.folder = (folderInput.value || '').trim();
-                state.page = 1;
-                state.hasMore = true;
-                fetchFiles(true);
-            });
-
-            folderInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    folderApply.click();
-                }
-            });
-
-            loadMoreBtn.addEventListener('click', () => fetchFiles());
-            uploadTrigger.addEventListener('click', () => uploadInput.click());
-            uploadInput.addEventListener('change', () => handleUpload(uploadInput.files));
-            refreshBtn.addEventListener('click', () => fetchFiles(true));
-
-            grid.addEventListener('click', (event) => {
-                const button = event.target.closest('.media-picker-item');
-                if (!button) {
-                    return;
-                }
-                const relativePath = button.dataset.path || '';
-                const fileName = relativePath.split('/').pop() || button.dataset.name || '';
-                onSelect?.({
-                    url: button.dataset.url,
-                    name: button.dataset.name,
-                    path: relativePath,
-                    filename: fileName,
-                });
-                closeModal();
-            });
-
-            overlay.addEventListener('click', handleOverlayClick);
-            overlay.appendChild(modal);
-            document.body.appendChild(overlay);
-
-            fetchFiles(true);
-        }
 
     </script>
 @endpush
