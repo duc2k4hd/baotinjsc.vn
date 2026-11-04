@@ -805,7 +805,6 @@ button, input, select, textarea {
     color: #059669;
     font-size: 14px;
     flex-shrink: 0;
-}
     border: 1px solid var(--single-border);
     border-radius: var(--single-radius);
     display: flex;
@@ -2188,5 +2187,410 @@ button, input, select, textarea {
 
     .related-product-price {
         font-size: 13.5px;
+    }
+}
+
+/* ==========================================================================
+   9. ADVANCED IMAGE LIGHTBOX POPUP (BẢO TÍN JSC - KHÔNG CHE ẢNH)
+   ========================================================================== */
+.baotin-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.baotin-lightbox.is-open {
+    display: block !important;
+    opacity: 1 !important;
+}
+
+.baotin-lightbox-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(7, 11, 22, 0.96);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    cursor: zoom-out;
+}
+
+.baotin-lightbox-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* --- HEADER BAR (Không che khuất ảnh) --- */
+.baotin-lightbox-header {
+    height: 60px;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(7, 11, 22, 0.85) 0%, rgba(7, 11, 22, 0.4) 75%, transparent 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.baotin-lightbox-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.baotin-lightbox-badge {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.baotin-lightbox-title {
+    color: #e2e8f0;
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 480px;
+}
+
+.baotin-lightbox-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* Toolbar các nút công cụ */
+.baotin-lightbox-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 4px 8px;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.baotin-lb-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    text-decoration: none;
+}
+
+.baotin-lb-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #ffffff;
+    transform: translateY(-1px) scale(1.08);
+}
+
+.baotin-lb-btn:active {
+    transform: scale(0.95);
+}
+
+.baotin-lightbox-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.baotin-lightbox-close:hover {
+    background: #ef4444;
+    color: #ffffff;
+    border-color: #ef4444;
+    transform: scale(1.1) rotate(90deg);
+}
+
+/* --- STAGE KHÔNG GIAN ẢNH TRUNG TÂM --- */
+.baotin-lightbox-stage {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: calc(100vh - 160px);
+    overflow: hidden;
+    padding: 8px 70px;
+    box-sizing: border-box;
+}
+
+/* 2 Nút Prev / Next nằm ngoài rìa hoàn toàn */
+.baotin-lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(15, 23, 42, 0.65);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.baotin-lightbox-nav.prev {
+    left: 20px;
+}
+
+.baotin-lightbox-nav.next {
+    right: 20px;
+}
+
+.baotin-lightbox-nav:hover {
+    background: rgba(37, 99, 235, 0.85);
+    border-color: #3b82f6;
+    transform: translateY(-50%) scale(1.12);
+    box-shadow: 0 6px 24px rgba(37, 99, 235, 0.5);
+}
+
+.baotin-lightbox-nav:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Vùng hiển thị ảnh */
+.baotin-lightbox-viewport {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    touch-action: none;
+}
+
+.baotin-lightbox-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    cursor: grab;
+    will-change: transform, opacity;
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    background-color: transparent;
+}
+
+.baotin-lightbox-img.is-zoomed {
+    cursor: grab;
+}
+
+.baotin-lightbox-img.is-dragging {
+    cursor: grabbing !important;
+    transition: none !important;
+}
+
+/* --- THUMBNAILS BAR DƯỚI CÙNG --- */
+.baotin-lightbox-thumbs-bar {
+    height: 94px;
+    background: linear-gradient(0deg, rgba(7, 11, 22, 0.95) 0%, rgba(7, 11, 22, 0.6) 70%, transparent 100%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    flex-shrink: 0;
+    z-index: 5;
+}
+
+.baotin-lightbox-thumbs-track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-width: 90vw;
+    padding: 6px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.baotin-lightbox-thumbs-track::-webkit-scrollbar {
+    height: 5px;
+}
+
+.baotin-lightbox-thumbs-track::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+}
+
+.baotin-lb-thumb-item {
+    width: 58px;
+    height: 58px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    background: #ffffff;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+}
+
+.baotin-lb-thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.baotin-lb-thumb-item:hover {
+    opacity: 0.9;
+    transform: translateY(-2px) scale(1.06);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.baotin-lb-thumb-item.active {
+    opacity: 1;
+    border-color: #38bdf8;
+    transform: translateY(-3px) scale(1.12);
+    box-shadow: 0 0 14px rgba(56, 189, 248, 0.7);
+}
+
+/* Cursor phóng to cho ảnh chính ngoài trang */
+#mainImage {
+    cursor: zoom-in;
+    transition: transform 0.25s ease;
+}
+
+#mainImage:hover {
+    transform: scale(1.02);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN CHO LIGHTBOX TRÊN MỌI THIẾT BỊ
+   ========================================================================== */
+
+/* Tablet & Mobile (< 768px) */
+@media (max-width: 768px) {
+    .baotin-lightbox-header {
+        height: 54px;
+        padding: 8px 12px;
+    }
+
+    .baotin-lightbox-title {
+        display: none; /* Ẩn tên sản phẩm dài trên mobile để ưu tiên toolbar */
+    }
+
+    .baotin-lightbox-toolbar {
+        padding: 3px 6px;
+        gap: 3px;
+    }
+
+    .baotin-lb-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .baotin-lb-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .baotin-lightbox-close {
+        width: 32px;
+        height: 32px;
+    }
+
+    .baotin-lightbox-stage {
+        padding: 6px 10px;
+        height: calc(100vh - 135px);
+    }
+
+    .baotin-lightbox-nav {
+        width: 40px;
+        height: 40px;
+        background: rgba(15, 23, 42, 0.8);
+    }
+
+    .baotin-lightbox-nav.prev {
+        left: 8px;
+    }
+
+    .baotin-lightbox-nav.next {
+        right: 8px;
+    }
+
+    .baotin-lightbox-nav svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .baotin-lightbox-thumbs-bar {
+        height: 76px;
+        padding: 6px 10px;
+    }
+
+    .baotin-lb-thumb-item {
+        width: 46px;
+        height: 46px;
+    }
+}
+
+/* Màn hình siêu nhỏ (< 480px) */
+@media (max-width: 480px) {
+    #baotinLbReset {
+        display: none; /* Giảm nút reset trên màn hình quá bé để tránh chật */
+    }
+
+    .baotin-lightbox-thumbs-track {
+        max-width: 98vw;
+        gap: 8px;
     }
 }

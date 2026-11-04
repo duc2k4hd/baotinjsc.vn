@@ -1088,6 +1088,81 @@
             </div>
         </section>
     @endif
+
+    {{-- 6. FULL PRODUCT IMAGE LIGHTBOX POPUP --}}
+    <div id="product_image_lightbox" class="baotin-lightbox" role="dialog" aria-modal="true" aria-label="Xem ảnh sản phẩm" style="display: none;">
+        <div class="baotin-lightbox-backdrop" id="baotinLightboxBackdrop"></div>
+        <div class="baotin-lightbox-container">
+            <!-- Header Bar: Không che ảnh -->
+            <div class="baotin-lightbox-header">
+                <div class="baotin-lightbox-meta">
+                    <span class="baotin-lightbox-badge" id="baotinLightboxCounter">1 / 1</span>
+                    <span class="baotin-lightbox-title" title="{{ $product->name }}">{{ $product->name }}</span>
+                </div>
+
+                <div class="baotin-lightbox-header-actions">
+                    <!-- Thanh công cụ (Zoom, Rotate, Reset, Download) -->
+                    <div class="baotin-lightbox-toolbar">
+                        <button type="button" class="baotin-lb-btn" id="baotinLbZoomIn" title="Phóng to (+)" aria-label="Phóng to">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                        </button>
+                        <button type="button" class="baotin-lb-btn" id="baotinLbZoomOut" title="Thu nhỏ (-)" aria-label="Thu nhỏ">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+                        </button>
+                        <button type="button" class="baotin-lb-btn" id="baotinLbRotate" title="Xoay ảnh 90°" aria-label="Xoay ảnh">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6"></path><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                        </button>
+                        <button type="button" class="baotin-lb-btn" id="baotinLbReset" title="Đặt lại kích thước ban đầu" aria-label="Đặt lại">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                        </button>
+                        <a id="baotinLbDownload" class="baotin-lb-btn" href="#" download title="Tải ảnh gốc về máy" aria-label="Tải ảnh">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        </a>
+                    </div>
+
+                    <!-- Nút Đóng -->
+                    <button type="button" class="baotin-lightbox-close" id="baotinLightboxClose" title="Đóng (Esc)" aria-label="Đóng popup">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stage: Vùng hiển thị ảnh trung tâm không bị che -->
+            <div class="baotin-lightbox-stage">
+                <button type="button" class="baotin-lightbox-nav prev" id="baotinLbPrev" title="Ảnh trước (Mũi tên trái)" aria-label="Ảnh trước">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+
+                <div class="baotin-lightbox-viewport" id="baotinLbViewport">
+                    <img id="baotinLightboxMainImg" src="" alt="{{ $product->name }}" class="baotin-lightbox-img" draggable="false">
+                </div>
+
+                <button type="button" class="baotin-lightbox-nav next" id="baotinLbNext" title="Ảnh sau (Mũi tên phải)" aria-label="Ảnh sau">
+                    <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
+
+            <!-- Thumbnails Bar: Nằm riêng biệt bên dưới -->
+            <div class="baotin-lightbox-thumbs-bar">
+                <div class="baotin-lightbox-thumbs-track" id="baotinLbThumbsTrack">
+                    @php
+                        $lbImageList = (isset($galleryImages) && $galleryImages->isNotEmpty()) 
+                            ? $galleryImages 
+                            : collect([['url' => ($product->primaryImage ? $product->primaryImage->url : 'no-image.webp')]]);
+                    @endphp
+                    @foreach ($lbImageList as $idx => $imgItem)
+                        @php
+                            $lbRawUrl = $imgItem['url'] ?? 'no-image.webp';
+                            $lbFullSrc = asset('clients/assets/img/clothes/' . $lbRawUrl);
+                        @endphp
+                        <button type="button" class="baotin-lb-thumb-item {{ $idx === 0 ? 'active' : '' }}" data-index="{{ $idx }}" data-src="{{ $lbFullSrc }}" aria-label="Xem ảnh {{ $idx + 1 }}">
+                            <img src="{{ $lbFullSrc }}" alt="{{ $product->name }} - Hình {{ $idx + 1 }}" loading="lazy">
+                        </button>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('foot')

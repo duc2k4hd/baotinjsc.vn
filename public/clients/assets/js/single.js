@@ -77,45 +77,423 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Phóng to ảnh chính (Zoom Modal)
+    // =========================================================================
+    // 2.1 ADVANCED FULL-FEATURED IMAGE LIGHTBOX POPUP (BẢO TÍN JSC)
+    // =========================================================================
+    const lightboxModal = document.getElementById('product_image_lightbox');
+    const lbMainImg = document.getElementById('baotinLightboxMainImg');
+    const lbCounter = document.getElementById('baotinLightboxCounter');
+    const lbCloseBtn = document.getElementById('baotinLightboxClose');
+    const lbBackdrop = document.getElementById('baotinLightboxBackdrop');
+    const lbPrevBtn = document.getElementById('baotinLbPrev');
+    const lbNextBtn = document.getElementById('baotinLbNext');
+    const lbZoomInBtn = document.getElementById('baotinLbZoomIn');
+    const lbZoomOutBtn = document.getElementById('baotinLbZoomOut');
+    const lbRotateBtn = document.getElementById('baotinLbRotate');
+    const lbResetBtn = document.getElementById('baotinLbReset');
+    const lbDownloadBtn = document.getElementById('baotinLbDownload');
+    const lbThumbItems = document.querySelectorAll('.baotin-lb-thumb-item');
     const zoomBtn = document.querySelector('.zoom-btn');
-    if (zoomBtn && mainImage) {
-        zoomBtn.addEventListener('click', function () {
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100vw;
-                height: 100vh;
-                background-color: rgba(15, 23, 42, 0.92);
-                z-index: 99999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: zoom-out;
-                padding: 20px;
-                box-sizing: border-box;
-            `;
 
-            const img = document.createElement('img');
-            img.src = mainImage.src;
-            img.style.cssText = `
-                max-width: 95%;
-                max-height: 92%;
-                object-fit: contain;
-                border-radius: 8px;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            `;
+    if (lightboxModal && lbMainImg) {
+        let lbImages = [];
+        let lbCurrentIndex = 0;
+        let lbScale = 1;
+        let lbRotation = 0;
+        let lbTranslateX = 0;
+        let lbTranslateY = 0;
+        let lbIsDragging = false;
+        let lbStartX = 0;
+        let lbStartY = 0;
 
-            modal.appendChild(img);
-            document.body.appendChild(modal);
+        // Swipe touch variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+        let isTouchMoving = false;
 
-            modal.addEventListener('click', function () {
-                if (document.body.contains(modal)) {
-                    document.body.removeChild(modal);
+        // 1. Khởi tạo danh sách ảnh chuẩn
+        function collectLightboxImages() {
+            lbImages = [];
+            if (lbThumbItems && lbThumbItems.length > 0) {
+                lbThumbItems.forEach((btn, idx) => {
+                    const src = btn.getAttribute('data-src') || btn.querySelector('img')?.src;
+                    if (src) {
+                        lbImages.push({
+                            src: src,
+                            alt: btn.querySelector('img')?.alt || '',
+                            index: idx
+                        });
+                    }
+                });
+            } else if (thumbImages && thumbImages.length > 0) {
+                thumbImages.forEach((img, idx) => {
+                    lbImages.push({
+                        src: img.src,
+                        alt: img.alt || '',
+                        index: idx
+                    });
+                });
+            } else if (mainImage) {
+                lbImages.push({
+                    src: mainImage.src,
+                    alt: mainImage.alt || '',
+                    index: 0
+                });
+            }
+        }
+
+        collectLightboxImages();
+
+        // 2. Áp dụng biến đổi (Scale, Rotate, Translate)
+        function applyImageTransform(animate = true) {
+            if (!lbMainImg) return;
+            lbMainImg.style.transition = animate ? 'transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease' : 'none';
+            lbMainImg.style.transform = `translate(${lbTranslateX}px, ${lbTranslateY}px) scale(${lbScale}) rotate(${lbRotation}deg)`;
+            lbMainImg.classList.toggle('is-zoomed', lbScale > 1);
+        }
+
+        // 3. Đặt lại trạng thái phóng to / xoay
+        function resetImageTransform() {
+            lbScale = 1;
+            lbRotation = 0;
+            lbTranslateX = 0;
+            lbTranslateY = 0;
+            applyImageTransform(true);
+        }
+
+        // 4. Cập nhật ảnh hiển thị
+        function updateLightboxImage(index) {
+            if (lbImages.length === 0) return;
+            if (index < 0) index = lbImages.length - 1;
+            if (index >= lbImages.length) index = 0;
+
+            lbCurrentIndex = index;
+            const targetData = lbImages[lbCurrentIndex];
+
+            // Hiệu ứng fade nhẹ khi chuyển ảnh
+            lbMainImg.style.opacity = '0.35';
+            lbMainImg.style.transform = `translate(0px, 0px) scale(0.96) rotate(${lbRotation}deg)`;
+
+            const temp = new Image();
+            temp.onload = function () {
+                lbMainImg.src = targetData.src;
+                lbMainImg.alt = targetData.alt || '';
+                resetImageTransform();
+                lbMainImg.style.opacity = '1';
+
+                // Cập nhật link tải xuống
+                if (lbDownloadBtn) {
+                    lbDownloadBtn.href = targetData.src;
+                    const fileName = targetData.src.split('/').pop().split('?')[0] || 'bao-tin-jsc-product.jpg';
+                    lbDownloadBtn.setAttribute('download', fileName);
+                }
+            };
+            temp.onerror = function () {
+                lbMainImg.src = targetData.src;
+                resetImageTransform();
+                lbMainImg.style.opacity = '1';
+            };
+            temp.src = targetData.src;
+
+            // Cập nhật bộ đếm
+            if (lbCounter) {
+                lbCounter.textContent = `${lbCurrentIndex + 1} / ${lbImages.length}`;
+            }
+
+            // Cập nhật thumbnail active trong popup & cuộn mượt vào giữa
+            if (lbThumbItems && lbThumbItems.length > 0) {
+                lbThumbItems.forEach((btn, idx) => {
+                    const isActive = (idx === lbCurrentIndex);
+                    btn.classList.toggle('active', isActive);
+                    if (isActive) {
+                        btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                });
+            }
+
+            // Đồng bộ thumbnail & ảnh chính ngoài trang
+            if (thumbImages && thumbImages[lbCurrentIndex]) {
+                thumbImages.forEach(t => t.classList.remove('active'));
+                thumbImages[lbCurrentIndex].classList.add('active');
+                if (mainImage) {
+                    mainImage.src = thumbImages[lbCurrentIndex].src;
+                }
+            }
+        }
+
+        // 5. Mở Lightbox
+        function openLightbox(startIndex = 0) {
+            collectLightboxImages();
+            if (lbImages.length === 0) return;
+
+            lightboxModal.style.display = 'block';
+            // Buộc reflow để kích hoạt CSS transition
+            void lightboxModal.offsetHeight;
+            lightboxModal.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+
+            updateLightboxImage(startIndex);
+        }
+
+        // 6. Đóng Lightbox
+        function closeLightbox() {
+            lightboxModal.classList.remove('is-open');
+            setTimeout(() => {
+                if (!lightboxModal.classList.contains('is-open')) {
+                    lightboxModal.style.display = 'none';
+                    document.body.style.overflow = '';
+                    resetImageTransform();
+                }
+            }, 280);
+        }
+
+        // Mở popup khi click nút Phóng to
+        if (zoomBtn) {
+            zoomBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                // Tìm vị trí ảnh đang active
+                let activeIdx = 0;
+                if (thumbImages && thumbImages.length > 0) {
+                    thumbImages.forEach((t, i) => {
+                        if (t.classList.contains('active')) activeIdx = i;
+                    });
+                }
+                openLightbox(activeIdx);
+            });
+        }
+
+        // Mở popup khi click trực tiếp vào ảnh chính ngoài trang
+        if (mainImage) {
+            mainImage.addEventListener('click', function (e) {
+                e.preventDefault();
+                let activeIdx = 0;
+                if (thumbImages && thumbImages.length > 0) {
+                    thumbImages.forEach((t, i) => {
+                        if (t.classList.contains('active')) activeIdx = i;
+                    });
+                }
+                openLightbox(activeIdx);
+            });
+        }
+
+        // Đóng popup
+        if (lbCloseBtn) lbCloseBtn.addEventListener('click', closeLightbox);
+        if (lbBackdrop) lbBackdrop.addEventListener('click', closeLightbox);
+
+        // Nút chuyển ảnh Trước / Sau
+        if (lbPrevBtn) {
+            lbPrevBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                updateLightboxImage(lbCurrentIndex - 1);
+            });
+        }
+
+        if (lbNextBtn) {
+            lbNextBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                updateLightboxImage(lbCurrentIndex + 1);
+            });
+        }
+
+        // Click vào các thumbnail trong popup
+        if (lbThumbItems && lbThumbItems.length > 0) {
+            lbThumbItems.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-index'), 10) || 0;
+                    updateLightboxImage(idx);
+                });
+            });
+        }
+
+        // Công cụ: Phóng to
+        if (lbZoomInBtn) {
+            lbZoomInBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (lbScale < 3.5) {
+                    lbScale = Math.min(3.5, lbScale + 0.5);
+                    applyImageTransform(true);
                 }
             });
+        }
+
+        // Công cụ: Thu nhỏ
+        if (lbZoomOutBtn) {
+            lbZoomOutBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (lbScale > 1) {
+                    lbScale = Math.max(1, lbScale - 0.5);
+                    if (lbScale === 1) {
+                        lbTranslateX = 0;
+                        lbTranslateY = 0;
+                    }
+                    applyImageTransform(true);
+                }
+            });
+        }
+
+        // Công cụ: Xoay ảnh 90 độ
+        if (lbRotateBtn) {
+            lbRotateBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                lbRotation = (lbRotation + 90) % 360;
+                applyImageTransform(true);
+            });
+        }
+
+        // Công cụ: Đặt lại ban đầu
+        if (lbResetBtn) {
+            lbResetBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                resetImageTransform();
+            });
+        }
+
+        // Click hoặc double click vào ảnh để zoom nhanh
+        lbMainImg.addEventListener('dblclick', function (e) {
+            e.stopPropagation();
+            if (lbScale === 1) {
+                lbScale = 2;
+            } else {
+                lbScale = 1;
+                lbTranslateX = 0;
+                lbTranslateY = 0;
+            }
+            applyImageTransform(true);
+        });
+
+        // Kéo rê chuột khi phóng to (Pan/Drag)
+        const viewport = document.getElementById('baotinLbViewport');
+        if (viewport) {
+            viewport.addEventListener('mousedown', function (e) {
+                if (lbScale > 1 && e.button === 0) {
+                    lbIsDragging = true;
+                    lbStartX = e.clientX - lbTranslateX;
+                    lbStartY = e.clientY - lbTranslateY;
+                    lbMainImg.classList.add('is-dragging');
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener('mousemove', function (e) {
+                if (lbIsDragging && lbScale > 1) {
+                    lbTranslateX = e.clientX - lbStartX;
+                    lbTranslateY = e.clientY - lbStartY;
+                    applyImageTransform(false);
+                }
+            });
+
+            window.addEventListener('mouseup', function () {
+                if (lbIsDragging) {
+                    lbIsDragging = false;
+                    lbMainImg.classList.remove('is-dragging');
+                }
+            });
+
+            // Touch Drag / Swipe trên điện thoại
+            viewport.addEventListener('touchstart', function (e) {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    touchEndX = touchStartX;
+                    touchEndY = touchStartY;
+                    isTouchMoving = true;
+
+                    if (lbScale > 1) {
+                        lbIsDragging = true;
+                        lbStartX = touchStartX - lbTranslateX;
+                        lbStartY = touchStartY - lbTranslateY;
+                        lbMainImg.classList.add('is-dragging');
+                    }
+                }
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', function (e) {
+                if (!isTouchMoving || e.touches.length !== 1) return;
+
+                touchEndX = e.touches[0].clientX;
+                touchEndY = e.touches[0].clientY;
+
+                if (lbScale > 1 && lbIsDragging) {
+                    lbTranslateX = touchEndX - lbStartX;
+                    lbTranslateY = touchEndY - lbStartY;
+                    applyImageTransform(false);
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            viewport.addEventListener('touchend', function () {
+                if (!isTouchMoving) return;
+                isTouchMoving = false;
+
+                if (lbScale > 1 && lbIsDragging) {
+                    lbIsDragging = false;
+                    lbMainImg.classList.remove('is-dragging');
+                    return;
+                }
+
+                // Nếu ảnh đang ở tỉ lệ 1:1, kiểm tra cử chỉ vuốt chuyển ảnh (Swipe)
+                if (lbScale === 1) {
+                    const diffX = touchEndX - touchStartX;
+                    const diffY = touchEndY - touchStartY;
+
+                    // Chỉ kích hoạt swipe nếu vuốt ngang nhiều hơn vuốt dọc và cự ly > 45px
+                    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 45) {
+                        if (diffX < 0) {
+                            // Vuốt sang trái -> Ảnh tiếp theo
+                            updateLightboxImage(lbCurrentIndex + 1);
+                        } else {
+                            // Vuốt sang phải -> Ảnh trước
+                            updateLightboxImage(lbCurrentIndex - 1);
+                        }
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // Hỗ trợ phím tắt bàn phím
+        document.addEventListener('keydown', function (e) {
+            if (!lightboxModal.classList.contains('is-open')) return;
+
+            switch (e.key) {
+                case 'Escape':
+                    closeLightbox();
+                    break;
+                case 'ArrowLeft':
+                    updateLightboxImage(lbCurrentIndex - 1);
+                    break;
+                case 'ArrowRight':
+                    updateLightboxImage(lbCurrentIndex + 1);
+                    break;
+                case '+':
+                case '=':
+                    if (lbScale < 3.5) {
+                        lbScale = Math.min(3.5, lbScale + 0.5);
+                        applyImageTransform(true);
+                    }
+                    break;
+                case '-':
+                    if (lbScale > 1) {
+                        lbScale = Math.max(1, lbScale - 0.5);
+                        if (lbScale === 1) {
+                            lbTranslateX = 0;
+                            lbTranslateY = 0;
+                        }
+                        applyImageTransform(true);
+                    }
+                    break;
+                case '0':
+                    resetImageTransform();
+                    break;
+                case 'r':
+                case 'R':
+                    lbRotation = (lbRotation + 90) % 360;
+                    applyImageTransform(true);
+                    break;
+            }
         });
     }
 
