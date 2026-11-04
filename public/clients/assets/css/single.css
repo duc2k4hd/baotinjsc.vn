@@ -1521,11 +1521,32 @@ button, input, select, textarea {
    5. RIGHT COLUMN: STICKY SIDEBAR (30%)
    ========================================================================== */
 .product-tabs-sidebar {
+    position: -webkit-sticky;
     position: sticky;
-    top: 90px;
+    top: 0;
+    align-self: start;
     display: flex;
     flex-direction: column;
     gap: 18px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+    z-index: 15;
+}
+
+.product-tabs-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.product-tabs-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+}
+
+.product-tabs-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.6);
 }
 
 .side-card {
@@ -2024,9 +2045,13 @@ button, input, select, textarea {
         gap: 28px;
     }
 
-    /* Trên Tablet, Sidebar di chuyển xuống dưới và dàn thành lưới 2 cột */
+    /* Trên Tablet, Sidebar di chuyển xuống dưới và dàn thành lưới 2 cột, bỏ sticky */
     .product-tabs-sidebar {
-        position: static;
+        position: static !important;
+        top: auto !important;
+        align-self: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 18px;
@@ -2162,8 +2187,16 @@ button, input, select, textarea {
         grid-template-columns: 1fr;
     }
 
+    /* Trên Mobile (<768px), Sidebar xếp dọc tự nhiên 1 cột bên dưới, bỏ sticky */
     .product-tabs-sidebar {
-        grid-template-columns: 1fr;
+        position: static !important;
+        top: auto !important;
+        align-self: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
     }
 
     .benefit-grid {

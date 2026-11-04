@@ -111,7 +111,7 @@
     </div>
     <div class="footer-bottom">
         <div class="container">
-            <p>© Copyright {{ date('Y') }}, {{ $settings->site_name ?? 'Bảo Tín JSC' }}</p>
+            <p>{!! !empty($settings->copyright) ? Blade::render($settings->copyright) : 'Đang cập nhật...' !!}</p>
         </div>
     </div>
 </footer>
