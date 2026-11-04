@@ -811,7 +811,7 @@
                     @forelse($products as $product)
                         @php
                             $primaryImg = $product->primary_image;
-                            $imgUrl = $primaryImg ? $primaryImg->url : null;
+                            $imgUrl = $primaryImg ? ($primaryImg->full_url ?? null) : null;
                             $hasDiscount = $product->sale_price && $product->sale_price < $product->price;
                         @endphp
                         <tr>

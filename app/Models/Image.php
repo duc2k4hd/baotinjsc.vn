@@ -99,4 +99,36 @@ class Image extends Model
 
         return $value;
     }
+
+    /**
+     * URL đầy đủ có thể render trực tiếp lên thẻ <img>
+     */
+    public function getFullUrlAttribute(): ?string
+    {
+        $value = $this->attributes['url'] ?? $this->attributes['path'] ?? null;
+        if (empty($value)) {
+            return null;
+        }
+
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://') || str_starts_with($value, 'data:')) {
+            return $value;
+        }
+
+        $clean = ltrim($value, '/');
+
+        if (str_starts_with($clean, 'clients/assets/img/clothes/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clients/assets/img/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clients/') || str_starts_with($clean, 'admins/') || str_starts_with($clean, 'storage/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clothes/')) {
+            return asset('clients/assets/img/' . $clean);
+        }
+
+        return asset('clients/assets/img/clothes/' . $clean);
+    }
 }

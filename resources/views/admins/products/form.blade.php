@@ -55,6 +55,34 @@
         'to' => 0,
     ];
 
+    // Helper resolve URL ảnh sản phẩm chính xác
+    $resolveProductImgUrl = function (?string $path): ?string {
+        if (empty($path)) {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://') || str_starts_with($path, 'data:')) {
+            return $path;
+        }
+
+        $clean = ltrim($path, '/');
+
+        if (str_starts_with($clean, 'clients/assets/img/clothes/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clients/assets/img/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clients/') || str_starts_with($clean, 'admins/') || str_starts_with($clean, 'storage/')) {
+            return asset($clean);
+        }
+        if (str_starts_with($clean, 'clothes/')) {
+            return asset('clients/assets/img/' . $clean);
+        }
+
+        return asset('clients/assets/img/clothes/' . $clean);
+    };
+
     // Dữ liệu ảnh đại diện (ảnh đầu tiên)
     $primaryImage = null;
     if (old('primary_image')) {
@@ -488,9 +516,7 @@
                     @foreach($existingImages as $index => $image)
                         @php
                             $storedValue = $image['existing_path'] ?? $image['path'] ?? $image['url'] ?? null;
-                            $storedUrl = $storedValue
-                                ? (str_starts_with($storedValue, 'http') ? $storedValue : asset($storedValue))
-                                : null;
+                            $storedUrl = $resolveProductImgUrl($storedValue);
                         @endphp
                         <div class="repeater-item">
                             <div class="repeater-header">
@@ -526,7 +552,7 @@
                                 <div class="gallery-dropzone p-2 mb-2 text-center" title="Kéo thả ảnh vào đây hoặc bấm để chọn">
                                     <div class="gallery-preview image-preview">
                                         @if($storedUrl)
-                                            <img src="{{ $storedUrl }}" alt="">
+                                            <img src="{{ $storedUrl }}" alt="" onerror="this.onerror=null;this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                                         @else
                                             <div class="text-muted py-2">
                                                 <i class="fa-solid fa-cloud-arrow-up fa-2x mb-1 d-block text-secondary"></i>
@@ -690,9 +716,7 @@
                     @php
                         $primaryImgValue = old('primary_image.existing_path', $primaryImage['existing_path'] ?? null);
                         $primaryImgId = old('primary_image.id', $primaryImage['id'] ?? null);
-                        $primaryImgUrl = $primaryImgValue
-                            ? (str_starts_with($primaryImgValue, 'http') ? $primaryImgValue : asset($primaryImgValue))
-                            : null;
+                        $primaryImgUrl = $resolveProductImgUrl($primaryImgValue);
                     @endphp
                     <input type="hidden" id="primary-image-id" name="primary_image[id]" value="{{ $primaryImgId }}">
                     <input type="hidden" id="primary-image-path" name="primary_image[existing_path]" value="{{ $primaryImgValue }}">
@@ -700,7 +724,7 @@
 
                     <div class="primary-image-preview mb-3" id="primary-image-preview" title="Bấm để chọn ảnh từ thư viện hoặc kéo thả file từ máy tính">
                         @if($primaryImgUrl)
-                            <img src="{{ $primaryImgUrl }}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;">
+                            <img src="{{ $primaryImgUrl }}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;" onerror="this.onerror=null;this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                         @else
                             <div class="drop-zone-placeholder text-muted p-4">
                                 <i class="fa-solid fa-cloud-arrow-up fa-3x mb-2 d-block text-primary"></i>
@@ -1078,9 +1102,31 @@ document.addEventListener('DOMContentLoaded', function () {
     const primarySourceInfo = document.getElementById('primary-image-source-info');
     const primarySourceText = document.getElementById('primary-image-source-text');
 
+    function resolveProductImageUrl(path) {
+        if (!path) return '';
+        if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+            return path;
+        }
+        const clean = path.replace(/^\/+/, '');
+        if (clean.startsWith('clients/assets/img/clothes/')) {
+            return '/' + clean;
+        }
+        if (clean.startsWith('clients/assets/img/')) {
+            return '/' + clean;
+        }
+        if (clean.startsWith('clients/') || clean.startsWith('admins/') || clean.startsWith('storage/')) {
+            return '/' + clean;
+        }
+        if (clean.startsWith('clothes/')) {
+            return '/clients/assets/img/' + clean;
+        }
+        return '/clients/assets/img/clothes/' + clean;
+    }
+
     function renderPrimaryPreview(imgUrl, sourceLabel) {
         if (!primaryPreview) return;
-        primaryPreview.innerHTML = `<img src="${imgUrl}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;">`;
+        const resolvedSrc = resolveProductImageUrl(imgUrl);
+        primaryPreview.innerHTML = `<img src="${resolvedSrc}" alt="Ảnh đại diện" style="max-width: 100%; max-height: 260px; object-fit: contain;" onerror="this.onerror=null;this.src='/clients/assets/img/clothes/no-image.webp';">`;
         if (btnClearPrimary) btnClearPrimary.classList.remove('d-none');
         if (sourceLabel && primarySourceInfo && primarySourceText) {
             primarySourceInfo.classList.remove('d-none');
@@ -1303,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const chosenPath = file.relative_path || file.path || file.filename || file.url;
                         if (primaryPathInput) primaryPathInput.value = chosenPath;
                         if (primaryIdInput) primaryIdInput.value = file.id || '';
-                        const previewUrl = file.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+                        const previewUrl = (file.url && file.url.includes('/')) ? file.url : resolveProductImageUrl(chosenPath);
                         renderPrimaryPreview(previewUrl, `Thư viện: ${file.filename || chosenPath}`);
                     }
                 }
@@ -1392,11 +1438,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const altInput = itemEl.querySelector('input[name*="[alt]"]');
 
             const chosenPath = fileData.relative_path || fileData.path || fileData.filename || fileData.url;
-            const previewUrl = fileData.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+            const previewUrl = (fileData.url && fileData.url.includes('/')) ? fileData.url : resolveProductImageUrl(chosenPath);
 
             if (pathInput) pathInput.value = chosenPath;
             if (previewWrap) {
-                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;" onerror="this.onerror=null;this.src='/clients/assets/img/clothes/no-image.webp';">`;
             }
             if (statusEl) {
                 statusEl.classList.remove('is-empty');
@@ -1514,9 +1560,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             const chosenPath = file.relative_path || file.path || file.filename || file.url;
                             if (pathInput) pathInput.value = chosenPath;
 
-                            const previewUrl = file.url || (chosenPath.startsWith('http') ? chosenPath : ('/' + chosenPath.replace(/^\/+/, '')));
+                            const previewUrl = (file.url && file.url.includes('/')) ? file.url : resolveProductImageUrl(chosenPath);
                             if (previewWrap) {
-                                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+                                previewWrap.innerHTML = `<img src="${previewUrl}" alt="" style="max-height: 100px; max-width: 180px; object-fit: contain; border-radius: 4px;" onerror="this.onerror=null;this.src='/clients/assets/img/clothes/no-image.webp';">`;
                             }
                             if (statusEl) {
                                 statusEl.classList.remove('is-empty');
