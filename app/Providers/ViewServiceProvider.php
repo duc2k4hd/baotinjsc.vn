@@ -110,115 +110,100 @@ class ViewServiceProvider extends ServiceProvider
 
         // --- ACCOUNT + CART (Global composer) ---
         View::composer('*', function ($view) {
-            // Không cache để đảm bảo luôn lấy dữ liệu mới nhất, đặc biệt sau khi đăng xuất
-            try {
-                $accountId = auth('web')->id();
-                $sessionId = session()->getId() ?? null;
-            } catch (Throwable $e) {
-                // Nếu session chưa start (ví dụ Googlebot), dùng null
-                Log::debug('ViewServiceProvider: Session not available', [
-                    'error' => $e->getMessage(),
-                ]);
-                $accountId = null;
-                $sessionId = null;
-            }
+            static $sharedPayload = null;
 
-            try {
-                $account = auth('web')->user() ?? null;
-
-                // Lấy cart: nếu đã đăng nhập thì lấy theo account_id, nếu chưa thì lấy theo session_id
-                $cartQuery = Cart::query()->active()->with(['items' => function ($q) {
-                    $q->where(function ($q2) {
-                        $q2->whereNull('status')->orWhere('status', 'active');
-                    });
-                }]);
-
-                if ($accountId) {
-                    // Đã đăng nhập: chỉ lấy cart của account này
-                    $cartQuery->where('account_id', $accountId);
-                } else {
-                    // Chưa đăng nhập: chỉ lấy cart theo session và không có account_id
-                    // QUAN TRỌNG: Phải đảm bảo account_id là NULL để không lấy cart của user khác
-                    if ($sessionId) {
-                        $cartQuery->whereNull('account_id')->where('session_id', $sessionId);
-                    } else {
-                        // Nếu không có sessionId (ví dụ Googlebot), không lấy cart
-                        $cartQuery->whereRaw('1 = 0');
-                    }
+            if ($sharedPayload === null) {
+                try {
+                    $accountId = auth('web')->id();
+                    $sessionId = session()->getId() ?? null;
+                } catch (Throwable $e) {
+                    // Nếu session chưa start (ví dụ Googlebot), dùng null
+                    Log::debug('ViewServiceProvider: Session not available', [
+                        'error' => $e->getMessage(),
+                    ]);
+                    $accountId = null;
+                    $sessionId = null;
                 }
 
-                $cart = $cartQuery->orderByDesc('id')->first();
+                try {
+                    $account = auth('web')->user() ?? null;
 
-                // Đếm số lượng cart items
-                $cartItemSumQuery = CartItem::query()->active()
-                    ->where(function ($q) {
-                        $q->whereNull('status')->orWhere('status', 'active');
-                    })
-                    ->whereHas('cart', function ($q) use ($accountId, $sessionId) {
-                        if ($accountId) {
-                            $q->where('account_id', $accountId);
+                    // Lấy cart: nếu đã đăng nhập thì lấy theo account_id, nếu chưa thì lấy theo session_id
+                    $cartQuery = Cart::query()->active()->with(['items' => function ($q) {
+                        $q->where(function ($q2) {
+                            $q2->whereNull('status')->orWhere('status', 'active');
+                        });
+                    }]);
+
+                    if ($accountId) {
+                        // Đã đăng nhập: chỉ lấy cart của account này
+                        $cartQuery->where('account_id', $accountId);
+                    } else {
+                        // Chưa đăng nhập: chỉ lấy cart theo session và không có account_id
+                        if ($sessionId) {
+                            $cartQuery->whereNull('account_id')->where('session_id', $sessionId);
                         } else {
-                            // QUAN TRỌNG: Phải đảm bảo account_id là NULL
-                            if ($sessionId) {
-                                $q->whereNull('account_id')->where('session_id', $sessionId);
-                            } else {
-                                // Nếu không có sessionId (ví dụ Googlebot), không lấy cart items
-                                $q->whereRaw('1 = 0');
-                            }
+                            $cartQuery->whereRaw('1 = 0');
                         }
-                    });
+                    }
 
-                $cartCount = (int) ($cartItemSumQuery->sum('quantity') ?? 0);
-                $cartLink = $cartCount > 0 ? route('client.cart.index') : null;
+                    $cart = $cartQuery->orderByDesc('id')->first();
 
-                // Lấy favorites
-                $favorites = Favorite::ofOwner($accountId, $sessionId)->pluck('product_id');
-                $favCount = $favorites->count();
-                $favIds = $favorites->toArray();
-                $favLink = $favCount > 0 ? route('client.wishlist.index') : null;
+                    // Đếm số lượng cart items trực tiếp từ items collection đã eager-load, không cần query DB whereHas!
+                    $cartCount = 0;
+                    if ($cart && $cart->items) {
+                        $cartCount = (int) $cart->items->sum('quantity');
+                    }
+                    $cartLink = $cartCount > 0 ? route('client.cart.index') : null;
 
-                // Lấy comparison count từ session
-                $comparisonCount = count(session()->get('product_comparison', []));
+                    // Lấy favorites
+                    $favorites = Favorite::ofOwner($accountId, $sessionId)->pluck('product_id');
+                    $favCount = $favorites->count();
+                    $favIds = $favorites->toArray();
+                    $favLink = $favCount > 0 ? route('client.wishlist.index') : null;
 
-                $sharedPayload = [
-                    'account' => $account,
-                    'cart' => $cart,
-                    'cartCount' => $cartCount,
-                    'cartLink' => $cartLink,
-                    'cartQuantity' => $cartCount,
-                    'cartQty' => $cartCount,
-                    'cart_items_count' => $cartCount,
-                    'cartUrl' => $cartLink,
-                    'wishlistCount' => $favCount,
-                    'wishlistLink' => $favLink,
-                    'favoriteProductIds' => $favIds,
-                    'comparisonCount' => $comparisonCount,
-                ];
-            } catch (Throwable $e) {
-                Log::debug('Trình soạn thảo ViewServiceProvider đã bỏ qua', [
-                    'error' => $e->getMessage(),
-                ]);
+                    // Lấy comparison count từ session
+                    $comparisonCount = count(session()->get('product_comparison', []));
 
-                $sharedPayload = [
-                    'account' => null,
-                    'cart' => null,
-                    'cartCount' => 0,
-                    'cartLink' => null,
-                    'cartQuantity' => 0,
-                    'cartQty' => 0,
-                    'cart_items_count' => 0,
-                    'cartUrl' => null,
-                    'wishlistCount' => 0,
-                    'wishlistLink' => null,
-                    'favoriteProductIds' => [],
-                    'comparisonCount' => 0,
-                ];
+                    $sharedPayload = [
+                        'account' => $account,
+                        'cart' => $cart,
+                        'cartCount' => $cartCount,
+                        'cartLink' => $cartLink,
+                        'cartQuantity' => $cartCount,
+                        'cartQty' => $cartCount,
+                        'cart_items_count' => $cartCount,
+                        'cartUrl' => $cartLink,
+                        'wishlistCount' => $favCount,
+                        'wishlistLink' => $favLink,
+                        'favoriteProductIds' => $favIds,
+                        'comparisonCount' => $comparisonCount,
+                    ];
+                } catch (Throwable $e) {
+                    Log::debug('Trình soạn thảo ViewServiceProvider đã bỏ qua', [
+                        'error' => $e->getMessage(),
+                    ]);
+
+                    $sharedPayload = [
+                        'account' => null,
+                        'cart' => null,
+                        'cartCount' => 0,
+                        'cartLink' => null,
+                        'cartQuantity' => 0,
+                        'cartQty' => 0,
+                        'cart_items_count' => 0,
+                        'cartUrl' => null,
+                        'wishlistCount' => 0,
+                        'wishlistLink' => null,
+                        'favoriteProductIds' => [],
+                        'comparisonCount' => 0,
+                    ];
+                }
             }
 
             foreach ($sharedPayload as $key => $value) {
                 $view->with($key, $value);
             }
-
         });
     }
 

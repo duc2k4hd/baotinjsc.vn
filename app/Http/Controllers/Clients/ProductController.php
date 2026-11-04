@@ -221,37 +221,24 @@ class ProductController extends Controller
                 ]);
             }
 
-            // Vouchers với error handling
-            try {
-                $vouchers = Cache::remember('vouchers_for_product_'.$product->id, 3600, function () {
-                    return Voucher::active()
-                        ->orderBy('created_at', 'desc')
-                        ->limit(4)
-                        ->get();
-                });
-            } catch (\Throwable $e) {
-                Log::warning('ProductController: Failed to load vouchers', ['error' => $e->getMessage()]);
-                $vouchers = collect();
-            }
+            // Vouchers (view chi tiết sản phẩm hiện tại không dùng)
+            $vouchers = collect();
 
-            // New products với error handling
-            // Sản phẩm nổi bật (featured)
+            // Sản phẩm nổi bật (featured) - Chỉ select cột hiển thị cho sidebar, cache dùng chung toàn hệ thống
             try {
-                $productFeatured = Cache::remember('featured_products_sidebar', now()->addDays(2), function () use ($product) {
-                    $products = Product::active()
+                $featuredPool = Cache::remember('global_featured_sidebar_products', now()->addDay(), function () {
+                    $items = Product::active()
                         ->featured()
-                        ->where('is_featured', true)
-                        ->where('id', '!=', $product->id)
-                        ->orderBy('name', 'desc')
-                        ->orderBy('created_at', 'desc')
-                        ->limit(6)
-                        ->withApprovedCommentsMeta()
+                        ->select(['id', 'name', 'slug', 'price', 'sale_price', 'image_ids'])
+                        ->orderByDesc('id')
+                        ->limit(10)
                         ->get() ?? collect();
 
-                    Product::preloadImages($products);
+                    Product::preloadImages($items);
 
-                    return $products;
+                    return $items;
                 });
+                $productFeatured = $featuredPool->reject(fn ($p) => $p->id === $product->id)->take(4)->values();
                 Product::preloadImages($productFeatured);
             } catch (\Throwable $e) {
                 Log::warning('ProductController: Failed to load featured products', ['error' => $e->getMessage()]);
@@ -273,216 +260,29 @@ class ProductController extends Controller
                 $productRelated = collect();
             }
 
-            // Sản phẩm đi kèm theo danh mục category_included_ids (nếu có)
+            // Sản phẩm đi kèm (view single hiện tại không dùng, gán rỗng để tối ưu 100% tài nguyên)
             $includedProducts = collect();
-            try {
-                $includedCategoryIds = collect($product->category_included_ids ?? [])
-                    ->filter(fn ($id) => ! empty($id))
-                    ->unique()
-                    ->values();
-
-                if ($includedCategoryIds->isNotEmpty()) {
-                    // Cache key bao gồm brand_id để cache riêng theo hãng
-                    // Lưu ý: Cache key không thay đổi khi fallback, vì fallback chỉ xảy ra khi không có kết quả cùng brand
-                    $brandId = $product->brand_id ?? 'no-brand';
-                    $cacheKey = 'included_products_'.$product->id.'_'.$brandId.'_'.md5($includedCategoryIds->join('-'));
-                    try {
-                        $cachedSets = Cache::remember(
-                            $cacheKey,
-                            now()->addHours(6),
-                            function () use ($product, $includedCategoryIds) {
-                                // 1️⃣ Load tất cả categories một lần (tránh N+1)
-                                $categories = Category::query()
-                                    ->select('id', 'name', 'slug')
-                                    ->whereIn('id', $includedCategoryIds->toArray())
-                                    ->get()
-                                    ->keyBy('id');
-
-                                if ($categories->isEmpty()) {
-                                    return [];
-                                }
-
-                                // 2️⃣ Tính descendants một lần cho tất cả categories (cache để tránh query lại)
-                                $categoryDescendants = [];
-                                $allDescendantIds = [];
-                                
-                                foreach ($includedCategoryIds as $categoryId) {
-                                    if (!isset($categories[$categoryId])) {
-                                        continue;
-                                    }
-                                    // Cache descendants với key riêng cho mỗi category (cache 1 ngày)
-                                    $descendantCacheKey = 'category_descendants_'.$categoryId;
-                                    $descendantIds = Cache::remember($descendantCacheKey, now()->addDay(), function () use ($categoryId) {
-                                        return CategoryHelper::getDescendants($categoryId);
-                                    });
-                                    $categoryDescendants[$categoryId] = $descendantIds;
-                                    $allDescendantIds = array_merge($allDescendantIds, $descendantIds);
-                                }
-
-                                $allDescendantIds = array_values(array_unique($allDescendantIds));
-
-                                if (empty($allDescendantIds)) {
-                                    return [];
-                                }
-
-                                // 3️⃣ Query products DUY NHẤT một lần với tất cả descendant IDs
-                                // Tối ưu: Sử dụng whereRaw với JSON_SEARCH để giảm số lượng orWhereJsonContains
-                                $limitPerCategory = 20;
-                                $totalLimit = count($includedCategoryIds) * $limitPerCategory * 2; // Lấy dư để có thể group
-                                
-                                // Tạo điều kiện JSON_SEARCH một lần cho tất cả IDs
-                                $jsonConditions = [];
-                                foreach ($allDescendantIds as $id) {
-                                    $jsonConditions[] = "JSON_SEARCH(category_ids, 'one', '{$id}') IS NOT NULL";
-                                    $jsonConditions[] = "JSON_SEARCH(category_ids, 'one', {$id}) IS NOT NULL";
-                                }
-                                
-                                // Base query builder
-                                $baseQuery = function ($includeBrand = true) use ($product, $allDescendantIds, $jsonConditions, $totalLimit) {
-                                    return Product::query()
-                                        ->active()
-                                        ->where('id', '!=', $product->id)
-                                        ->when($includeBrand && $product->brand_id, function ($q) use ($product) {
-                                            // Lọc theo cùng hãng (brand_id) nếu có
-                                            $q->where('brand_id', $product->brand_id);
-                                        })
-                                        ->where(function ($q) use ($allDescendantIds, $jsonConditions) {
-                                            // Check primary_category_id
-                                            $q->whereIn('primary_category_id', $allDescendantIds);
-                                            
-                                            // Check category_ids JSON (chỉ thêm điều kiện nếu có)
-                                            if (!empty($jsonConditions)) {
-                                                $q->orWhereRaw('('.implode(' OR ', $jsonConditions).')');
-                                            }
-                                        })
-                                        ->select([
-                                            'id', 'name', 'slug', 'price', 'sale_price', 'primary_category_id', 
-                                            'category_ids', 'brand_id', 'is_featured', 'created_at', 'image_ids'
-                                        ])
-                                        ->with(['variants' => function ($q) {
-                                            $q->select('id', 'product_id', 'name', 'price', 'sale_price', 'stock_quantity', 'attributes');
-                                        }])
-                                        ->inRandomOrder()
-                                        ->limit($totalLimit);
-                                };
-                                
-                                // Thử query với brand_id trước (ưu tiên cùng hãng)
-                                $allProducts = $baseQuery(true)->get();
-                                
-                                // Nếu không có sản phẩm cùng brand, fallback không lọc brand
-                                if ($allProducts->isEmpty() && $product->brand_id) {
-                                    $allProducts = $baseQuery(false)->get();
-                                }
-
-                                if ($allProducts->isEmpty()) {
-                                    return [];
-                                }
-
-                                // Preload images một lần cho tất cả products
-                                Product::preloadImages($allProducts);
-
-                                // 4️⃣ Group products theo category trong memory (tối ưu với collection)
-                                $sets = [];
-                                
-                                // Tạo map nhanh: category_id => descendant_ids để filter nhanh hơn
-                                $categoryDescendantMap = [];
-                                foreach ($includedCategoryIds as $categoryId) {
-                                    if (isset($categories[$categoryId]) && isset($categoryDescendants[$categoryId])) {
-                                        // Tạo map với cả int và string keys để đảm bảo match
-                                        $descendantIds = $categoryDescendants[$categoryId];
-                                        $categoryDescendantMap[$categoryId] = [];
-                                        foreach ($descendantIds as $descId) {
-                                            $categoryDescendantMap[$categoryId][(int) $descId] = true;
-                                            $categoryDescendantMap[$categoryId][(string) $descId] = true;
-                                        }
-                                    }
-                                }
-                                
-                                // Track các sản phẩm đã được gán để tránh duplicate giữa các category
-                                $assignedProductIds = [];
-                                
-                                foreach ($includedCategoryIds as $categoryId) {
-                                    if (!isset($categories[$categoryId]) || !isset($categoryDescendantMap[$categoryId])) {
-                                        continue;
-                                    }
-                                    
-                                    $category = $categories[$categoryId];
-                                    $descendantMap = $categoryDescendantMap[$categoryId];
-
-                                    // Filter products thuộc category này từ tập products đã query
-                                    // Loại trừ các sản phẩm đã được gán cho category trước đó
-                                    $matchedProducts = $allProducts->filter(function ($p) use ($descendantMap, $assignedProductIds) {
-                                        // Bỏ qua sản phẩm đã được gán
-                                        if (in_array($p->id, $assignedProductIds, true)) {
-                                            return false;
-                                        }
-                                        
-                                        // Check primary_category_id (O(1) lookup) - check cả int và null
-                                        if ($p->primary_category_id !== null) {
-                                            if (isset($descendantMap[(int) $p->primary_category_id]) || isset($descendantMap[(string) $p->primary_category_id])) {
-                                                return true;
-                                            }
-                                        }
-                                        
-                                        // Check category_ids (đã được cast thành array trong model)
-                                        $productCategoryIds = $p->category_ids ?? [];
-                                        if (empty($productCategoryIds) || !is_array($productCategoryIds)) {
-                                            return false;
-                                        }
-                                        
-                                        // Check intersection với map (nhanh hơn array_intersect)
-                                        foreach ($productCategoryIds as $catId) {
-                                            $catIdInt = (int) $catId;
-                                            $catIdStr = (string) $catId;
-                                            if (isset($descendantMap[$catIdInt]) || isset($descendantMap[$catIdStr])) {
-                                                return true;
-                                            }
-                                        }
-                                        return false;
-                                    })
-                                    ->take($limitPerCategory)
-                                    ->values();
-
-                                    if ($matchedProducts->isNotEmpty()) {
-                                        // Đánh dấu các sản phẩm đã được gán cho category này
-                                        foreach ($matchedProducts as $product) {
-                                            $assignedProductIds[] = $product->id;
-                                        }
-                                        
-                                        $sets[] = [
-                                            'category' => $category,
-                                            'products' => $matchedProducts,
-                                        ];
-                                    }
-                                }
-
-                                return $sets;
-                            }
-                        );
-                        $includedProducts = collect($cachedSets);
-                    } catch (\Throwable $e) {
-                        Log::warning('ProductController: Failed to load included products', [
-                            'product_id' => $product->id,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-                }
-            } catch (\Throwable $e) {
-                Log::warning('ProductController: Failed to process included products', [
-                    'product_id' => $product->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
 
             // Load comments và rating stats - chỉ load 10 đầu tiên
-            // Tối ưu: Cache comments và rating stats để giảm query
             $comments = collect();
             $totalComments = 0;
-            $ratingStats = ['average' => 0, 'count' => 0, 'distribution' => []];
+            $ratingStats = ['average_rating' => 5.0, 'total_comments' => 0, 'star_1_count' => 0, 'star_2_count' => 0, 'star_3_count' => 0, 'star_4_count' => 0, 'star_5_count' => 0];
             $latestReviews = collect();
             
             try {
-                // Cache comments với key dựa trên product ID và updated_at để invalidate khi product update
+                // Cache rating stats trước để dùng luôn total_comments mà không cần query count riêng
+                $ratingStatsCacheKey = "product_rating_stats_{$product->id}_{$product->updated_at->timestamp}";
+                try {
+                    $ratingStats = Cache::remember($ratingStatsCacheKey, now()->addHours(6), function () use ($product) {
+                        $commentService = app(\App\Services\CommentService::class);
+                        return $commentService->calculateRatingStats('product', $product->id);
+                    });
+                    $totalComments = (int) ($ratingStats['total_comments'] ?? 0);
+                } catch (\Throwable $e) {
+                    Log::warning('ProductController: Failed to calculate rating stats', ['error' => $e->getMessage()]);
+                }
+
+                // Cache comments với key dựa trên product ID và updated_at
                 $commentsCacheKey = "product_comments_{$product->id}_{$product->updated_at->timestamp}";
                 $comments = Cache::remember($commentsCacheKey, now()->addHours(6), function () use ($product) {
                     // Lấy comments của người dùng (không phải admin)
@@ -496,12 +296,13 @@ class ProductController extends Controller
                                   $q->where('role', '!=', 'admin');
                               });
                         })
-                        ->with(['account'])
+                        ->with(['account:id,name,role'])
+                        ->select(['id', 'commentable_type', 'commentable_id', 'parent_id', 'account_id', 'name', 'content', 'rating', 'created_at'])
                         ->orderByDesc('created_at')
                         ->limit(10)
                         ->get();
 
-                    // Load admin replies separately để đảm bảo relationship hoạt động đúng
+                    // Load admin replies separately
                     $commentIds = $comments->pluck('id');
                     if ($commentIds->isNotEmpty()) {
                         try {
@@ -510,11 +311,11 @@ class ProductController extends Controller
                                 ->whereHas('account', function ($q) {
                                     $q->where('role', 'admin');
                                 })
-                                ->with('account')
+                                ->with(['account:id,name,role'])
+                                ->select(['id', 'parent_id', 'account_id', 'content', 'created_at'])
                                 ->get()
                                 ->keyBy('parent_id');
 
-                            // Attach admin replies to comments
                             $comments->each(function ($comment) use ($adminReplies) {
                                 if ($adminReplies->has($comment->id)) {
                                     $comment->setRelation('adminReply', $adminReplies->get($comment->id));
@@ -539,52 +340,11 @@ class ProductController extends Controller
                         ->whereHas('account', function ($q) {
                             $q->where('role', 'admin');
                         })
-                        ->with(['account'])
+                        ->with(['account:id,name,role'])
+                        ->select(['id', 'commentable_type', 'commentable_id', 'parent_id', 'account_id', 'content', 'rating', 'created_at'])
                         ->orderByDesc('created_at')
                         ->get();
                 });
-
-                // Cache total comments count
-                $totalCommentsCacheKey = "product_comments_count_{$product->id}_{$product->updated_at->timestamp}";
-                $totalComments = Cache::remember($totalCommentsCacheKey, now()->addHours(6), function () use ($product) {
-                    return Comment::where('commentable_type', 'product')
-                        ->where('commentable_id', $product->id)
-                        ->whereNull('parent_id')
-                        ->approved()
-                        ->where(function($q) {
-                            $q->whereNull('account_id')
-                              ->orWhereHas('account', function($q) {
-                                  $q->where('role', '!=', 'admin');
-                              });
-                        })
-                        ->count();
-                });
-
-                // Cache rating stats
-                $ratingStatsCacheKey = "product_rating_stats_{$product->id}_{$product->updated_at->timestamp}";
-                try {
-                    $ratingStats = Cache::remember($ratingStatsCacheKey, now()->addHours(6), function () use ($product) {
-                        $commentService = app(\App\Services\CommentService::class);
-                        return $commentService->calculateRatingStats('product', $product->id);
-                    });
-                } catch (\Throwable $e) {
-                    Log::warning('ProductController: Failed to calculate rating stats', ['error' => $e->getMessage()]);
-                }
-
-                // 5 đánh giá mới nhất cho schema Product
-                $cacheKey = "product_latest_reviews_{$product->id}_{$product->updated_at->timestamp}";
-
-                $latestReviews = Cache::rememberForever($cacheKey, fn () =>
-                    Comment::query()
-                        ->where('commentable_type', 'product')
-                        ->where('commentable_id', $product->id)
-                        ->whereNull('parent_id')
-                        ->approved()
-                        ->whereNotNull('rating')
-                        ->latest()
-                        ->limit(5)
-                        ->get()
-                );
             } catch (\Throwable $e) {
                 Log::warning('ProductController: Failed to load comments', [
                     'product_id' => $product->id,
@@ -593,7 +353,6 @@ class ProductController extends Controller
             }
 
             // Tính tồn kho còn lại sau khi trừ số lượng trong giỏ hàng hiện tại
-            // Tối ưu: Query trực tiếp CartItem thay vì load cả cart
             $variantCartQuantities = [];
             $productCartQuantity = 0;
 
@@ -601,7 +360,7 @@ class ProductController extends Controller
                 $accountId = auth('web')->id();
                 $sessionId = request()->session()->getId();
 
-                // Tìm cart ID trước
+                // Tìm cart ID
                 $cartQuery = Cart::query();
                 if ($accountId) {
                     $cartQuery->where('account_id', $accountId);
@@ -611,9 +370,9 @@ class ProductController extends Controller
                 $cartId = $cartQuery->latest('id')->value('id');
 
                 if ($cartId) {
-                    // Query trực tiếp items của product này trong cart
                     $items = \App\Models\CartItem::where('cart_id', $cartId)
                         ->where('product_id', $product->id)
+                        ->select('product_variant_id', 'quantity')
                         ->get();
 
                     $productCartQuantity = (int) $items->whereNull('product_variant_id')->sum('quantity');
@@ -631,7 +390,7 @@ class ProductController extends Controller
                 ]);
             }
 
-            // Tính số lượng tồn kho sản phẩm chính xác theo chuẩn nobifashion
+            // Tính số lượng tồn kho sản phẩm chính xác
             if ($product->hasVariants() && $product->variants->isNotEmpty()) {
                 $hasUnlimited = $product->variants->contains(fn ($v) => $v->stock_quantity === null);
                 if ($hasUnlimited) {
@@ -650,13 +409,9 @@ class ProductController extends Controller
                 }
             }
 
-            // CSKH dynamic (cache 1 ngày)
-            $supportStaff = Cache::remember('support_staff_active', now()->addDay(), function () {
-                return SupportStaff::where('is_active', true)->orderBy('sort_order')->get();
-            });
-
-            // Popup content (active & trong khung thời gian) - không cache theo yêu cầu
-            $popup = PopupContent::active()->orderBy('sort_order')->first();
+            // Support staff đã được ViewServiceProvider chia sẻ toàn cục
+            $supportStaff = view()->shared('supportStaff') ?? collect();
+            $popup = null;
             
             // Tạo gallery images: merge product images + variant images, loại bỏ duplicate
             $galleryImages = collect();

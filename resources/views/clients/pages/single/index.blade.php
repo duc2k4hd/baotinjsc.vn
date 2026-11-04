@@ -3,7 +3,7 @@
 @section('title', ($product->meta_title ?? $product->name) . ' - ' . ($settings->site_name ?? 'Bảo Tín JSC'))
 
 @section('head')
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css?v=' . time()) }}">
+    <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css?v=' . (file_exists(public_path('clients/assets/css/single.css')) ? filemtime(public_path('clients/assets/css/single.css')) : '1.0')) }}">
 
     @php
         $pageTitle = $product->meta_title ?? ($product->name ?? 'Sản phẩm');
@@ -503,10 +503,6 @@
                     <div class="product-meta-item">
                         <dt>Bảo hành:</dt>
                         <dd>12 tháng chính hãng</dd>
-                    </div>
-                    <div class="product-meta-item">
-                        <dt>Chứng từ:</dt>
-                        <dd>CO / CQ đầy đủ</dd>
                     </div>
                 </dl>
 
@@ -1166,7 +1162,7 @@
 @endsection
 
 @section('foot')
-    <script src="{{ asset('clients/assets/js/single.js?v=' . time()) }}"></script>
+    <script src="{{ asset('clients/assets/js/single.js?v=' . (file_exists(public_path('clients/assets/js/single.js')) ? filemtime(public_path('clients/assets/js/single.js')) : '1.0')) }}"></script>
     <script>
         window.phoneNumber = '{{ $settings->contact_phone ?? '0903 223 663' }}';
 

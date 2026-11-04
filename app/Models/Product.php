@@ -130,10 +130,14 @@ class Product extends Model
     }
 
     /**
-     * Kiểm tra sản phẩm có variants không
+     * Kiểm tra sản phẩm có variants không (tối ưu memory nếu đã eager load)
      */
     public function hasVariants(): bool
     {
+        if ($this->relationLoaded('variants')) {
+            return $this->variants->isNotEmpty();
+        }
+
         return $this->variants()->exists();
     }
 
@@ -343,13 +347,12 @@ class Product extends Model
 
         $baseQuery = static::query()
             ->active()
-            ->withApprovedCommentsMeta()
-            ->where('id', '!=', $currentId)
-            ->where(function ($q) use ($product) {
-                $q->where('primary_category_id', $product->primary_category_id)
-                    ->orWhereJsonContains('category_ids', (int) $product->primary_category_id)
-                    ->orWhereJsonContains('category_ids', (string) $product->primary_category_id);
-            });
+            ->select(['id', 'name', 'slug', 'price', 'sale_price', 'image_ids', 'primary_category_id'])
+            ->where('id', '!=', $currentId);
+
+        if ($product->primary_category_id) {
+            $baseQuery->where('primary_category_id', $product->primary_category_id);
+        }
 
         // 1️⃣ Lấy các sản phẩm trước
         $before = (clone $baseQuery)
