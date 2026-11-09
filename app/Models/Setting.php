@@ -107,12 +107,18 @@ class Setting extends Model
 
     protected static function booted()
     {
-        static::saved(function () {
+        static::saved(function ($setting) {
             Cache::forget('settings');
+            if ($setting->key === 'maintenance_mode') {
+                Cache::forget('maintenance_mode_status');
+            }
         });
 
-        static::deleted(function () {
+        static::deleted(function ($setting) {
             Cache::forget('settings');
+            if ($setting->key === 'maintenance_mode') {
+                Cache::forget('maintenance_mode_status');
+            }
         });
     }
 }

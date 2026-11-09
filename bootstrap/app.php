@@ -25,6 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => \App\Http\Middleware\CheckAdmin::class,
+            'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
+        ]);
+
+        // Kiểm tra chế độ bảo trì ở đầu web pipeline
+        $middleware->web(append: [
+            \App\Http\Middleware\CheckMaintenanceMode::class,
         ]);
 
         // Không dùng redirectGuestsTo để tránh ảnh hưởng SEO

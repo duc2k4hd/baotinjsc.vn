@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\SettingStoreRequest;
 use App\Http\Requests\Admin\SettingUpdateRequest;
 use App\Models\Setting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -51,7 +52,59 @@ class SettingController extends Controller
         $groups = Setting::select('group')->distinct()->pluck('group')->filter();
         $types = $this->allowedTypes();
 
-        return view('admins.settings.index', compact('settings_all', 'groups', 'types'));
+        $maintenanceSetting = Setting::where('key', 'maintenance_mode')->first();
+        $isMaintenance = $maintenanceSetting ? (bool) $maintenanceSetting->getParsedValue() : false;
+
+        return view('admins.settings.index', compact('settings_all', 'groups', 'types', 'isMaintenance'));
+    }
+
+    /**
+     * Bật / tắt nhanh chế độ bảo trì hệ thống
+     */
+    public function toggleMaintenance(Request $request)
+    {
+        $setting = Setting::firstOrCreate(
+            ['key' => 'maintenance_mode'],
+            [
+                'group' => 'general',
+                'type' => Setting::TYPE_BOOLEAN,
+                'label' => 'Chế độ bảo trì hệ thống',
+                'description' => 'Bật để tạm dừng website hiển thị trang bảo trì cho khách hàng',
+                'value' => '0',
+                'is_public' => true,
+            ]
+        );
+
+        $currentValue = (bool) $setting->getParsedValue();
+        $newValue = $currentValue ? '0' : '1';
+        $setting->value = $newValue;
+        $setting->save();
+
+        Cache::forget('maintenance_mode_status');
+        Cache::forget('settings');
+
+        $statusText = $newValue === '1' ? 'ĐÃ BẬT' : 'ĐÃ TẮT';
+        $alertType = $newValue === '1' ? 'warning' : 'success';
+
+        return redirect()->back()->with($alertType, "Hệ thống: {$statusText} chế độ bảo trì thành công.");
+    }
+
+    /**
+     * Xem trước trang bảo trì dành cho Admin
+     */
+    public function previewMaintenance()
+    {
+        $settings = Cache::rememberForever('settings', function () {
+            return Setting::active()
+                ->get()
+                ->mapWithKeys(fn ($s) => [$s->key => $s->getParsedValue()])
+                ->toArray();
+        });
+
+        return response()->view('clients.pages.errors.503', [
+            'settings' => (object) $settings,
+            'isPreview' => true,
+        ]);
     }
 
     public function create()

@@ -260,6 +260,8 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::get('tags/entities', [\App\Http\Controllers\Admins\TagController::class, 'getEntities'])->name('tags.entities');
 
     // Settings Management
+    Route::post('settings/toggle-maintenance', [\App\Http\Controllers\Admins\SettingController::class, 'toggleMaintenance'])->name('settings.toggle-maintenance');
+    Route::get('settings/preview-maintenance', [\App\Http\Controllers\Admins\SettingController::class, 'previewMaintenance'])->name('settings.preview-maintenance');
     Route::resource('settings', \App\Http\Controllers\Admins\SettingController::class);
 
     // Banners Management
