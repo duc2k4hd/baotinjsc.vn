@@ -67,7 +67,7 @@ class ProductService
         $oldSlug = $product->slug; // Lưu slug cũ để invalidate cache
         
         $product = DB::transaction(function () use ($product, $data, $oldSlug) {
-            $payload = $this->extractProductPayload($data);
+            $payload = $this->extractProductPayload($data, $product->id);
             $payload['category_ids'] = $this->resolveCategoryIds($data);
 
             $product->update($payload);
@@ -219,11 +219,19 @@ class ProductService
         $prod->forceDelete();
     }
 
-    private function extractProductPayload(array $data): array
+    private function extractProductPayload(array $data, ?int $ignoreProductId = null): array
     {
         $slug = Arr::get($data, 'slug');
         if (empty($slug)) {
             $slug = Str::slug($data['name'] ?? Str::random(6));
+        }
+
+        // Tự động đảm bảo slug là duy nhất, không bị lỗi duplicate entry
+        $baseSlug = $slug;
+        $counter = 1;
+        while (Product::where('slug', $slug)->when($ignoreProductId, fn($q) => $q->where('id', '!=', $ignoreProductId))->exists()) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
         }
 
         $domainName = Setting::where('key', 'site_url')->value('value') ?? config('app.url');
@@ -236,16 +244,19 @@ class ProductService
 
         $includedCategoryIds = $this->normalizeIncludedCategories(Arr::get($data, 'category_included_ids', []));
 
+        // created_by bắt buộc NOT NULL trong DB
+        $createdBy = Arr::get($data, 'created_by') ?: (Auth::id() ?? auth('web')->id() ?? \App\Models\Account::value('id') ?? 1);
+
         return [
             'sku' => Arr::get($data, 'sku'),
             'name' => Arr::get($data, 'name'),
             'slug' => $slug,
             'description' => $description,
             'short_description' => $shortDescription,
-            'price' => Arr::get($data, 'price', 0),
-            'sale_price' => Arr::get($data, 'sale_price'),
-            'cost_price' => Arr::get($data, 'cost_price'),
-            'stock_quantity' => Arr::get($data, 'stock_quantity', 0),
+            'price' => (float) Arr::get($data, 'price', 0),
+            'sale_price' => Arr::get($data, 'sale_price') !== null ? (float) Arr::get($data, 'sale_price') : null,
+            'cost_price' => Arr::get($data, 'cost_price') !== null ? (float) Arr::get($data, 'cost_price') : null,
+            'stock_quantity' => (int) Arr::get($data, 'stock_quantity', 0),
             'meta_title' => Arr::get($data, 'meta_title'),
             'meta_description' => Arr::get($data, 'meta_description'),
             'meta_keywords' => Arr::get($data, 'meta_keywords'),
@@ -257,7 +268,7 @@ class ProductService
             'link_catalog' => $this->normalizeLinkCatalog(Arr::get($data, 'link_catalog'), Arr::get($data, 'catalog_files', [])),
             'video_url' => Arr::get($data, 'video_url') ? trim(Arr::get($data, 'video_url')) : null,
             'is_featured' => Arr::get($data, 'is_featured', false),
-            'created_by' => Arr::get($data, 'created_by', Auth::id()),
+            'created_by' => $createdBy,
             'is_active' => Arr::get($data, 'is_active', true),
         ];
     }
@@ -783,10 +794,19 @@ class ProductService
                 }
             }
 
+            // Đảm bảo SKU của variant không bị trùng gây lỗi SQL
+            $variantSku = ! empty($sku) ? $sku : null;
+            if ($variantSku) {
+                $exists = ProductVariant::where('sku', $variantSku)->when($variantId, fn($q) => $q->where('id', '!=', $variantId))->exists();
+                if ($exists) {
+                    $variantSku = $variantSku . '-' . Str::random(4);
+                }
+            }
+
             $payload = [
                 'product_id' => $product->id,
                 'name' => $name,
-                'sku' => ! empty($sku) ? $sku : null,
+                'sku' => $variantSku,
                 'price' => $price,
                 'sale_price' => $salePrice,
                 'cost_price' => $costPrice,
@@ -801,41 +821,21 @@ class ProductService
             if ($variantId && ProductVariant::where('product_id', $product->id)->where('id', $variantId)->exists()) {
                 ProductVariant::where('id', $variantId)->update($payload);
                 $keepIds[] = $variantId;
-                Log::info('🟢 [DEBUG ProductService] syncVariants - Updated variant', [
-                    'product_id' => $product->id,
-                    'variant_id' => $variantId,
-                    'variant_name' => $name,
-                ]);
             } else {
                 $newId = ProductVariant::create(array_merge($payload, [
                     'created_at' => now(),
                 ]))->id;
                 $keepIds[] = $newId;
-                Log::info('🟢 [DEBUG ProductService] syncVariants - Created variant', [
-                    'product_id' => $product->id,
-                    'variant_id' => $newId,
-                    'variant_name' => $name,
-                ]);
             }
         }
 
         // Xóa variants không còn được sử dụng
         if (! empty($keepIds)) {
-            $deletedCount = ProductVariant::where('product_id', $product->id)
+            ProductVariant::where('product_id', $product->id)
                 ->whereNotIn('id', $keepIds)
                 ->delete();
-            Log::info('🟢 [DEBUG ProductService] syncVariants - Deleted unused variants', [
-                'product_id' => $product->id,
-                'deleted_count' => $deletedCount,
-                'kept_ids' => $keepIds,
-            ]);
         } else {
-            // Nếu không có variants nào, xóa tất cả
-            $deletedCount = ProductVariant::where('product_id', $product->id)->delete();
-            Log::info('🟢 [DEBUG ProductService] syncVariants - Deleted all variants (no valid variants)', [
-                'product_id' => $product->id,
-                'deleted_count' => $deletedCount,
-            ]);
+            ProductVariant::where('product_id', $product->id)->delete();
         }
         
         Log::info('🟢 [DEBUG ProductService] syncVariants - Completed', [

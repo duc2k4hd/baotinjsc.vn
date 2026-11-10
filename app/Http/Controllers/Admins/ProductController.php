@@ -176,11 +176,7 @@ class ProductController extends Controller
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Tạo sản phẩm thành công');
         } catch (\Throwable $e) {
-            Log::error('🔴 [ProductController] store - Error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            report($e);
+            Log::error('Lỗi khi tạo sản phẩm: '.$e->getMessage().' tại '.$e->getFile().':'.$e->getLine());
 
             return redirect()
                 ->route('admin.products.create')
@@ -260,12 +256,7 @@ class ProductController extends Controller
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Cập nhật sản phẩm thành công');
         } catch (\Throwable $e) {
-            Log::error('🔴 [ProductController] update - Error', [
-                'product_id' => $product->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            report($e);
+            Log::error('Lỗi khi cập nhật sản phẩm: '.$e->getMessage().' tại '.$e->getFile().':'.$e->getLine());
 
             return redirect()
                 ->route('admin.products.edit', $product)
