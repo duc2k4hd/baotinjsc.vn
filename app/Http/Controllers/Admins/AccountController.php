@@ -99,8 +99,12 @@ class AccountController extends Controller
         $newAccount = $result['account'];
         $plainPassword = $result['plain_password'];
 
-        // Log activity
-        $this->activityLogService->logCreate($newAccount, 'Tạo tài khoản mới: '.$newAccount->name);
+        // Log activity safely
+        try {
+            $this->activityLogService->logCreate($newAccount, 'Tạo tài khoản mới: '.$newAccount->name);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to log activity: '.$e->getMessage());
+        }
 
         if ($request->boolean('send_email')) {
             try {
@@ -116,27 +120,27 @@ class AccountController extends Controller
                     'new_account_email' => $newAccount->email,
                     'new_account_name' => $newAccount->name,
                     'password_length' => strlen($plainPassword),
-                    'admin_id' => $admin->id,
-                    'admin_email' => $admin->email,
+                    'admin_id' => $admin?->id,
+                    'admin_email' => $admin?->email,
                 ]);
 
                 Mail::to($recipientEmail)->send(
                     new AccountCreatedMail($newAccount, $plainPassword, $forgotPasswordUrl)
                 );
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // Log error but don't fail the request
                 Log::error('Failed to send account creation email', [
                     'new_account_id' => $newAccount->id,
                     'new_account_email' => $newAccount->email,
-                    'admin_id' => $admin->id,
-                    'admin_email' => $admin->email,
+                    'admin_id' => $admin?->id,
+                    'admin_email' => $admin?->email,
                     'error' => $e->getMessage(),
                 ]);
             }
         }
 
         return redirect()
-            ->route('admin.accounts.show', $newAccount)
+            ->route('admin.accounts.index')
             ->with('success', 'Tài khoản đã được tạo thành công.');
     }
 

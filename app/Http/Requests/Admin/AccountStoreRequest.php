@@ -12,6 +12,17 @@ class AccountStoreRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => $this->phone ? trim($this->phone) : null,
+            'fullname' => $this->fullname ? trim($this->fullname) : null,
+            'gender' => $this->gender ?: null,
+            'birthday' => $this->birthday ?: null,
+            'logs' => $this->logs ? trim($this->logs) : null,
+        ]);
+    }
+
     public function rules(): array
     {
         return [

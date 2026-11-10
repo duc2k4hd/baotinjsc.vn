@@ -35,8 +35,10 @@ class CheckMaintenanceMode
         if (
             $request->is('admin*') ||
             $request->is('admin') ||
+            $request->is('*/admin*') ||
             $request->routeIs('admin.*') ||
-            $request->is('api/admin*')
+            $request->is('api/admin*') ||
+            str_starts_with(ltrim($request->getPathInfo(), '/'), 'admin')
         ) {
             return $next($request);
         }

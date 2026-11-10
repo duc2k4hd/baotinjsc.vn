@@ -72,14 +72,14 @@ class AccountService
             $profileData = [];
             $profileFields = ['phone', 'fullname', 'gender', 'birthday'];
             foreach ($profileFields as $field) {
-                if (isset($data[$field])) {
+                if (isset($data[$field]) && $data[$field] !== null && $data[$field] !== '') {
                     $profileData[$field] = $data[$field];
-                    unset($data[$field]);
                 }
+                unset($data[$field]);
             }
 
             // Handle email verification
-            $emailVerified = $data['email_verified'] ?? false;
+            $emailVerified = ! empty($data['email_verified']);
             unset($data['email_verified']);
             if ($emailVerified) {
                 $data['email_verified_at'] = now();
@@ -89,7 +89,7 @@ class AccountService
             unset($data['password_confirmation']);
 
             // Remove send_email flag (handled separately)
-            $sendEmail = $data['send_email'] ?? false;
+            $sendEmail = ! empty($data['send_email']);
             unset($data['send_email']);
 
             // Ensure password is set (should be validated in request)
@@ -100,11 +100,15 @@ class AccountService
             $passwordForEmail = $plainPassword;
 
             // Log for debugging
-            Log::info('AccountService creating account', [
-                'email' => $data['email'] ?? 'N/A',
-                'password_length' => strlen($plainPassword),
-                'password_preview' => substr($plainPassword, 0, 3).'***',
-            ]);
+            try {
+                Log::info('AccountService creating account', [
+                    'email' => $data['email'] ?? 'N/A',
+                    'password_length' => strlen($plainPassword),
+                    'password_preview' => substr($plainPassword, 0, 3).'***',
+                ]);
+            } catch (\Throwable $e) {
+                // Ignore log error
+            }
 
             // Set password (will be hashed automatically via setPasswordAttribute)
             $data['password'] = $plainPassword;
@@ -114,21 +118,34 @@ class AccountService
             $data['role'] = $data['role'] ?? Account::ROLE_USER;
             $data['login_attempts'] = 0;
 
+            // Clean logs attribute if empty
+            if (isset($data['logs']) && ($data['logs'] === '' || $data['logs'] === null)) {
+                $data['logs'] = null;
+            }
+
             // Create account (password will be hashed automatically via setPasswordAttribute)
             $account = Account::create($data);
 
-            // Create profile if profile data exists
+            // Create profile if non-empty profile data exists
             if (! empty($profileData)) {
                 $profileData['account_id'] = $account->id;
-                \App\Models\Profile::create($profileData);
+                try {
+                    \App\Models\Profile::create($profileData);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to create profile: '.$e->getMessage());
+                }
             }
 
-            // Log action
-            $this->logService->log($account, 'account_created', [
-                'admin_id' => $admin?->id,
-                'email_verified' => $emailVerified,
-                'send_email' => $sendEmail,
-            ], $admin);
+            // Log action safely
+            try {
+                $this->logService->log($account, 'account_created', [
+                    'admin_id' => $admin?->id,
+                    'email_verified' => $emailVerified,
+                    'send_email' => $sendEmail,
+                ], $admin);
+            } catch (\Throwable $e) {
+                Log::warning('Failed to create account log: '.$e->getMessage());
+            }
 
             DB::commit();
 
@@ -136,8 +153,13 @@ class AccountService
                 'account' => $account->fresh(['profile']),
                 'plain_password' => $passwordForEmail,
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('Error in AccountService::create: '.$e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             throw $e;
         }
     }
