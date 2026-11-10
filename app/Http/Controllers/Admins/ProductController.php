@@ -271,15 +271,26 @@ class ProductController extends Controller
             return $response;
         }
 
-        // Log activity before delete
-        $this->activityLogService->logDelete($product, 'Xóa sản phẩm vào thùng rác: '.$product->name);
+        // Log activity before delete (an toàn, không chặn luồng)
+        try {
+            $this->activityLogService->logDelete($product, 'Xóa sản phẩm vào thùng rác: '.$product->name);
+        } catch (\Throwable $logEx) {
+            // Không để lỗi log làm gián đoạn việc xóa
+        }
 
         $this->releaseEditingLock($product);
-        $this->productService->delete($product);
 
-        return redirect()
-            ->route('admin.products.index')
-            ->with('success', 'Đã chuyển sản phẩm vào thùng rác');
+        try {
+            $this->productService->delete($product);
+
+            return redirect()
+                ->route('admin.products.index')
+                ->with('success', 'Đã chuyển sản phẩm vào thùng rác');
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('admin.products.index')
+                ->with('error', 'Không thể xóa sản phẩm: '.$e->getMessage());
+        }
     }
 
     public function restore(Request $request, int|string $id): RedirectResponse
@@ -292,9 +303,11 @@ class ProductController extends Controller
                 ->route('admin.products.index', ['status' => 'trash'])
                 ->with('success', 'Đã khôi phục sản phẩm thành công.');
         } catch (\Throwable $e) {
-            report($e);
+            Log::error('Lỗi khôi phục sản phẩm: '.$e->getMessage());
 
-            return back()->with('error', 'Không thể khôi phục: '.$e->getMessage());
+            return redirect()
+                ->route('admin.products.index', ['status' => 'trash'])
+                ->with('error', 'Không thể khôi phục: '.$e->getMessage());
         }
     }
 
@@ -309,9 +322,11 @@ class ProductController extends Controller
                 ->route('admin.products.index', ['status' => 'trash'])
                 ->with('success', "Đã xóa vĩnh viễn sản phẩm: {$name}.");
         } catch (\Throwable $e) {
-            report($e);
+            Log::error('Lỗi xóa vĩnh viễn sản phẩm: '.$e->getMessage());
 
-            return back()->with('error', 'Không thể xóa vĩnh viễn: '.$e->getMessage());
+            return redirect()
+                ->route('admin.products.index', ['status' => 'trash'])
+                ->with('error', 'Không thể xóa vĩnh viễn: '.$e->getMessage());
         }
     }
 

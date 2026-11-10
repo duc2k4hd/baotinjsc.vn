@@ -184,15 +184,17 @@ class ProductService
             $product->save();
             $product->delete();
 
-            // 8. Logging
-            Log::info('Product soft-deleted', [
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'product_sku' => $product->sku,
-                'tags_deleted' => $tagsDeleted,
-                'deleted_by' => Auth::id(),
-                'deleted_at' => now()->toDateTimeString(),
-            ]);
+            // 8. Logging (bọc try-catch để nếu file log bị lỗi quyền ghi cũng không làm hỏng thao tác xóa)
+            try {
+                Log::info('Product soft-deleted', [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'product_sku' => $product->sku,
+                    'tags_deleted' => $tagsDeleted,
+                    'deleted_by' => Auth::id(),
+                    'deleted_at' => now()->toDateTimeString(),
+                ]);
+            } catch (\Throwable) {}
 
             // 9. Clear cache (trong transaction để đảm bảo consistency)
             $this->clearProductDetailCache($product->slug);
