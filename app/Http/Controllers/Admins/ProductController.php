@@ -159,38 +159,31 @@ class ProductController extends Controller
 
     public function store(ProductRequest $request): RedirectResponse
     {
+        @ini_set('memory_limit', '512M');
+
         try {
-            // DEBUG: Log request data
-            Log::info('🔵 [DEBUG ProductController] store - Request data', [
-                'all_input' => $request->all(),
-                'variants_raw' => $request->input('variants'),
-                'variants_count' => is_array($request->input('variants')) ? count($request->input('variants')) : 0,
-            ]);
-            
             $validated = $request->validated();
-            
-            // DEBUG: Log validated data
-            Log::info('🟢 [DEBUG ProductController] store - Validated data', [
-                'variants' => Arr::get($validated, 'variants'),
-                'variants_count' => is_array(Arr::get($validated, 'variants')) ? count(Arr::get($validated, 'variants')) : 0,
-            ]);
-            
             $product = $this->productService->create($validated);
 
             // Log activity
-            $this->activityLogService->logCreate($product, 'Tạo sản phẩm mới: '.$product->name);
+            try {
+                $this->activityLogService->logCreate($product, 'Tạo sản phẩm mới: '.$product->name);
+            } catch (\Throwable $logEx) {
+                Log::warning('Không thể ghi activity log khi tạo sản phẩm: '.$logEx->getMessage());
+            }
 
             return redirect()
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Tạo sản phẩm thành công');
         } catch (\Throwable $e) {
-            Log::error('🔴 [DEBUG ProductController] store - Error', [
+            Log::error('🔴 [ProductController] store - Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             report($e);
 
-            return back()
+            return redirect()
+                ->route('admin.products.create')
                 ->withInput()
                 ->with('error', 'Không thể tạo sản phẩm: '.$e->getMessage());
         }
@@ -244,47 +237,38 @@ class ProductController extends Controller
 
     public function update(ProductRequest $request, Product $product): RedirectResponse
     {
+        @ini_set('memory_limit', '512M');
+
         if ($response = $this->handleEditingLock($product, false)) {
             return $response;
         }
 
         try {
-            // DEBUG: Log request data
-            Log::info('🔵 [DEBUG ProductController] update - Request data', [
-                'product_id' => $product->id,
-                'all_input' => $request->all(),
-                'variants_raw' => $request->input('variants'),
-                'variants_count' => is_array($request->input('variants')) ? count($request->input('variants')) : 0,
-            ]);
-            
             $validated = $request->validated();
-            
-            // DEBUG: Log validated data
-            Log::info('🟢 [DEBUG ProductController] update - Validated data', [
-                'product_id' => $product->id,
-                'variants' => Arr::get($validated, 'variants'),
-                'variants_count' => is_array(Arr::get($validated, 'variants')) ? count(Arr::get($validated, 'variants')) : 0,
-            ]);
-            
             $oldData = $product->toArray();
             $this->productService->update($product, $validated);
             $this->releaseEditingLock($product);
 
             // Log activity
-            $this->activityLogService->logUpdate($product->fresh(), $oldData, 'Cập nhật sản phẩm: '.$product->name);
+            try {
+                $this->activityLogService->logUpdate($product->fresh(), $oldData, 'Cập nhật sản phẩm: '.$product->name);
+            } catch (\Throwable $logEx) {
+                Log::warning('Không thể ghi activity log khi cập nhật sản phẩm: '.$logEx->getMessage());
+            }
 
             return redirect()
                 ->route('admin.products.edit', $product)
                 ->with('success', 'Cập nhật sản phẩm thành công');
         } catch (\Throwable $e) {
-            Log::error('🔴 [DEBUG ProductController] update - Error', [
+            Log::error('🔴 [ProductController] update - Error', [
                 'product_id' => $product->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
             report($e);
 
-            return back()
+            return redirect()
+                ->route('admin.products.edit', $product)
                 ->withInput()
                 ->with('error', 'Không thể cập nhật: '.$e->getMessage());
         }
@@ -848,7 +832,11 @@ class ProductController extends Controller
 
     protected function handleEditingLock(Product $product, bool $acquireLock = true): ?RedirectResponse
     {
-        $currentUser = auth('web')->user();
+        $currentUser = auth('web')->user() ?? auth()->user();
+        if (! $currentUser) {
+            return redirect()->route('admin.login');
+        }
+
         $lockTtl = now()->subMinutes((int) config('app.editor_lock_minutes', 15));
 
         $product->loadMissing('lockedByUser');
@@ -901,7 +889,8 @@ class ProductController extends Controller
 
     protected function releaseEditingLock(Product $product): void
     {
-        if ($product->locked_by && $product->locked_by === auth('web')->id()) {
+        $currentUserId = auth('web')->id() ?? auth()->id();
+        if ($currentUserId && $product->locked_by && (int) $product->locked_by === (int) $currentUserId) {
             $product->forceFill([
                 'locked_by' => null,
                 'locked_at' => null,

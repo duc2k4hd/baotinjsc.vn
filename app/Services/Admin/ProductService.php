@@ -19,6 +19,8 @@ class ProductService
 {
     public function create(array $data): Product
     {
+        @ini_set('memory_limit', '512M');
+
         $product = DB::transaction(function () use ($data) {
             $payload = $this->extractProductPayload($data);
             $payload['category_ids'] = $this->resolveCategoryIds($data);
@@ -36,12 +38,7 @@ class ProductService
 
             // Sync Variants
             $variantsData = Arr::get($data, 'variants', []);
-            Log::info('🔵 [DEBUG ProductService] create - Before syncVariants', [
-                'product_id' => $product->id,
-                'variants_data' => $variantsData,
-                'variants_count' => is_array($variantsData) ? count($variantsData) : 0,
-            ]);
-            $this->syncVariants($product, $variantsData);
+            $this->syncVariants($product, is_array($variantsData) ? $variantsData : []);
 
             return $product->fresh();
         });
@@ -65,6 +62,8 @@ class ProductService
 
     public function update(Product $product, array $data): Product
     {
+        @ini_set('memory_limit', '512M');
+
         $oldSlug = $product->slug; // Lưu slug cũ để invalidate cache
         
         $product = DB::transaction(function () use ($product, $data, $oldSlug) {
@@ -134,12 +133,7 @@ class ProductService
             // Sync Variants
             // Luôn sync để đảm bảo xóa các biến thể đã bị remove trên UI admin.
             $variantsData = Arr::get($data, 'variants', []);
-            Log::info('🔵 [DEBUG ProductService] update - Before syncVariants', [
-                'product_id' => $product->id,
-                'variants_data' => $variantsData,
-                'variants_count' => is_array($variantsData) ? count($variantsData) : 0,
-            ]);
-            $this->syncVariants($product, $variantsData);
+            $this->syncVariants($product, is_array($variantsData) ? $variantsData : []);
 
             // Invalidate cache sau khi update (bao gồm cả slug_type_ và product_detail_)
             $this->clearProductDetailCache($product->slug);
@@ -664,20 +658,9 @@ class ProductService
 
     private function syncVariants(Product $product, array $variants): void
     {
-        Log::info('🔵 [DEBUG ProductService] syncVariants - Starting', [
-            'product_id' => $product->id,
-            'variants_count' => count($variants),
-            'variants' => $variants,
-        ]);
-        
         $keepIds = [];
 
         foreach ($variants as $index => $variant) {
-            Log::info('🔵 [DEBUG ProductService] syncVariants - Processing variant', [
-                'product_id' => $product->id,
-                'variant_index' => $index,
-                'variant_data' => $variant,
-            ]);
             $variantId = Arr::get($variant, 'id');
             $name = trim(Arr::get($variant, 'name', ''));
             $sku = trim(Arr::get($variant, 'sku', ''));
@@ -1224,6 +1207,8 @@ class ProductService
      */
     private function processProductImages(Product $product): void
     {
+        @ini_set('memory_limit', '512M');
+
         try {
             $imageIds = $product->image_ids ?? [];
             

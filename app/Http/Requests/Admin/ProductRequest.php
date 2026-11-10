@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,9 +13,96 @@ class ProductRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $merge = [];
+
+        // Chuẩn hóa các trường nullable dạng chuỗi và id
+        $nullableFields = [
+            'sku', 'slug', 'sale_price', 'cost_price', 'video_url',
+            'meta_title', 'meta_description', 'meta_keywords', 'meta_canonical',
+            'primary_category_id', 'brand_id'
+        ];
+
+        foreach ($nullableFields as $field) {
+            if ($this->has($field)) {
+                $val = $this->input($field);
+                if ($val === '' || $val === null) {
+                    $merge[$field] = null;
+                } elseif (is_string($val)) {
+                    $trimmed = trim($val);
+                    $merge[$field] = $trimmed === '' ? null : $trimmed;
+                }
+            }
+        }
+
+        // Làm sạch định dạng số tiền (bỏ dấu phẩy ngăn cách hàng nghìn)
+        if ($this->has('price') && is_string($this->price)) {
+            $cleaned = str_replace([',', ' '], '', trim($this->price));
+            $merge['price'] = $cleaned === '' ? 0 : $cleaned;
+        }
+
+        if (array_key_exists('sale_price', $merge) && is_string($merge['sale_price'])) {
+            $cleaned = str_replace([',', ' '], '', $merge['sale_price']);
+            $merge['sale_price'] = $cleaned === '' ? null : $cleaned;
+        }
+
+        if (array_key_exists('cost_price', $merge) && is_string($merge['cost_price'])) {
+            $cleaned = str_replace([',', ' '], '', $merge['cost_price']);
+            $merge['cost_price'] = $cleaned === '' ? null : $cleaned;
+        }
+
+        // Chuẩn hóa dữ liệu biến thể nếu có
+        $variants = $this->input('variants');
+        if (is_array($variants)) {
+            foreach ($variants as $idx => $v) {
+                if (is_array($v)) {
+                    if (isset($v['price']) && is_string($v['price'])) {
+                        $variants[$idx]['price'] = str_replace([',', ' '], '', trim($v['price']));
+                    }
+                    if (isset($v['sale_price']) && is_string($v['sale_price'])) {
+                        $vSale = str_replace([',', ' '], '', trim($v['sale_price']));
+                        $variants[$idx]['sale_price'] = $vSale === '' ? null : $vSale;
+                    }
+                    if (isset($v['cost_price']) && is_string($v['cost_price'])) {
+                        $vCost = str_replace([',', ' '], '', trim($v['cost_price']));
+                        $variants[$idx]['cost_price'] = $vCost === '' ? null : $vCost;
+                    }
+                    if (isset($v['sku']) && is_string($v['sku']) && trim($v['sku']) === '') {
+                        $variants[$idx]['sku'] = null;
+                    }
+                    if (isset($v['id']) && ($v['id'] === '' || $v['id'] === null)) {
+                        $variants[$idx]['id'] = null;
+                    }
+                }
+            }
+            $merge['variants'] = $variants;
+        }
+
+        // Đảm bảo brand_id và primary_category_id nếu không còn tồn tại trong DB thì reset về null
+        $brandId = array_key_exists('brand_id', $merge) ? $merge['brand_id'] : $this->input('brand_id');
+        if (!empty($brandId)) {
+            if (!\App\Models\Brand::where('id', $brandId)->exists()) {
+                $merge['brand_id'] = null;
+            }
+        }
+
+        $primaryCatId = array_key_exists('primary_category_id', $merge) ? $merge['primary_category_id'] : $this->input('primary_category_id');
+        if (!empty($primaryCatId)) {
+            if (!\App\Models\Category::where('id', $primaryCatId)->exists()) {
+                $merge['primary_category_id'] = null;
+            }
+        }
+
+        if (!empty($merge)) {
+            $this->merge($merge);
+        }
+    }
+
     public function rules(): array
     {
-        $productId = $this->route('product')?->id;
+        $product = $this->route('product');
+        $productId = $product instanceof Product ? $product->id : ($product ?? $this->input('id') ?? $this->input('product_id'));
 
         return [
             'sku' => [
@@ -120,6 +208,7 @@ class ProductRequest extends FormRequest
             'stock_quantity.integer' => 'Số lượng tồn kho phải là số nguyên.',
             'stock_quantity.min' => 'Số lượng tồn kho không được nhỏ hơn 0.',
             'primary_category_id.exists' => 'Danh mục chính không tồn tại.',
+            'brand_id.exists' => 'Thương hiệu/hãng không tồn tại.',
             'category_ids.*.exists' => 'Một trong các danh mục không tồn tại.',
             'tag_ids.*.exists' => 'Một trong các tag không tồn tại.',
             'image_ids.*.exists' => 'Một trong các ảnh không tồn tại.',
@@ -131,6 +220,9 @@ class ProductRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            $product = $this->route('product');
+            $productId = $product instanceof Product ? $product->id : ($product ?? $this->input('id') ?? $this->input('product_id'));
+
             $hasPrimary = !empty($this->input('primary_image.existing_path'))
                 || !empty($this->input('primary_image.path'))
                 || !empty($this->input('primary_image.id'))
@@ -144,6 +236,14 @@ class ProductRequest extends FormRequest
                         $hasGallery = true;
                         break;
                     }
+                }
+            }
+
+            // Nếu đang cập nhật sản phẩm, kiểm tra xem sản phẩm đã có ảnh trên hệ thống chưa
+            if (!$hasPrimary && !$hasGallery && !empty($productId)) {
+                $existingProduct = $product instanceof Product ? $product : Product::find($productId);
+                if ($existingProduct && (!empty($existingProduct->image_ids) || !empty($existingProduct->primary_image))) {
+                    $hasPrimary = true;
                 }
             }
 
