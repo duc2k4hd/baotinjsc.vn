@@ -58,7 +58,10 @@ class BannerController extends Controller
         $positions = config('banners.positions', []);
         $positionBadges = config('banners.position_badges', []);
 
-        return view('admins.banners.index', compact('banners', 'positions', 'positionBadges'));
+        // Trạng thái cài đặt caption hero slider
+        $heroShowCaption = (bool) \App\Models\Setting::getValue('hero_show_caption', false);
+
+        return view('admins.banners.index', compact('banners', 'positions', 'positionBadges', 'heroShowCaption'));
     }
 
     public function create()
@@ -77,7 +80,7 @@ class BannerController extends Controller
         $this->clearBannerCache();
 
         return redirect()->route('admin.banners.index')
-            ->with('success', 'Tạo banner thành công.');
+            ->with('success', 'Táº¡o banner thÃ nh cÃ´ng.');
     }
 
     public function edit(Banner $banner)
@@ -95,7 +98,7 @@ class BannerController extends Controller
         $this->clearBannerCache();
 
         return redirect()->route('admin.banners.edit', $banner)
-            ->with('success', 'Cập nhật banner thành công.');
+            ->with('success', 'Cáº­p nháº­t banner thÃ nh cÃ´ng.');
     }
 
     public function destroy(Banner $banner)
@@ -105,7 +108,7 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return back()->with('success', 'Đã xoá banner.');
+        return back()->with('success', 'ÄÃ£ xoÃ¡ banner.');
     }
 
     public function toggle(Banner $banner)
@@ -114,7 +117,7 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return back()->with('success', 'Đã cập nhật trạng thái banner.');
+        return back()->with('success', 'ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i banner.');
     }
 
     public function reorder(Request $request)
@@ -131,41 +134,41 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return response()->json(['success' => true, 'message' => 'Đã cập nhật thứ tự banner.']);
+        return response()->json(['success' => true, 'message' => 'ÄÃ£ cáº­p nháº­t thá»© tá»± banner.']);
     }
 
     private function preparePayload(BannerStoreRequest|BannerUpdateRequest $request, ?Banner $banner = null): array
     {
         $data = $request->validated();
 
-        // Xử lý images
+        // Xá»­ lÃ½ images
         if ($request->hasFile('image_desktop')) {
             $data['image_desktop'] = $this->handleImage($request->file('image_desktop'), $banner?->image_desktop);
         } elseif ($banner) {
-            // Giữ nguyên image_desktop nếu không upload mới
+            // Giá»¯ nguyÃªn image_desktop náº¿u khÃ´ng upload má»›i
             unset($data['image_desktop']);
         }
 
         if ($request->hasFile('image_mobile')) {
             $data['image_mobile'] = $this->handleImage($request->file('image_mobile'), $banner?->image_mobile);
         } elseif ($banner) {
-            // Giữ nguyên image_mobile nếu không upload mới
+            // Giá»¯ nguyÃªn image_mobile náº¿u khÃ´ng upload má»›i
             unset($data['image_mobile']);
         }
 
-        // Xử lý boolean và defaults
+        // Xá»­ lÃ½ boolean vÃ  defaults
         $data['is_active'] = $request->boolean('is_active', config('banners.defaults.is_active', true));
         $data['target'] = $data['target'] ?? config('banners.defaults.target', '_blank');
 
-        // Xử lý datetime
+        // Xá»­ lÃ½ datetime
         $data['start_at'] = $request->filled('start_at') ? $request->input('start_at') : null;
         $data['end_at'] = $request->filled('end_at') ? $request->input('end_at') : null;
 
-        // Tự động set order nếu không có (chỉ khi tạo mới)
+        // Tá»± Ä‘á»™ng set order náº¿u khÃ´ng cÃ³ (chá»‰ khi táº¡o má»›i)
         if (! $banner && (! isset($data['order']) || $data['order'] === null)) {
             $data['order'] = Banner::getNextOrderForPosition($data['position']);
         } elseif (isset($data['order']) && $data['order'] === null) {
-            // Nếu order là null khi update, giữ nguyên giá trị cũ
+            // Náº¿u order lÃ  null khi update, giá»¯ nguyÃªn giÃ¡ trá»‹ cÅ©
             unset($data['order']);
         }
 
@@ -212,11 +215,41 @@ class BannerController extends Controller
     }
 
     /**
-     * Xóa cache banners_home_parent và banners_home_children.
+     * XÃ³a cache banners_home_parent vÃ  banners_home_children.
      */
     private function clearBannerCache(): void
     {
         Cache::forget('banners_home_parent');
         Cache::forget('banners_home_children');
+    }
+
+    /**
+     * Bật / tắt nhanh cài đặt hiển thị caption (tiêu đề & mô tả) trên Hero Slider.
+     */
+    public function toggleCaption(): \Illuminate\Http\RedirectResponse
+    {
+        $setting = \App\Models\Setting::firstOrCreate(
+            ['key' => 'hero_show_caption'],
+            [
+                'group'       => 'banner',
+                'type'        => 'boolean',
+                'label'       => 'Hiển thị tiêu đề & mô tả trên Hero Slider',
+                'description' => 'Bật để hiện tiêu đề, mô tả và nút CTA lên slider. Tắt để slider chỉ hiển thị ảnh thuần.',
+                'value'       => '0',
+                'is_public'   => true,
+            ]
+        );
+
+        $newValue = $setting->getParsedValue() ? '0' : '1';
+        $setting->value = $newValue;
+        $setting->save();
+
+        Cache::forget('settings');
+
+        $msg = $newValue === '1'
+            ? 'Đã BẬT hiển thị tiêu đề & mô tả trên slider.'
+            : 'Đã TẮT tiêu đề & mô tả — slider chỉ hiển thị ảnh.';
+
+        return redirect()->route('admin.banners.index')->with('success', $msg);
     }
 }

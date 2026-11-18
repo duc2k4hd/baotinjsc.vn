@@ -268,6 +268,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::resource('banners', \App\Http\Controllers\Admins\BannerController::class);
     Route::patch('banners/{banner}/toggle', [\App\Http\Controllers\Admins\BannerController::class, 'toggle'])->name('banners.toggle');
     Route::post('banners/reorder', [\App\Http\Controllers\Admins\BannerController::class, 'reorder'])->name('banners.reorder');
+    Route::post('banners/toggle-caption', [\App\Http\Controllers\Admins\BannerController::class, 'toggleCaption'])->name('banners.toggleCaption');
 
     // Sitemap Management
     Route::prefix('sitemap')->name('sitemap.')->group(function () {

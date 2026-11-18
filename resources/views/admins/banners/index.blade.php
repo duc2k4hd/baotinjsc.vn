@@ -112,6 +112,29 @@
         <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">➕ Thêm banner</a>
     </div>
 
+    {{-- Cài đặt nhanh: Hiển thị caption trên Hero Slider --}}
+    <div style="background:{{ $heroShowCaption ? '#eff6ff' : '#f8fafc' }};border:1.5px solid {{ $heroShowCaption ? '#93c5fd' : '#e2e8f0' }};border-radius:10px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+        <div>
+            <strong style="font-size:14px;color:#1e293b;">🖼️ Hiển thị tiêu đề &amp; mô tả trên Hero Slider</strong>
+            <p style="margin:4px 0 0;font-size:12px;color:#64748b;">
+                @if($heroShowCaption)
+                    <span style="color:#2563eb;font-weight:600;">✅ Đang BẬT</span> — Tiêu đề, mô tả và nút "Xem ngay" sẽ hiện lên ảnh slider.
+                @else
+                    <span style="color:#64748b;font-weight:600;">⬜ Đang TẮT</span> — Slider chỉ hiển thị ảnh thuần, không có text overlay. <em>(Mặc định)</em>
+                @endif
+            </p>
+        </div>
+        <form method="POST" action="{{ route('admin.banners.toggleCaption') }}" style="margin:0;">
+            @csrf
+            <button type="submit"
+                style="padding:9px 20px;border-radius:6px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .2s;
+                       background:{{ $heroShowCaption ? '#fee2e2' : '#2563eb' }};
+                       color:{{ $heroShowCaption ? '#b91c1c' : '#fff' }};">
+                {{ $heroShowCaption ? '🔕 Tắt caption' : '🔔 Bật caption' }}
+            </button>
+        </form>
+    </div>
+
     <form method="GET" class="filters">
         <input type="text" name="keyword" placeholder="🔍 Tìm theo tiêu đề..." value="{{ request('keyword') }}">
         <select name="position">

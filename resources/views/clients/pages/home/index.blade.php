@@ -152,8 +152,9 @@
 @section('content')
     {{-- HERO SLIDER: Full-width 16:9, quản lý qua Admin > Banner (position = 1) --}}
     @php
-        $heroBanners = $banners->get('1', collect());
-        $heroCount   = $heroBanners->count();
+        $heroBanners      = $banners->get('1', collect());
+        $heroCount        = $heroBanners->count();
+        $heroShowCaption  = !empty($settings->hero_show_caption); // mặc định false = ảnh thuần
     @endphp
     @if ($heroCount > 0)
     <section class="btjsc-hero" aria-label="Banner quảng cáo chính">
@@ -182,6 +183,7 @@
                                  class="btjsc-hero__img">
                         </picture>
                         @if (!empty($banner->title) || !empty($banner->description))
+                            @if ($heroShowCaption)
                             <div class="btjsc-hero__caption">
                                 @if (!empty($banner->title))
                                     <h2 class="btjsc-hero__title">{{ $banner->title }}</h2>
@@ -193,6 +195,7 @@
                                     <span class="btjsc-hero__btn">Xem ngay</span>
                                 @endif
                             </div>
+                            @endif
                         @endif
                     @if ($banner->link)
                         </a>
