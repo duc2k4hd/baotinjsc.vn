@@ -16,26 +16,14 @@
 }
 
 .misutech_home_container {
-    width: min(1200px, calc(100% - 32px));
-    margin-inline: auto;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding-left: 16px;
+    padding-right: 16px;
 }
 
-@media (max-width: 1024px) {
-    .misutech_home_container {
-        width: 100% !important;
-        max-width: 100% !important;
-        padding-left: 16px !important;
-        padding-right: 16px !important;
-        box-sizing: border-box !important;
-    }
-}
 
-@media (max-width: 767px) {
-    .misutech_home_container {
-        width: calc(100% - 20px);
-        margin-inline: auto;
-    }
-}
 
 /* Ensure mega menu is strictly hidden unless hover */
 .misutech_home_mega_menu {

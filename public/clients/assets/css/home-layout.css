@@ -108,7 +108,7 @@
     overflow: hidden;
 }
 
-/* Container bên trong main: không margin auto nữa */
+/* Container bên trong main: full width, không margin auto */
 .home-body-main .misutech_home_container {
     width: 100% !important;
     max-width: 100% !important;
