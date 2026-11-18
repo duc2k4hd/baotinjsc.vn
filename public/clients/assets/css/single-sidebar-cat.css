@@ -19,17 +19,17 @@
 .single-cat-sidebar {
     width: 220px;
     flex-shrink: 0;
-    position: sticky;
-    top: 80px; /* dưới header */
-    max-height: calc(100vh - 100px);
+    position: sticky !important;
+    top: 10px !important;
+    max-height: calc(100vh - 20px);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
     background: #fff;
     border-right: 1px solid #e8edf3;
-    z-index: 10;
-    align-self: flex-start;
+    z-index: 50;
+    align-self: flex-start !important;
 }
 
 .single-cat-sidebar::-webkit-scrollbar {

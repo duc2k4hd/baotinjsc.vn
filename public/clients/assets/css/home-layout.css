@@ -20,17 +20,17 @@
     width: 210px !important;
     min-width: 210px !important;
     flex-shrink: 0 !important;
-    position: sticky;
-    top: 70px;
-    max-height: calc(100vh - 90px);
+    position: sticky !important;
+    top: 10px !important;
+    max-height: calc(100vh - 20px);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
     background: #fff;
     border-right: 1px solid #e8edf3;
-    z-index: 10;
-    align-self: flex-start;
+    z-index: 50;
+    align-self: flex-start !important;
 }
 
 .home-cat-sidebar::-webkit-scrollbar { width: 4px; }
@@ -94,9 +94,9 @@
     color: #f1a300;
 }
 
-/* Đảm bảo scroll mượt đến đúng vị trí dưới header */
+/* Đảm bảo scroll mượt đến đúng vị trí sát top màn hình */
 .misutech_home_catalog_section {
-    scroll-margin-top: 85px;
+    scroll-margin-top: 10px;
     content-visibility: visible !important;
 }
 
