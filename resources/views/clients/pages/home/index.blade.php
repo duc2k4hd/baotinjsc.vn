@@ -33,7 +33,7 @@
 
 @section('head')
     <link rel="stylesheet" href="{{ asset('clients/assets/css/home.css') }}?v={{ file_exists(public_path('clients/assets/css/home.css')) ? filemtime(public_path('clients/assets/css/home.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/home-layout.css') }}?v=1.4">
+    <link rel="stylesheet" href="{{ asset('clients/assets/css/home-layout.css') }}?v=1.5">
 
     @php
         $siteTitle = $homeTitle;
@@ -242,11 +242,16 @@
                     <span>Danh mục sản phẩm</span>
                 </div>
                 <nav class="home-cat-sidebar__list" aria-label="Danh mục">
-                    @forelse ($allCategories ?? [] as $cat)
-                        <a href="/{{ $cat->slug }}"
-                           class="home-cat-sidebar__item"
+                    @forelse ($categorySections ?? [] as $index => $section)
+                        @php
+                            $cat = $section->category;
+                            $targetId = 'misutech_home_catalog_' . ($index + 1);
+                        @endphp
+                        <a href="#{{ $targetId }}"
+                           data-target="{{ $targetId }}"
+                           class="home-cat-sidebar__item{{ $index === 0 ? ' active' : '' }}"
                            title="{{ $cat->name }}">
-                            @if (!empty($cat->image))
+                            @if (!empty($cat->image) && file_exists(public_path('clients/assets/img/categories/' . $cat->image)))
                                 <img src="{{ asset('clients/assets/img/categories/' . $cat->image) }}"
                                      alt="{{ $cat->name }}" width="22" height="22" loading="lazy">
                             @else
@@ -396,14 +401,72 @@
 @section('foot')
     <script src="{{ asset('clients/assets/js/home.js') }}?v={{ file_exists(public_path('clients/assets/js/home.js')) ? filemtime(public_path('clients/assets/js/home.js')) : time() }}"></script>
     <script>
-    // Toggle sidebar danh mục trên mobile (homepage)
+    // Sidebar danh mục trang chủ: Toggle mobile + Smooth Scroll đến section + ScrollSpy
     (function () {
         var sb = document.querySelector('.home-cat-sidebar');
-        var hd = sb ? sb.querySelector('.home-cat-sidebar__heading') : null;
+        if (!sb) return;
+        var hd = sb.querySelector('.home-cat-sidebar__heading');
+        var links = sb.querySelectorAll('.home-cat-sidebar__item[data-target]');
+
         if (hd) {
             hd.addEventListener('click', function () {
                 if (window.innerWidth <= 767) sb.classList.toggle('is-open');
             });
+        }
+
+        function setActiveLink(targetId) {
+            links.forEach(function (item) {
+                if (item.getAttribute('data-target') === targetId) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // Click vào danh mục -> scroll mượt đến đúng section bên phải
+        links.forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                var targetId = this.getAttribute('data-target');
+                var targetEl = document.getElementById(targetId);
+                if (targetEl) {
+                    setActiveLink(targetId);
+                    if (window.innerWidth <= 767) {
+                        sb.classList.remove('is-open');
+                    }
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        // Tự động highlight danh mục bên trái khi cuộn chuột
+        var sections = [];
+        links.forEach(function (link) {
+            var id = link.getAttribute('data-target');
+            var el = document.getElementById(id);
+            if (el) sections.push(el);
+        });
+
+        if (sections.length > 0) {
+            var ticking = false;
+            window.addEventListener('scroll', function () {
+                if (!ticking) {
+                    window.requestAnimationFrame(function () {
+                        var currentId = sections[0].id;
+                        var offset = 150;
+                        for (var i = 0; i < sections.length; i++) {
+                            var rect = sections[i].getBoundingClientRect();
+                            if (rect.top <= offset) {
+                                currentId = sections[i].id;
+                            }
+                        }
+                        setActiveLink(currentId);
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            }, { passive: true });
         }
     })();
     </script>
