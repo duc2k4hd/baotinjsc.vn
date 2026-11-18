@@ -308,39 +308,6 @@
         </section>
     @endforeach
 
-    {{-- SHOP BY CATEGORY SECTION --}}
-    <section class="misutech_home_shop_categories" aria-labelledby="misutech_home_shop_categories_title">
-        <div class="misutech_home_container">
-            <header class="misutech_home_section_header">
-                <h2 class="misutech_home_section_title" id="misutech_home_shop_categories_title">
-                    <span class="misutech_home_section_title_mark"></span>Mua sắm theo danh mục
-                </h2>
-                <a class="misutech_home_view_all" href="{{ route('client.shop.index') }}">Xem tất cả ›</a>
-            </header>
-            <div class="misutech_home_shop_category_grid"
-                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; padding: 20px 0;">
-                @foreach ($allCategories->take(14) as $category)
-                    <a href="{{ route('client.product.detail', $category->slug) }}" class="misutech_home_shop_category_item">
-                        <span class="misutech_home_shop_category_icon_wrapper">
-                            @if (!empty($category->image) && file_exists(public_path('storage/clients/imgs/categories/' . $category->image)))
-                                <img src="{{ asset('storage/clients/imgs/categories/' . $category->image) }}"
-                                    alt="{{ $category->name }}"
-                                    width="35"
-                                    height="35"
-                                    loading="lazy"
-                                    decoding="async"
-                                    style="max-width: 35px; max-height: 35px; object-fit: contain;">
-                            @else
-                                <i class="fa-solid {{ getCategoryFaIcon($category->slug) }}" style="font-size: 22px; color: var(--misutech_home_primary, #2563EB);"></i>
-                            @endif
-                        </span>
-                        <span style="font-size: 13px; font-weight: 500; line-height: 1.4;">{{ $category->name }}</span>
-                    </a>
-                @endforeach
-            </div>
-        </div>
-    </section>
-
     {{-- BLOG & TECHNICAL NEWS SECTION --}}
     @if(isset($blogSections) && $blogSections->isNotEmpty())
         <section class="misutech_home_content_area" aria-label="Tin tức và cẩm nang kỹ thuật">

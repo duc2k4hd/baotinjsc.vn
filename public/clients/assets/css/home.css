@@ -648,40 +648,6 @@
     font-weight: 900;
 }
 
-.misutech_home_shop_category_item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: #fff;
-    padding: 15px 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    text-decoration: none;
-    color: #333;
-    transition: all 0.3s ease;
-}
-.misutech_home_shop_category_item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    color: var(--misutech_home_primary, #2563EB);
-}
-.misutech_home_shop_category_icon_wrapper {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f8f9fa;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-}
-.misutech_home_shop_category_item:hover
-    .misutech_home_shop_category_icon_wrapper {
-    background: #e3f2fd;
-}
 .misutech_home_product_grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -975,46 +941,6 @@
     opacity: 0.9;
 }
 
-.misutech_home_shop_categories {
-    padding: 26px 0 30px;
-    background: var(--misutech_home_soft);
-}
-.misutech_home_shop_category_grid {
-    display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 18px 14px;
-}
-.misutech_home_shop_category {
-    border: 0;
-    background: transparent;
-    text-align: center;
-    color: var(--misutech_home_text);
-    font-size: 11px;
-}
-.misutech_home_shop_category_image {
-    width: 112px;
-    max-width: 100%;
-    aspect-ratio: 1;
-    overflow: hidden;
-    margin: 0 auto 8px;
-    border: 6px solid var(--misutech_home_white);
-    border-radius: 22px;
-    background: var(--misutech_home_primary_light, #EFF6FF);
-    box-shadow: 0 6px 18px rgba(0, 59, 112, 0.08);
-    transition: 0.2s ease;
-}
-.misutech_home_shop_category:nth-child(3n + 2)
-    .misutech_home_shop_category_image {
-    background: #ffe0bd;
-}
-.misutech_home_shop_category:nth-child(3n) .misutech_home_shop_category_image {
-    background: #d8e2ee;
-}
-.misutech_home_shop_category:hover .misutech_home_shop_category_image {
-    transform: translateY(-4px);
-    border-color: #c8d9e6;
-}
-
 .misutech_home_content_area {
     padding: 34px 0 38px;
 }
@@ -1232,21 +1158,6 @@
     #misutech_home_catalog_0 .misutech_home_product_card:first-child .misutech_home_product_image {
         height: auto;
         aspect-ratio: 1 / 1;
-    }
-
-    /* Shop By Category (14 categories fully visible) */
-    .misutech_home_shop_category_grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)) !important;
-        gap: 12px !important;
-        padding: 16px 0 !important;
-    }
-    .misutech_home_shop_category_item {
-        padding: 12px 8px;
-    }
-    .misutech_home_shop_category_icon_wrapper {
-        width: 48px;
-        height: 48px;
-        margin-bottom: 8px;
     }
 
     /* Tech News & Blog Grid (2 columns side by side) */
@@ -1467,27 +1378,6 @@
     #misutech_home_catalog_0 .misutech_home_product_card:first-child .misutech_home_product_image {
         height: auto;
         aspect-ratio: 1 / 1;
-    }
-
-    /* Shop By Category Grid (14 categories) */
-    .misutech_home_shop_categories {
-        padding: 14px 0;
-    }
-    .misutech_home_shop_category_grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-        gap: 8px 6px !important;
-        padding: 10px 0 !important;
-    }
-    .misutech_home_shop_category_item {
-        padding: 8px 4px;
-    }
-    .misutech_home_shop_category_icon_wrapper {
-        width: 40px;
-        height: 40px;
-        margin-bottom: 4px;
-    }
-    .misutech_home_shop_category_name {
-        font-size: 10.5px;
     }
 
     /* Tech News & Blog Section */
