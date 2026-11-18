@@ -230,6 +230,39 @@
 
 
 
+    {{-- CATEGORY SECTIONS + BLOG: layout 2 cột (sidebar trái + nội dung phải) --}}
+    <div class="home-body-layout">
+
+        {{-- ===== SIDEBAR DANH MỤC BÊN TRÁI ===== --}}
+        <aside class="home-cat-sidebar" aria-label="Danh mục sản phẩm">
+            <div class="home-cat-sidebar__inner">
+                <div class="home-cat-sidebar__heading">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    <span>Danh mục sản phẩm</span>
+                </div>
+                <nav class="home-cat-sidebar__list" aria-label="Danh mục">
+                    @forelse ($allCategories ?? [] as $cat)
+                        <a href="/{{ $cat->slug }}"
+                           class="home-cat-sidebar__item"
+                           title="{{ $cat->name }}">
+                            @if (!empty($cat->image))
+                                <img src="{{ asset('clients/assets/img/categories/' . $cat->image) }}"
+                                     alt="{{ $cat->name }}" width="22" height="22" loading="lazy">
+                            @else
+                                <i class="fas {{ getCategoryFaIcon($cat->slug ?? '') }} home-cat-sidebar__icon"></i>
+                            @endif
+                            <span>{{ $cat->name }}</span>
+                        </a>
+                    @empty
+                        <p style="padding:10px 14px;color:#94a3b8;font-size:13px;">Chưa có danh mục</p>
+                    @endforelse
+                </nav>
+            </div>
+        </aside>
+
+        {{-- ===== NỘI DUNG CHÍNH ===== --}}
+        <div class="home-body-main">
+
     {{-- CATEGORY SECTIONS (Biến tần, Cảm biến, PLC, Rơ le, Bộ lọc...) --}}
     @foreach ($categorySections as $index => $section)
         <section class="misutech_home_catalog_section" id="misutech_home_catalog_{{ $index + 1 }}">
@@ -388,10 +421,25 @@
 
     {{-- Floating Toast for interactions --}}
     <div class="misutech_home_toast" aria-hidden="true"></div>
+
+        </div>{{-- /.home-body-main --}}
+    </div>{{-- /.home-body-layout --}}
 @endsection
 
 @section('foot')
     <script src="{{ asset('clients/assets/js/home.js') }}?v={{ file_exists(public_path('clients/assets/js/home.js')) ? filemtime(public_path('clients/assets/js/home.js')) : time() }}"></script>
+    <script>
+    // Toggle sidebar danh mục trên mobile (homepage)
+    (function () {
+        var sb = document.querySelector('.home-cat-sidebar');
+        var hd = sb ? sb.querySelector('.home-cat-sidebar__heading') : null;
+        if (hd) {
+            hd.addEventListener('click', function () {
+                if (window.innerWidth <= 767) sb.classList.toggle('is-open');
+            });
+        }
+    })();
+    </script>
     @if ($heroCount > 1)
     <script>
     (function () {
