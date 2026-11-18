@@ -47,13 +47,12 @@
         $email = $settings->contact_email ?? 'info@baotinjsc.vn';
         $address = $settings->contact_address ?? 'Hà Nội, Việt Nam';
 
-        $firstHeroBanner = $banners->get('1', collect())->first();
-        $firstHeroBannerUrl = null;
-        if ($firstHeroBanner && $firstHeroBanner->image_desktop) {
-            $firstHeroBannerUrl = Str::startsWith($firstHeroBanner->image_desktop, ['http://', 'https://'])
-                ? $firstHeroBanner->image_desktop
-                : asset('clients/assets/img/banners/' . $firstHeroBanner->image_desktop);
-        }
+        $heroBannersList = $banners->get('1', collect())
+            ->merge($banners->get('homepage_banner_parent', collect()))
+            ->unique('id')
+            ->values();
+        $firstHeroBanner = $heroBannersList->first();
+        $firstHeroBannerUrl = $firstHeroBanner ? $firstHeroBanner->image_desktop_url : null;
     @endphp
 
     {{-- LCP Image Preload for Instant First Paint --}}
@@ -151,9 +150,12 @@
 @endsection
 
 @section('content')
-    {{-- HERO SLIDER: Full-width 16:9, quản lý qua Admin > Banner (position = 1) --}}
+    {{-- HERO SLIDER: Full-width 16:9, quản lý qua Admin > Banner (position = 1 hoặc homepage_banner_parent) --}}
     @php
-        $heroBanners      = $banners->get('1', collect());
+        $heroBanners      = $banners->get('1', collect())
+            ->merge($banners->get('homepage_banner_parent', collect()))
+            ->unique('id')
+            ->values();
         $heroCount        = $heroBanners->count();
         $heroShowCaption  = !empty($settings->hero_show_caption); // mặc định false = ảnh thuần
     @endphp
@@ -162,10 +164,8 @@
         <div class="btjsc-hero__track" id="btjscHeroTrack" role="list" aria-live="polite">
             @foreach ($heroBanners as $idx => $banner)
                 @php
-                    $bImg = $banner->image_desktop;
-                    $bUrl = Str::startsWith($bImg, ['http://', 'https://']) ? $bImg : asset('clients/assets/img/banners/' . $bImg);
-                    $bMob = $banner->image_mobile;
-                    $bMobUrl = $bMob ? (Str::startsWith($bMob, ['http://', 'https://']) ? $bMob : asset('clients/assets/img/banners/' . $bMob)) : $bUrl;
+                    $bUrl = $banner->image_desktop_url;
+                    $bMobUrl = $banner->image_mobile_url ?: $bUrl;
                 @endphp
                 <div class="btjsc-hero__slide{{ $idx === 0 ? ' btjsc-hero__slide--active' : '' }}"
                      role="listitem"

@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class Banner extends Model
 {
@@ -70,23 +72,75 @@ class Banner extends Model
             ->where('end_at', '<', now());
     }
 
+    /**
+     * Chuẩn hóa và trả về URL ảnh banner hoạt động trên cả môi trường local (public/) và cPanel (public_html/).
+     */
+    public function resolveBannerImageUrl(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        $clean = trim(str_replace('\\', '/', $value));
+        if ($clean === '') {
+            return null;
+        }
+
+        if (Str::startsWith($clean, ['http://', 'https://'])) {
+            return $clean;
+        }
+
+        $folder = trim(config('banners.image.path', 'clients/assets/img/banners'), '/');
+        $clean = ltrim($clean, '/');
+
+        // Bỏ prefix thừa nếu trong DB đã lưu cả đường dẫn thư mục
+        if (Str::startsWith($clean, 'public/')) {
+            $clean = substr($clean, 7);
+        }
+        if (Str::startsWith($clean, $folder.'/')) {
+            $filename = substr($clean, strlen($folder) + 1);
+        } elseif (Str::startsWith($clean, 'clients/assets/img/')) {
+            return asset($clean);
+        } else {
+            $filename = $clean;
+        }
+
+        $relativePath = $folder.'/'.$filename;
+        $publicFile = public_path($relativePath);
+        $rootFile = base_path($relativePath);
+
+        // Nếu đang chạy trên hosting mà Document Root là base_path (public_html)
+        // và file mới chỉ nằm trong public/clients/... thì tự động đồng bộ ra ngoài hoặc trả về URL đúng
+        if ($publicFile !== $rootFile && is_file($publicFile) && ! is_file($rootFile)) {
+            $docRoot = ! empty($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
+            $baseRoot = realpath(base_path());
+
+            if ($docRoot && $baseRoot && $docRoot === $baseRoot) {
+                $rootDir = dirname($rootFile);
+                if (! is_dir($rootDir)) {
+                    @mkdir($rootDir, 0755, true);
+                }
+                @copy($publicFile, $rootFile);
+                @chmod($rootFile, 0644);
+
+                if (! is_file($rootFile)) {
+                    return asset('public/'.$relativePath);
+                }
+            }
+        }
+
+        return asset($relativePath);
+    }
+
     // Accessors
     public function getImageDesktopUrlAttribute(): string
     {
-        if (! $this->image_desktop) {
-            return '';
-        }
-
-        return asset(config('banners.image.path', 'clients/assets/img/banners').'/'.$this->image_desktop);
+        return $this->resolveBannerImageUrl($this->image_desktop) ?? '';
     }
 
     public function getImageMobileUrlAttribute(): ?string
     {
-        if (! $this->image_mobile) {
-            return null;
-        }
-
-        return asset(config('banners.image.path', 'clients/assets/img/banners').'/'.$this->image_mobile);
+        return $this->resolveBannerImageUrl($this->image_mobile);
     }
 
     public function getStatusAttribute(): string
@@ -153,7 +207,7 @@ class Banner extends Model
             return false;
         }
 
-        if ($this->end_at && $this->end_at->lt($now)) {
+        if ($this->end_at && $this->end_at->lt(now)) {
             return false;
         }
 

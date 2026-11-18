@@ -1,7 +1,10 @@
 @php
     $isEdit = $banner->exists;
     $positionDescriptions = [
-        'homepage_banner_parent' => '🎠 Banner chính ở slider giữa trang chủ (có thể nhiều banner, tự động chuyển slide). Kích thước khuyến nghị: 1920x600px',
+        '1' => '🎠 Banner chính ở Hero Slider 16:9 trang chủ (có thể nhiều banner, tự động chuyển slide sau 5s). Kích thước khuyến nghị: 1920x1080px',
+        '2' => '📌 Banner phụ 1 trang chủ',
+        '3' => '📌 Banner phụ 2 trang chủ',
+        'homepage_banner_parent' => '🎠 Banner chính ở slider giữa trang chủ (có thể nhiều banner, tự động chuyển slide). Kích thước khuyến nghị: 1920x1080px',
         'homepage_banner_children' => '📌 Banner phụ bên phải trang chủ (tối đa 2 banner, hiển thị cố định). Kích thước khuyến nghị: 400x300px',
         'homepage' => 'Hiển thị ở trang chủ (vị trí tổng quát)',
         'sidebar' => 'Hiển thị ở thanh bên (sidebar) của các trang',
@@ -131,7 +134,7 @@
                 <select name="position" class="form-control" id="banner-position" required>
                     <option value="">-- Chọn vị trí --</option>
                     @foreach($positions ?? config('banners.positions', []) as $key => $label)
-                        <option value="{{ $key }}" {{ old('position', $banner->position) === $key ? 'selected' : '' }}>{{ $label }}</option>
+                        <option value="{{ $key }}" {{ (string) old('position', $banner->position) === (string) $key ? 'selected' : '' }}>{{ $label }}</option>
                     @endforeach
                 </select>
                 <div class="position-description" id="position-description" style="display:none;">

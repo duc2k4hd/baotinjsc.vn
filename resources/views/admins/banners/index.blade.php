@@ -140,7 +140,7 @@
         <select name="position">
             <option value="">-- Vị trí --</option>
             @foreach($positions ?? config('banners.positions', []) as $key => $label)
-                <option value="{{ $key }}" {{ request('position') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                <option value="{{ $key }}" {{ (string) request('position') === (string) $key ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
         <select name="status">

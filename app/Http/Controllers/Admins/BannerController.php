@@ -80,7 +80,7 @@ class BannerController extends Controller
         $this->clearBannerCache();
 
         return redirect()->route('admin.banners.index')
-            ->with('success', 'Táº¡o banner thÃ nh cÃ´ng.');
+            ->with('success', 'Tạo banner thành công.');
     }
 
     public function edit(Banner $banner)
@@ -98,7 +98,7 @@ class BannerController extends Controller
         $this->clearBannerCache();
 
         return redirect()->route('admin.banners.edit', $banner)
-            ->with('success', 'Cáº­p nháº­t banner thÃ nh cÃ´ng.');
+            ->with('success', 'Cập nhật banner thành công.');
     }
 
     public function destroy(Banner $banner)
@@ -108,7 +108,7 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return back()->with('success', 'ÄÃ£ xoÃ¡ banner.');
+        return back()->with('success', 'Đã xoá banner.');
     }
 
     public function toggle(Banner $banner)
@@ -117,7 +117,7 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return back()->with('success', 'ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i banner.');
+        return back()->with('success', 'Đã cập nhật trạng thái banner.');
     }
 
     public function reorder(Request $request)
@@ -134,41 +134,41 @@ class BannerController extends Controller
 
         $this->clearBannerCache();
 
-        return response()->json(['success' => true, 'message' => 'ÄÃ£ cáº­p nháº­t thá»© tá»± banner.']);
+        return response()->json(['success' => true, 'message' => 'Đã cập nhật thứ tự banner.']);
     }
 
     private function preparePayload(BannerStoreRequest|BannerUpdateRequest $request, ?Banner $banner = null): array
     {
         $data = $request->validated();
 
-        // Xá»­ lÃ½ images
+        // Xử lý images
         if ($request->hasFile('image_desktop')) {
             $data['image_desktop'] = $this->handleImage($request->file('image_desktop'), $banner?->image_desktop);
         } elseif ($banner) {
-            // Giá»¯ nguyÃªn image_desktop náº¿u khÃ´ng upload má»›i
+            // Giữ nguyên image_desktop nếu không upload mới
             unset($data['image_desktop']);
         }
 
         if ($request->hasFile('image_mobile')) {
             $data['image_mobile'] = $this->handleImage($request->file('image_mobile'), $banner?->image_mobile);
         } elseif ($banner) {
-            // Giá»¯ nguyÃªn image_mobile náº¿u khÃ´ng upload má»›i
+            // Giữ nguyên image_mobile nếu không upload mới
             unset($data['image_mobile']);
         }
 
-        // Xá»­ lÃ½ boolean vÃ  defaults
+        // Xử lý boolean và defaults
         $data['is_active'] = $request->boolean('is_active', config('banners.defaults.is_active', true));
         $data['target'] = $data['target'] ?? config('banners.defaults.target', '_blank');
 
-        // Xá»­ lÃ½ datetime
+        // Xử lý datetime
         $data['start_at'] = $request->filled('start_at') ? $request->input('start_at') : null;
         $data['end_at'] = $request->filled('end_at') ? $request->input('end_at') : null;
 
-        // Tá»± Ä‘á»™ng set order náº¿u khÃ´ng cÃ³ (chá»‰ khi táº¡o má»›i)
+        // Tự động set order nếu không có (chỉ khi tạo mới)
         if (! $banner && (! isset($data['order']) || $data['order'] === null)) {
             $data['order'] = Banner::getNextOrderForPosition($data['position']);
         } elseif (isset($data['order']) && $data['order'] === null) {
-            // Náº¿u order lÃ  null khi update, giá»¯ nguyÃªn giÃ¡ trá»‹ cÅ©
+            // Nếu order là null khi update, giữ nguyên giá trị cũ
             unset($data['order']);
         }
 
@@ -181,13 +181,34 @@ class BannerController extends Controller
             return $current;
         }
 
-        $directory = public_path(config('banners.image.path', 'clients/assets/img/banners'));
-        if (! File::exists($directory)) {
-            File::makeDirectory($directory, 0755, true);
+        $relativeFolder = trim(config('banners.image.path', 'clients/assets/img/banners'), '/');
+        $publicDir = public_path($relativeFolder);
+        if (! File::exists($publicDir)) {
+            File::makeDirectory($publicDir, 0755, true);
         }
 
-        $filename = 'banner-'.time().'-'.uniqid().'.'.$file->getClientOriginalExtension();
-        $file->move($directory, $filename);
+        $ext = strtolower($file->getClientOriginalExtension() ?: 'png');
+        $filename = 'banner-'.time().'-'.uniqid().'.'.$ext;
+        $targetPublicPath = $publicDir.DIRECTORY_SEPARATOR.$filename;
+
+        $file->move($publicDir, $filename);
+        @chmod($targetPublicPath, 0644);
+
+        // Đồng bộ sang base_path('clients/assets/img/banners') nếu chạy trên hosting public_html gốc
+        $rootDir = base_path($relativeFolder);
+        if ($rootDir !== $publicDir) {
+            $docRoot = ! empty($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
+            $baseRoot = realpath(base_path());
+
+            if ($docRoot && $baseRoot && $docRoot === $baseRoot) {
+                if (! File::exists($rootDir)) {
+                    File::makeDirectory($rootDir, 0755, true);
+                }
+                $targetRootPath = $rootDir.DIRECTORY_SEPARATOR.$filename;
+                @copy($targetPublicPath, $targetRootPath);
+                @chmod($targetRootPath, 0644);
+            }
+        }
 
         if ($current) {
             $this->deleteImageFile($current);
@@ -204,18 +225,26 @@ class BannerController extends Controller
 
     private function deleteImageFile(?string $filename): void
     {
-        if (! $filename) {
+        if (! $filename || str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
             return;
         }
 
-        $path = public_path(config('banners.image.path', 'clients/assets/img/banners').'/'.$filename);
-        if (File::exists($path)) {
-            File::delete($path);
+        $relativeFolder = trim(config('banners.image.path', 'clients/assets/img/banners'), '/');
+        $cleanName = basename($filename);
+
+        $publicPath = public_path($relativeFolder.'/'.$cleanName);
+        if (File::exists($publicPath)) {
+            @File::delete($publicPath);
+        }
+
+        $rootPath = base_path($relativeFolder.'/'.$cleanName);
+        if ($rootPath !== $publicPath && File::exists($rootPath)) {
+            @File::delete($rootPath);
         }
     }
 
     /**
-     * XÃ³a cache banners_home_parent vÃ  banners_home_children.
+     * Xóa cache banners_home_parent và banners_home_children.
      */
     private function clearBannerCache(): void
     {

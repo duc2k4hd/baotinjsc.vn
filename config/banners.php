@@ -11,6 +11,9 @@ return [
     */
 
     'positions' => [
+        '1' => 'Trang chủ - Banner chính (Hero Slider 16:9)',
+        '2' => 'Trang chủ - Banner phụ 1',
+        '3' => 'Trang chủ - Banner phụ 2',
         'homepage_banner_parent' => 'Trang chủ - Banner chính (Slider)',
         'homepage_banner_children' => 'Trang chủ - Banner phụ (Bên phải)',
         'homepage' => 'Trang chủ (Tổng quát)',
@@ -32,6 +35,9 @@ return [
     */
 
     'position_badges' => [
+        '1' => ['bg' => '#dbeafe', 'text' => '#1e40af'],
+        '2' => ['bg' => '#bfdbfe', 'text' => '#1e3a8a'],
+        '3' => ['bg' => '#bfdbfe', 'text' => '#1e3a8a'],
         'homepage_banner_parent' => ['bg' => '#dbeafe', 'text' => '#1e40af'],
         'homepage_banner_children' => ['bg' => '#bfdbfe', 'text' => '#1e3a8a'],
         'homepage' => ['bg' => '#dbeafe', 'text' => '#1e40af'],
@@ -58,13 +64,13 @@ return [
         'max_size' => 5120, // KB (5MB)
         'desktop' => [
             // Không resize/crop, giữ nguyên kích thước gốc khi upload
-            'width' => null,
-            'height' => null,
+            'width' => 1920,
+            'height' => 1080,
         ],
         'mobile' => [
             // Không resize/crop, giữ nguyên kích thước gốc khi upload
-            'width' => null,
-            'height' => null,
+            'width' => 768,
+            'height' => 432,
         ],
     ],
 
