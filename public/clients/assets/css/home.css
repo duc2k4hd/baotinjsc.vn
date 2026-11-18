@@ -1792,12 +1792,12 @@
     inset: 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    padding: 0 6% 5%;
+    justify-content: flex-end;
+    padding: 0 5% 8%;
     background: linear-gradient(
         to right,
-        rgba(5, 15, 40, 0.72) 0%,
-        rgba(5, 15, 40, 0.30) 55%,
+        rgba(5, 15, 40, 0.75) 0%,
+        rgba(5, 15, 40, 0.35) 55%,
         transparent 100%
     );
     color: #fff;
@@ -1815,7 +1815,7 @@
 }
 
 .btjsc-hero__desc {
-    margin: 0 0 18px;
+    margin: 0 0 20px;
     font-size: clamp(0.8rem, 1.5vw, 1rem);
     opacity: 0.9;
     max-width: 360px;
@@ -1824,7 +1824,7 @@
 
 .btjsc-hero__btn {
     display: inline-block;
-    padding: 10px 24px;
+    padding: 11px 28px;
     background: #F59E0B;
     color: #1E293B;
     border-radius: 4px;
@@ -1833,12 +1833,16 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     pointer-events: auto;
+    cursor: pointer;
     transition: background 0.2s, transform 0.2s;
+    align-self: flex-start;
+    text-decoration: none;
 }
 
-.btjsc-hero__slide--active a:hover .btjsc-hero__btn {
+.btjsc-hero__slide--active a:hover .btjsc-hero__btn,
+.btjsc-hero__btn:hover {
     background: #FBBF24;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
 }
 
 /* --- Nút Prev / Next --- */
