@@ -228,27 +228,7 @@
     </section>
     @endif
 
-    {{-- TRUST BAR --}}
-    <div class="btjsc-trust" aria-label="Cam kết của chúng tôi">
-        <div class="misutech_home_container btjsc-trust__grid">
-            <div class="btjsc-trust__item">
-                <span class="btjsc-trust__icon" style="background:#EFF6FF;color:#2563EB"><i class="fa-solid fa-truck-fast"></i></span>
-                <div><strong>Giao hàng nhanh</strong><span>Vận chuyển toàn quốc</span></div>
-            </div>
-            <div class="btjsc-trust__item">
-                <span class="btjsc-trust__icon" style="background:#ECFDF5;color:#059669"><i class="fa-solid fa-shield-halved"></i></span>
-                <div><strong>100% Chính hãng</strong><span>CO / CQ đầy đủ</span></div>
-            </div>
-            <div class="btjsc-trust__item">
-                <span class="btjsc-trust__icon" style="background:#FFFBEB;color:#D97706"><i class="fa-solid fa-headset"></i></span>
-                <div><strong>Kỹ sư tư vấn 24/7</strong><span>Hotline: 0985 214 595</span></div>
-            </div>
-            <div class="btjsc-trust__item">
-                <span class="btjsc-trust__icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-rotate-left"></i></span>
-                <div><strong>Đổi trả dễ dàng</strong><span>Hỗ trợ trong 7 ngày</span></div>
-            </div>
-        </div>
-    </div>
+
 
     {{-- QUICK CATEGORY BAR --}}
     <section class="misutech_home_quick" aria-label="Danh mục nhanh">
