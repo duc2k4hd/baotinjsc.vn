@@ -461,15 +461,6 @@ class ProductController extends Controller
                 }
             }
             
-            // Sidebar danh mục: lấy top-level categories, cache 1h
-            $sidebarCategories = Cache::remember('sidebar_categories', 3600, function () {
-                return Category::whereNull('parent_id')
-                    ->where('is_active', true)
-                    ->orderBy('order', 'asc')
-                    ->select('id', 'name', 'slug', 'image')
-                    ->get();
-            });
-
             return view('clients.pages.single.index',
                 compact(
                     'product',
@@ -487,8 +478,7 @@ class ProductController extends Controller
                     'productCartQuantity',
                     'supportStaff',
                     'popup',
-                    'galleryImages',
-                    'sidebarCategories'
+                    'galleryImages'
                 )
             );
         } catch (\Throwable $e) {

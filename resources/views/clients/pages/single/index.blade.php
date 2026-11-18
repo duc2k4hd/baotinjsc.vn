@@ -4,7 +4,6 @@
 
 @section('head')
     <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css?v=' . (file_exists(public_path('clients/assets/css/single.css')) ? filemtime(public_path('clients/assets/css/single.css')) : '1.0')) }}">
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/single-sidebar-cat.css?v=1.3') }}">
 
     @php
         $pageTitle = $product->meta_title ?? ($product->name ?? 'Sản phẩm');
@@ -287,43 +286,6 @@
 @endsection
 
 @section('content')
-    {{-- WRAPPER: SIDEBAR TRÁI + NỘI DUNG CHÍNH --}}
-    <div class="single-page-layout">
-
-        {{-- ===== SIDEBAR DANH MỤC BÊN TRÁI (sticky) ===== --}}
-        <aside class="single-cat-sidebar" aria-label="Danh mục sản phẩm">
-            <div class="single-cat-sidebar__inner">
-                <div class="single-cat-sidebar__heading">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                    <span>Danh mục sản phẩm</span>
-                </div>
-                <nav class="single-cat-sidebar__list" aria-label="Danh mục">
-                    @forelse ($sidebarCategories ?? [] as $cat)
-                        @php
-                            $isActive = ($product->primaryCategory?->slug === $cat->slug)
-                                     || ($product->primaryCategory?->parent?->slug === $cat->slug);
-                        @endphp
-                        <a href="/{{ $cat->slug }}"
-                           class="single-cat-sidebar__item {{ $isActive ? 'active' : '' }}"
-                           title="{{ $cat->name }}">
-                            @if ($cat->image)
-                                <img src="{{ asset('clients/assets/img/categories/' . $cat->image) }}"
-                                     alt="{{ $cat->name }}" width="22" height="22" loading="lazy">
-                            @else
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                            @endif
-                            <span>{{ $cat->name }}</span>
-                        </a>
-                    @empty
-                        <p class="single-cat-sidebar__empty">Chưa có danh mục</p>
-                    @endforelse
-                </nav>
-            </div>
-        </aside>
-
-        {{-- ===== NỘI DUNG CHÍNH ===== --}}
-        <div class="single-main-content">
-
     {{-- 1. BREADCRUMB --}}
     <nav class="single-breadcrumb" aria-label="Breadcrumb">
         <div class="container">
@@ -1196,25 +1158,12 @@
                 </div>
             </div>
         </div>
-        </div>
     </div>
 @endsection
 
 @section('foot')
     <script src="{{ asset('clients/assets/js/single.js?v=' . (file_exists(public_path('clients/assets/js/single.js')) ? filemtime(public_path('clients/assets/js/single.js')) : '1.0')) }}"></script>
     <script>
-        // Toggle sidebar danh mục trên mobile
-        (function () {
-            var sidebar = document.querySelector('.single-cat-sidebar');
-            var heading = sidebar ? sidebar.querySelector('.single-cat-sidebar__heading') : null;
-            if (heading) {
-                heading.addEventListener('click', function () {
-                    if (window.innerWidth <= 767) {
-                        sidebar.classList.toggle('is-open');
-                    }
-                });
-            }
-        })();
         window.phoneNumber = '{{ $settings->contact_phone ?? '0903 223 663' }}';
 
         // Hàm mở tab Đánh giá mượt mà từ link trên đầu trang
