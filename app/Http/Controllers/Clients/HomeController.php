@@ -142,7 +142,7 @@ class HomeController extends Controller
                 $targetIdsLookup = array_flip($item['cat_ids']);
                 $pIds = $rawProducts->filter(function ($p) use ($targetIdsLookup) {
                     return isset($targetIdsLookup[$p->primary_category_id]);
-                })->take(10)->pluck('id')->toArray();
+                })->take(8)->pluck('id')->toArray();
 
                 if (!empty($pIds)) {
                     $catModel = $item['category'];

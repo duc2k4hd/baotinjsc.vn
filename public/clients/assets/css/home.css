@@ -811,12 +811,13 @@
 }
 .misutech_home_catalog_grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
     background: transparent;
 }
 .misutech_home_catalog_grid .misutech_home_product_card {
-    min-height: 282px;
+    min-height: 310px;
+    padding: 14px 12px;
 }
 #misutech_home_catalog_0 .misutech_home_product_card:first-child {
     grid-column: span 2;
