@@ -754,40 +754,48 @@
     background: #fbfcfd;
 }
 .misutech_home_section_header {
-    min-height: 46px;
+    min-height: 42px;
     display: flex;
-    align-items: end;
+    align-items: stretch;
     justify-content: space-between;
-    gap: 24px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid var(--misutech_home_line);
+    gap: 16px;
+    margin-bottom: 14px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-bottom: 2px solid var(--misutech_home_primary, #2563eb);
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
 }
 .misutech_home_section_title {
-    display: flex;
+    position: relative;
+    display: inline-flex;
     align-items: center;
     gap: 10px;
     margin: 0;
-    padding-bottom: 12px;
-    color: var(--misutech_home_text);
-    font-size: 20px;
+    padding: 9px 24px 9px 14px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
+    line-height: 1.3;
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
 }
 .misutech_home_section_title_mark {
-    width: 8px;
-    height: 25px;
+    width: 4px;
+    height: 16px;
     border-radius: 2px;
-    background: linear-gradient(
-        var(--misutech_home_primary),
-        var(--misutech_home_secondary)
-    );
-    transform: skew(-10deg);
+    background: #f59e0b;
+    flex-shrink: 0;
 }
 .misutech_home_section_tabs {
     display: flex;
     align-items: center;
     justify-content: flex-end;
     gap: 6px;
-    flex-wrap: wrap;
+    padding-right: 12px;
+    flex-shrink: 0;
 }
 .misutech_home_section_tab {
     border: 0;
@@ -803,11 +811,23 @@
     font-weight: 800;
 }
 .misutech_home_view_all {
-    margin-left: 6px;
-    padding: 8px 10px;
-    color: var(--misutech_home_orange);
-    font-size: 11px;
-    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.misutech_home_view_all:hover {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
 }
 .misutech_home_catalog_grid {
     display: grid;
@@ -1071,25 +1091,17 @@
 
     /* Featured & Catalog Sections */
     .misutech_home_section_header {
-        align-items: center;
+        align-items: stretch;
         flex-direction: row;
         justify-content: space-between;
-        flex-wrap: wrap;
         gap: 10px;
     }
     .misutech_home_section_title {
-        font-size: 18px;
-    }
-    .misutech_home_section_tabs {
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    .misutech_home_section_tab {
-        padding: 6px 12px;
-        font-size: 12px;
+        font-size: 14px;
+        padding: 8px 20px 8px 12px;
     }
     .misutech_home_view_all {
-        font-size: 12.5px;
+        font-size: 12px;
     }
     .misutech_home_catalog_grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1253,35 +1265,28 @@
         padding: 14px 0;
     }
     .misutech_home_section_header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: stretch;
+        justify-content: space-between;
         gap: 8px;
         margin-bottom: 12px;
+        min-height: 38px;
     }
     .misutech_home_section_title {
-        font-size: 16px;
+        font-size: 13px;
+        padding: 8px 18px 8px 10px;
     }
     .misutech_home_section_tabs {
-        overflow-x: auto;
-        scrollbar-width: none;
-        -webkit-overflow-scrolling: touch;
-        width: 100%;
+        width: auto;
         display: flex;
-        gap: 4px;
-        padding-bottom: 2px;
-    }
-    .misutech_home_section_tabs::-webkit-scrollbar {
-        display: none;
-    }
-    .misutech_home_section_tab {
-        padding: 4px 9px;
-        font-size: 11px;
-        white-space: nowrap;
-        flex-shrink: 0;
+        align-items: center;
+        padding-right: 8px;
     }
     .misutech_home_view_all {
         font-size: 11.5px;
-        margin-top: 2px;
+        padding: 4px 8px;
+        margin: 0;
+        white-space: nowrap;
     }
     .misutech_home_catalog_grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
