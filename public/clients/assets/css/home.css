@@ -650,6 +650,9 @@
     flex-direction: column;
     justify-content: space-between;
     box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid #eef0f4;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     transition:
         transform 0.25s ease,
         box-shadow 0.25s ease;
@@ -657,7 +660,8 @@
 .misutech_home_product_card:hover {
     z-index: 3;
     transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0, 59, 112, 0.15);
+    box-shadow: 0 8px 24px rgba(0, 59, 112, 0.14);
+    border-color: #d0d9e8;
 }
 .misutech_home_product_image {
     width: 100%;
@@ -856,9 +860,8 @@
 .misutech_home_catalog_grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    border: 1px solid var(--misutech_home_line);
-    background: var(--misutech_home_line);
-    gap: 1px;
+    gap: 12px;
+    background: transparent;
 }
 .misutech_home_catalog_grid .misutech_home_product_card {
     min-height: 282px;
