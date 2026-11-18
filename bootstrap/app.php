@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust tất cả proxy (Cloudflare, Nginx reverse proxy, v.v.)
+        // để Laravel nhận đúng scheme HTTPS từ header X-Forwarded-Proto
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\CheckAdmin::class,
             'maintenance' => \App\Http\Middleware\CheckMaintenanceMode::class,
