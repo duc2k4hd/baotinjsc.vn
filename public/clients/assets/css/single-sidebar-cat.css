@@ -20,8 +20,8 @@
     width: 220px;
     flex-shrink: 0;
     position: sticky !important;
-    top: 10px !important;
-    max-height: calc(100vh - 20px);
+    top: 62px !important;
+    max-height: calc(100vh - 75px);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;

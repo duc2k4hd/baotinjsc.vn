@@ -21,8 +21,8 @@
     min-width: 210px !important;
     flex-shrink: 0 !important;
     position: sticky !important;
-    top: 10px !important;
-    max-height: calc(100vh - 20px);
+    top: 62px !important;
+    max-height: calc(100vh - 75px);
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
@@ -94,9 +94,9 @@
     color: #f1a300;
 }
 
-/* Đảm bảo scroll mượt đến đúng vị trí sát top màn hình */
+/* Đảm bảo scroll mượt đến đúng vị trí dưới main-nav */
 .misutech_home_catalog_section {
-    scroll-margin-top: 10px;
+    scroll-margin-top: 65px;
     content-visibility: visible !important;
 }
 
