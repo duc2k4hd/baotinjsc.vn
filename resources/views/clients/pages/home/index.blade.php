@@ -33,7 +33,7 @@
 
 @section('head')
     <link rel="stylesheet" href="{{ asset('clients/assets/css/home.css') }}?v={{ file_exists(public_path('clients/assets/css/home.css')) ? filemtime(public_path('clients/assets/css/home.css')) : time() }}">
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/home-layout.css') }}?v=1.3">
+    <link rel="stylesheet" href="{{ asset('clients/assets/css/home-layout.css') }}?v=1.4">
 
     @php
         $siteTitle = $homeTitle;

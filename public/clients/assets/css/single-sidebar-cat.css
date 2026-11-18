@@ -7,10 +7,11 @@
 .single-page-layout {
     display: flex;
     align-items: flex-start;
-    gap: 0;
-    max-width: 1400px;
+    gap: 16px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0;
+    padding: 0 12px;
+    box-sizing: border-box;
     position: relative;
 }
 

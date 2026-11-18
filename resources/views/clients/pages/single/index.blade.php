@@ -4,7 +4,7 @@
 
 @section('head')
     <link rel="stylesheet" href="{{ asset('clients/assets/css/single.css?v=' . (file_exists(public_path('clients/assets/css/single.css')) ? filemtime(public_path('clients/assets/css/single.css')) : '1.0')) }}">
-    <link rel="stylesheet" href="{{ asset('clients/assets/css/single-sidebar-cat.css?v=1.0') }}">
+    <link rel="stylesheet" href="{{ asset('clients/assets/css/single-sidebar-cat.css?v=1.1') }}">
 
     @php
         $pageTitle = $product->meta_title ?? ($product->name ?? 'Sản phẩm');

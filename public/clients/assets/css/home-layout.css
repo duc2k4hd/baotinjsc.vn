@@ -2,11 +2,16 @@
    HOME PAGE — SIDEBAR + 2-COLUMN LAYOUT  (file riêng v1.0)
    ============================================================ */
 
-/* Wrapper ngoài: flex 2 cột */
+/* Wrapper ngoài: flex 2 cột, max-width 1200px căn giữa */
 .home-body-layout {
     display: flex !important;
     align-items: flex-start !important;
     width: 100%;
+    max-width: 1200px !important;
+    margin: 0 auto !important;
+    padding: 0 12px;
+    box-sizing: border-box;
+    gap: 16px;
     position: relative;
 }
 
