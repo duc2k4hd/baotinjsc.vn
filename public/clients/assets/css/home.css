@@ -32,51 +32,6 @@
 }
 
 
-/* === SERVICE BAR FROM STYLE.CSS === */
-.misutech_home_service_bar {
-    background: var(--misutech_home_primary);
-    color: var(--misutech_home_white);
-}
-
-.misutech_home_service_grid {
-    min-height: 92px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: center;
-}
-
-.misutech_home_service {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 48px;
-    padding: 0 24px;
-    border-right: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.misutech_home_service:last-child {
-    border-right: 0;
-}
-
-.misutech_home_service_icon {
-    font-size: 26px;
-    color: var(--misutech_home_accent);
-}
-
-.misutech_home_service_copy strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 12px;
-    text-transform: uppercase;
-}
-
-.misutech_home_service_copy span {
-    color: #c7d9e8;
-    font-size: 10px;
-}
-
-
-
 /* === MENU & HERO FROM STYLE.CSS === */
 .misutech_home_category_menu {
     margin: 0;
@@ -1174,30 +1129,6 @@
     .misutech_home_article_excerpt {
         font-size: 11.5px;
     }
-
-    /* Service Bar */
-    .misutech_home_service_bar {
-        padding: 16px 0;
-    }
-    .misutech_home_service_grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-    .misutech_home_service {
-        padding: 14px 16px;
-        gap: 12px;
-    }
-    .misutech_home_service_icon {
-        font-size: 24px;
-        width: 42px;
-        height: 42px;
-    }
-    .misutech_home_service_copy strong {
-        font-size: 13px;
-    }
-    .misutech_home_service_copy span {
-        font-size: 11.5px;
-    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1209,10 +1140,6 @@
     }
     .misutech_home_catalog_grid {
         grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-    .misutech_home_service_grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
     }
 }
 
@@ -1393,35 +1320,6 @@
     }
     .misutech_home_article_excerpt {
         font-size: 11px;
-    }
-
-    /* Service Bar */
-    .misutech_home_service_bar {
-        padding: 12px 0;
-    }
-    .misutech_home_service_grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 8px;
-        min-height: auto;
-    }
-    .misutech_home_service {
-        padding: 8px 10px;
-        gap: 8px;
-        border-right: none;
-        background: rgba(255, 255, 255, 0.06);
-        border-radius: 4px;
-        min-height: 42px;
-    }
-    .misutech_home_service_icon {
-        font-size: 20px;
-        width: 32px;
-        height: 32px;
-    }
-    .misutech_home_service_copy strong {
-        font-size: 11.5px;
-    }
-    .misutech_home_service_copy span {
-        font-size: 10px;
     }
 }
 

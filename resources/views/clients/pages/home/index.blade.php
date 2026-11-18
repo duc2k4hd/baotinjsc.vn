@@ -386,40 +386,6 @@
         </section>
     @endif
 
-    {{-- 4 COMMITMENT SERVICES BAR --}}
-    <section class="misutech_home_service_bar" aria-label="Cam kết dịch vụ">
-        <div class="misutech_home_container misutech_home_service_grid">
-            <div class="misutech_home_service">
-                <span class="misutech_home_service_icon"><i class="fa-solid fa-truck-fast"></i></span>
-                <span class="misutech_home_service_copy">
-                    <strong>Giao hàng toàn quốc</strong>
-                    <span>Đóng gói cẩn thận, theo dõi dễ dàng</span>
-                </span>
-            </div>
-            <div class="misutech_home_service">
-                <span class="misutech_home_service_icon"><i class="fa-solid fa-rotate-left"></i></span>
-                <span class="misutech_home_service_copy">
-                    <strong>Đổi trả linh hoạt</strong>
-                    <span>Hỗ trợ nhanh trong thời hạn quy định</span>
-                </span>
-            </div>
-            <div class="misutech_home_service">
-                <span class="misutech_home_service_icon"><i class="fa-solid fa-circle-check"></i></span>
-                <span class="misutech_home_service_copy">
-                    <strong>Sản phẩm chính hãng</strong>
-                    <span>Nguồn gốc rõ ràng, bảo hành an tâm</span>
-                </span>
-            </div>
-            <div class="misutech_home_service">
-                <span class="misutech_home_service_icon"><i class="fa-solid fa-headset"></i></span>
-                <span class="misutech_home_service_copy">
-                    <strong>Hỗ trợ tận tâm</strong>
-                    <span>Tư vấn kỹ thuật và lựa chọn phù hợp</span>
-                </span>
-            </div>
-        </div>
-    </section>
-
     {{-- Floating Toast for interactions --}}
     <div class="misutech_home_toast" aria-hidden="true"></div>
 
