@@ -5,13 +5,6 @@
             <div class="footer-col">
                 <img src="{{ asset('clients/assets/img/business/' . ($settings->site_logo ?? 'logo.webp')) }}" 
                      alt="{{ $settings->site_name ?? 'Bảo Tín JSC' }}" class="footer-logo">
-                <p>{{ $settings->site_description ?? 'Nhà cung cấp thiết bị tự động hóa công nghiệp hàng đầu Việt Nam' }}</p>
-                @if($settings->site_tax_code ?? null)
-                    <p><strong>MST:</strong> {{ $settings->site_tax_code }}</p>
-                @endif
-                @if($settings->contact_email ?? null)
-                    <p><strong>Email:</strong> {{ $settings->contact_email }}</p>
-                @endif
                 <div class="social-icons">
                     @if($settings->facebook_link ?? null)
                         <a href="{{ $settings->facebook_link }}" target="_blank"><i class="fab fa-facebook"></i></a>

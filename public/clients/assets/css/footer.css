@@ -6,72 +6,83 @@
 .footer {
     background-color: var(--dark-color);
     color: var(--text-color-light);
-    padding: 40px 0 0;
-    margin-top: 40px;
+    padding: 22px 0 0;
+    margin-top: 28px;
 }
 
 .footer-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr 1.5fr 1.5fr;
-    gap: 30px;
-    padding-bottom: 30px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    grid-template-columns: 1.1fr 1.8fr 1.4fr 1.2fr;
+    gap: 24px;
+    align-items: start;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .footer-col h3 {
-    font-size: 16px;
-    margin-bottom: 15px;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
     text-transform: uppercase;
+    letter-spacing: 0.03em;
 }
 
 .footer-col p {
-    font-size: 13px;
-    line-height: 1.8;
+    font-size: 12.5px;
+    line-height: 1.5;
     color: var(--text-color-light);
-    opacity: 0.7;
-    margin-bottom: 8px;
+    opacity: 0.75;
+    margin-bottom: 6px;
 }
 
 .footer-logo {
-    margin-bottom: 15px;
-    width: 120px;
-    aspect-ratio: 1/1;
+    margin-bottom: 10px;
+    max-width: 130px;
+    max-height: 48px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 .social-icons {
     display: flex;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .social-icons a {
-    width: 35px;
-    height: 35px;
+    width: 32px;
+    height: 32px;
     background-color: rgba(255, 255, 255, 0.1);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 13px;
     transition: var(--transition);
 }
 
 .social-icons a:hover {
     background-color: var(--primary-color);
-    transform: translateY(-3px);
+    transform: translateY(-2px);
 }
 
-.footer-col ul {
+.footer-col ul:not(.footer-support-staff) {
     list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px 14px;
 }
 
-.footer-col ul li {
-    margin-bottom: 10px;
+.footer-col ul:not(.footer-support-staff) li {
+    margin-bottom: 0;
 }
 
 .footer-col ul li a {
     color: var(--text-color-light);
-    opacity: 0.7;
-    font-size: 13px;
+    opacity: 0.75;
+    font-size: 12.5px;
+    line-height: 1.4;
     transition: var(--transition);
 }
 
@@ -82,26 +93,27 @@
 
 .newsletter-form {
     display: flex;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .newsletter-form input {
     flex: 1;
-    padding: 10px 15px;
+    padding: 8px 12px;
     border: none;
     border-radius: var(--border-radius) 0 0 var(--border-radius);
-    font-size: 13px;
+    font-size: 12.5px;
 }
 
 .newsletter-form button {
-    padding: 10px 20px;
+    padding: 8px 14px;
     background-color: var(--primary-color);
     color: var(--text-color-light);
     border: none;
     border-radius: 0 var(--border-radius) var(--border-radius) 0;
     cursor: pointer;
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
     transition: var(--transition);
 }
 
@@ -111,8 +123,13 @@
 
 .certification-box {
     background-color: rgba(255, 255, 255, 0.05);
-    padding: 15px;
+    padding: 10px 12px;
     border-radius: var(--border-radius);
+}
+
+.certification-box p {
+    margin: 0;
+    font-size: 12px;
 }
 
 /* Footer Support Staff (CSKH) */
@@ -209,9 +226,9 @@
 }
 
 .footer-bottom {
-    padding: 20px 0;
+    padding: 12px 0;
     text-align: center;
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-color-light);
     opacity: 0.6;
 }
