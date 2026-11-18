@@ -150,201 +150,102 @@
 @endsection
 
 @section('content')
-    {{-- HERO SECTION: 3 Columns --}}
-    <section class="misutech_home_hero">
-        <div class="misutech_home_container misutech_home_hero_grid">
-            {{-- Cột 1: Menu danh mục đa cấp --}}
-            <ul class="misutech_home_category_menu">
-                @foreach ($mainCategories as $category)
-                    <li class="misutech_home_category_item">
-                        <a href="{{ route('client.product.detail', $category->slug) }}" class="misutech_home_category_label">
-                            <span class="misutech_home_category_name_text">{{ $category->name }}</span>
-                            @if ($category->children && $category->children->count() > 0)
-                                <span class="misutech_home_category_arrow_icon">›</span>
-                            @endif
-                        </a>
-
-                        @if ($category->children && $category->children->count() > 0)
-                            <div class="misutech_home_mega_menu">
-                                <div class="misutech_home_mega_grid">
-                                    @foreach ($category->children as $child)
-                                        <div class="misutech_home_mega_column {{ ($child->children && $child->children->count() > 0) ? 'has-subitems' : 'no-subitems' }}">
-                                            <h4 class="misutech_home_mega_title">
-                                                <a href="{{ route('client.product.detail', $child->slug) }}">
-                                                    <span class="misutech_mega_title_text">{{ $child->name }}</span>
-                                                    <span class="misutech_mega_title_arrow">›</span>
-                                                </a>
-                                            </h4>
-                                            @if ($child->children && $child->children->count() > 0)
-                                                <ul class="misutech_home_mega_list">
-                                                    @foreach ($child->children as $grandchild)
-                                                        <li><a href="{{ route('client.product.detail', $grandchild->slug) }}">{{ $grandchild->name }}</a></li>
-                                                    @endforeach
-                                                </ul>
-                                            @endif
-                                        </div>
-                                    @endforeach
-                                </div>
+    {{-- HERO SLIDER: Full-width 16:9, quản lý qua Admin > Banner (position = 1) --}}
+    @php
+        $heroBanners = $banners->get('1', collect());
+        $heroCount   = $heroBanners->count();
+    @endphp
+    @if ($heroCount > 0)
+    <section class="btjsc-hero" aria-label="Banner quảng cáo chính">
+        <div class="btjsc-hero__track" id="btjscHeroTrack" role="list" aria-live="polite">
+            @foreach ($heroBanners as $idx => $banner)
+                @php
+                    $bImg = $banner->image_desktop;
+                    $bUrl = Str::startsWith($bImg, ['http://', 'https://']) ? $bImg : asset('clients/assets/img/banners/' . $bImg);
+                    $bMob = $banner->image_mobile;
+                    $bMobUrl = $bMob ? (Str::startsWith($bMob, ['http://', 'https://']) ? $bMob : asset('clients/assets/img/banners/' . $bMob)) : $bUrl;
+                @endphp
+                <div class="btjsc-hero__slide{{ $idx === 0 ? ' btjsc-hero__slide--active' : '' }}"
+                     role="listitem"
+                     aria-label="Slide {{ $idx + 1 }} / {{ $heroCount }}"
+                     aria-hidden="{{ $idx === 0 ? 'false' : 'true' }}">
+                    @if ($banner->link)
+                        <a href="{{ $banner->link }}" target="{{ $banner->target ?? '_self' }}" tabindex="{{ $idx === 0 ? '0' : '-1' }}" aria-label="{{ $banner->title }}">
+                    @endif
+                        <picture>
+                            <source media="(max-width: 639px)" srcset="{{ $bMobUrl }}">
+                            <img src="{{ $bUrl }}"
+                                 alt="{{ $banner->title }}"
+                                 width="1920" height="1080"
+                                 @if ($idx === 0) fetchpriority="high" loading="eager" @else loading="lazy" @endif
+                                 decoding="async"
+                                 class="btjsc-hero__img">
+                        </picture>
+                        @if (!empty($banner->title) || !empty($banner->description))
+                            <div class="btjsc-hero__caption">
+                                @if (!empty($banner->title))
+                                    <h2 class="btjsc-hero__title">{{ $banner->title }}</h2>
+                                @endif
+                                @if (!empty($banner->description))
+                                    <p class="btjsc-hero__desc">{{ $banner->description }}</p>
+                                @endif
+                                @if ($banner->link)
+                                    <span class="btjsc-hero__btn">Xem ngay</span>
+                                @endif
                             </div>
                         @endif
-                    </li>
-                @endforeach
-
-                <li class="misutech_home_category_item">
-                    <a href="{{ route('client.shop.index') }}" class="misutech_home_category_label misutech_home_category_all_link">
-                        <span class="misutech_home_category_name_text">+ Xem tất cả danh mục</span>
-                        <span class="misutech_home_category_arrow_icon">›</span>
-                    </a>
-
-                    <div class="misutech_home_mega_menu">
-                        <div class="misutech_home_mega_grid">
-                            @foreach ($allCategories as $allCat)
-                                <div class="misutech_home_mega_column {{ ($allCat->children && $allCat->children->count() > 0) ? 'has-subitems' : 'no-subitems' }}">
-                                    <h4 class="misutech_home_mega_title">
-                                        <a href="{{ route('client.product.detail', $allCat->slug) }}">
-                                            <span class="misutech_mega_title_text">{{ $allCat->name }}</span>
-                                            <span class="misutech_mega_title_arrow">›</span>
-                                        </a>
-                                    </h4>
-                                    @if ($allCat->children && $allCat->children->count() > 0)
-                                        <ul class="misutech_home_mega_list">
-                                            @foreach ($allCat->children as $child)
-                                                <li><a href="{{ route('client.product.detail', $child->slug) }}">{{ $child->name }}</a></li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-                </li>
-            </ul>
-
-            {{-- Cột 2: Slider Banner chính & Dải ưu đãi --}}
-            <div class="misutech_home_hero_center">
-                <div class="misutech_home_hero_main" style="position: relative; overflow: hidden;">
-                    @php $heroBanners = $banners->get('1', collect()); @endphp
-                    @foreach ($heroBanners as $index => $banner)
-                        @php
-                            $bImg = $banner->image_desktop;
-                            $bUrl = Str::startsWith($bImg, ['http://', 'https://']) ? $bImg : asset('clients/assets/img/banners/' . $bImg);
-                        @endphp
-                        <div class="misutech_home_hero_slide"
-                            style="opacity: {{ $index === 0 ? '1' : '0' }}; transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out; transform: {{ $index === 0 ? 'scale(1)' : 'scale(1.05)' }}; pointer-events: {{ $index === 0 ? 'auto' : 'none' }}; z-index: {{ $index === 0 ? '1' : '0' }}; width: 100%; height: 100%; position: absolute; top: 0; left: 0;">
-                            <img src="{{ $bUrl }}"
-                                alt="{{ $banner->title }}"
-                                width="790"
-                                height="380"
-                                @if($index === 0) fetchpriority="high" loading="eager" decoding="async" @else loading="lazy" decoding="async" @endif
-                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;" />
-                            <div class="misutech_home_hero_overlay">
-                                <div class="misutech_home_hero_copy">
-                                    @if(!empty($banner->description))
-                                        <p class="misutech_home_hero_eyebrow">
-                                            ƯU ĐÃI ĐẶC BIỆT
-                                        </p>
-                                    @endif
-                                    <h1 class="misutech_home_hero_title">
-                                        {!! nl2br(e($banner->title)) !!}
-                                    </h1>
-                                    @if(!empty($banner->description))
-                                        <p class="misutech_home_hero_desc">
-                                            {{ $banner->description }}
-                                        </p>
-                                    @endif
-                                    <a class="misutech_home_primary_button"
-                                        href="{{ $banner->link ?: route('client.shop.index') }}">MUA NGAY</a>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-
-                    <div class="misutech_home_hero_dots" aria-label="Chọn banner"
-                        style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 10;">
-                        @foreach ($heroBanners as $index => $banner)
-                            <button class="misutech_home_hero_dot" type="button"
-                                aria-current="{{ $index === 0 ? 'true' : 'false' }}"
-                                aria-label="Banner {{ $index + 1 }}"></button>
-                        @endforeach
-                    </div>
+                    @if ($banner->link)
+                        </a>
+                    @endif
                 </div>
-
-                {{-- Dải chương trình ưu đãi nhanh (Khớp chính xác chiều cao 105px của hàng thứ 2) --}}
-                <div class="misutech_home_hero_strip" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; height: 100%; border-radius: 4px; overflow: hidden;">
-                    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 4px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
-                        <div style="width: 44px; height: 44px; border-radius: 8px; background: #EFF6FF; display: grid; place-items: center; color: #2563EB; font-size: 20px; flex-shrink: 0;">
-                            <i class="fa-solid fa-truck-fast"></i>
-                        </div>
-                        <div>
-                            <strong style="display: block; font-size: 12px; color: #1E293B; text-transform: uppercase; line-height: 1.3;">Giao hàng nhanh</strong>
-                            <span style="font-size: 11px; color: #64748B;">Vận chuyển toàn quốc</span>
-                        </div>
-                    </div>
-                    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 4px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
-                        <div style="width: 44px; height: 44px; border-radius: 8px; background: #ECFDF5; display: grid; place-items: center; color: #059669; font-size: 20px; flex-shrink: 0;">
-                            <i class="fa-solid fa-shield-halved"></i>
-                        </div>
-                        <div>
-                            <strong style="display: block; font-size: 12px; color: #1E293B; text-transform: uppercase; line-height: 1.3;">100% Chính hãng</strong>
-                            <span style="font-size: 11px; color: #64748B;">CO / CQ đầy đủ</span>
-                        </div>
-                    </div>
-                    <div style="background: #ffffff; border: 1px solid #E2E8F0; border-radius: 4px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
-                        <div style="width: 44px; height: 44px; border-radius: 8px; background: #FFFBEB; display: grid; place-items: center; color: #D97706; font-size: 20px; flex-shrink: 0;">
-                            <i class="fa-solid fa-headset"></i>
-                        </div>
-                        <div>
-                            <strong style="display: block; font-size: 12px; color: #1E293B; text-transform: uppercase; line-height: 1.3;">Kỹ sư tư vấn 24/7</strong>
-                            <span style="font-size: 11px; color: #64748B;">Hotline: 0985 214 595</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Cột 3: 2 Banner phụ khuyến mại bên phải --}}
-            <aside class="misutech_home_hero_side" aria-label="Khuyến mại nổi bật">
-                @php
-                    $sideBanner1 = $banners->get('2', collect())->first();
-                    $sideBanner2 = $banners->get('3', collect())->first();
-                @endphp
-                @if ($sideBanner1)
-                    @php
-                        $s1Img = $sideBanner1->image_desktop;
-                        $s1Url = Str::startsWith($s1Img, ['http://', 'https://']) ? $s1Img : asset('clients/assets/img/banners/' . $s1Img);
-                    @endphp
-                    <a class="misutech_home_side_banner" href="{{ $sideBanner1->link ?: route('client.shop.index') }}"
-                        style="position: relative; border-radius: 4px; overflow: hidden; display: block; height: 100%;">
-                        <img src="{{ $s1Url }}"
-                            alt="{{ $sideBanner1->title }}"
-                            width="290"
-                            height="185"
-                            loading="lazy"
-                            decoding="async"
-                            style="width: 100%; height: 100%; object-fit: cover;" />
-                        <span class="misutech_home_side_banner_label">{{ $sideBanner1->title }}</span>
-                    </a>
-                @endif
-
-                @if ($sideBanner2)
-                    @php
-                        $s2Img = $sideBanner2->image_desktop;
-                        $s2Url = Str::startsWith($s2Img, ['http://', 'https://']) ? $s2Img : asset('clients/assets/img/banners/' . $s2Img);
-                    @endphp
-                    <a class="misutech_home_side_banner" href="{{ $sideBanner2->link ?: route('client.shop.index') }}"
-                        style="position: relative; border-radius: 4px; overflow: hidden; display: block; height: 100%;">
-                        <img src="{{ $s2Url }}"
-                            alt="{{ $sideBanner2->title }}"
-                            width="290"
-                            height="185"
-                            loading="lazy"
-                            decoding="async"
-                            style="width: 100%; height: 100%; object-fit: cover;" />
-                        <span class="misutech_home_side_banner_label">{{ $sideBanner2->title }}</span>
-                    </a>
-                @endif
-            </aside>
+            @endforeach
         </div>
+
+        {{-- Prev / Next --}}
+        @if ($heroCount > 1)
+            <button class="btjsc-hero__nav btjsc-hero__nav--prev" id="btjscHeroPrev" aria-label="Slide trước" type="button">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="btjsc-hero__nav btjsc-hero__nav--next" id="btjscHeroNext" aria-label="Slide tiếp" type="button">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            {{-- Dots --}}
+            <div class="btjsc-hero__dots" role="tablist" aria-label="Chọn slide">
+                @foreach ($heroBanners as $idx => $banner)
+                    <button class="btjsc-hero__dot{{ $idx === 0 ? ' btjsc-hero__dot--active' : '' }}"
+                            role="tab"
+                            type="button"
+                            aria-selected="{{ $idx === 0 ? 'true' : 'false' }}"
+                            aria-label="Slide {{ $idx + 1 }}"
+                            data-btjsc-slide="{{ $idx }}"></button>
+                @endforeach
+            </div>
+        @endif
     </section>
+    @endif
+
+    {{-- TRUST BAR --}}
+    <div class="btjsc-trust" aria-label="Cam kết của chúng tôi">
+        <div class="misutech_home_container btjsc-trust__grid">
+            <div class="btjsc-trust__item">
+                <span class="btjsc-trust__icon" style="background:#EFF6FF;color:#2563EB"><i class="fa-solid fa-truck-fast"></i></span>
+                <div><strong>Giao hàng nhanh</strong><span>Vận chuyển toàn quốc</span></div>
+            </div>
+            <div class="btjsc-trust__item">
+                <span class="btjsc-trust__icon" style="background:#ECFDF5;color:#059669"><i class="fa-solid fa-shield-halved"></i></span>
+                <div><strong>100% Chính hãng</strong><span>CO / CQ đầy đủ</span></div>
+            </div>
+            <div class="btjsc-trust__item">
+                <span class="btjsc-trust__icon" style="background:#FFFBEB;color:#D97706"><i class="fa-solid fa-headset"></i></span>
+                <div><strong>Kỹ sư tư vấn 24/7</strong><span>Hotline: 0985 214 595</span></div>
+            </div>
+            <div class="btjsc-trust__item">
+                <span class="btjsc-trust__icon" style="background:#F5F3FF;color:#7C3AED"><i class="fa-solid fa-rotate-left"></i></span>
+                <div><strong>Đổi trả dễ dàng</strong><span>Hỗ trợ trong 7 ngày</span></div>
+            </div>
+        </div>
+    </div>
 
     {{-- QUICK CATEGORY BAR --}}
     <section class="misutech_home_quick" aria-label="Danh mục nhanh">
@@ -747,4 +648,69 @@
 
 @section('foot')
     <script src="{{ asset('clients/assets/js/home.js') }}?v={{ file_exists(public_path('clients/assets/js/home.js')) ? filemtime(public_path('clients/assets/js/home.js')) : time() }}"></script>
+    @if ($heroCount > 1)
+    <script>
+    (function () {
+        'use strict';
+        var track   = document.getElementById('btjscHeroTrack');
+        if (!track) return;
+        var slides  = track.querySelectorAll('.btjsc-hero__slide');
+        var dots    = document.querySelectorAll('.btjsc-hero__dot');
+        var btnPrev = document.getElementById('btjscHeroPrev');
+        var btnNext = document.getElementById('btjscHeroNext');
+        var total   = slides.length;
+        var current = 0;
+        var timer   = null;
+        var DELAY   = 5000;
+
+        function goTo(n) {
+            slides[current].classList.remove('btjsc-hero__slide--active');
+            slides[current].setAttribute('aria-hidden', 'true');
+            if (dots[current]) {
+                dots[current].classList.remove('btjsc-hero__dot--active');
+                dots[current].setAttribute('aria-selected', 'false');
+            }
+            current = (n + total) % total;
+            slides[current].classList.add('btjsc-hero__slide--active');
+            slides[current].setAttribute('aria-hidden', 'false');
+            if (dots[current]) {
+                dots[current].classList.add('btjsc-hero__dot--active');
+                dots[current].setAttribute('aria-selected', 'true');
+            }
+        }
+
+        function next() { goTo(current + 1); }
+        function prev() { goTo(current - 1); }
+
+        function startAuto() {
+            clearInterval(timer);
+            timer = setInterval(next, DELAY);
+        }
+
+        function resetAuto() { startAuto(); }
+
+        if (btnNext) btnNext.addEventListener('click', function () { next(); resetAuto(); });
+        if (btnPrev) btnPrev.addEventListener('click', function () { prev(); resetAuto(); });
+
+        dots.forEach(function (dot, i) {
+            dot.addEventListener('click', function () { goTo(i); resetAuto(); });
+        });
+
+        /* Swipe hỗ trợ touch */
+        var touchStartX = 0;
+        track.addEventListener('touchstart', function (e) { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+        track.addEventListener('touchend', function (e) {
+            var diff = touchStartX - e.changedTouches[0].clientX;
+            if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); resetAuto(); }
+        }, { passive: true });
+
+        /* Dừng auto khi tab ẩn */
+        document.addEventListener('visibilitychange', function () {
+            document.hidden ? clearInterval(timer) : startAuto();
+        });
+
+        startAuto();
+    })();
+    </script>
+    @endif
 @endsection
