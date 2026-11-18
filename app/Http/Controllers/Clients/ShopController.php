@@ -438,9 +438,9 @@ class ShopController extends Controller
     protected function resolveFilters(Request $request): array
     {
         $perPageOptions = [24, 30, 36, 48, 60, 72, 96];
-        $perPage = (int) $request->input('perPage', 30);
+        $perPage = (int) $request->input('perPage', 24);
         if (! in_array($perPage, $perPageOptions, true)) {
-            $perPage = 30;
+            $perPage = 24;
         }
 
         // Price range validation - chống SQL injection và giá trị không hợp lệ
