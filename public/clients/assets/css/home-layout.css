@@ -1,0 +1,210 @@
+/* ============================================================
+   HOME PAGE — SIDEBAR + 2-COLUMN LAYOUT  (file riêng v1.0)
+   ============================================================ */
+
+/* Wrapper ngoài: flex 2 cột */
+.home-body-layout {
+    display: flex !important;
+    align-items: flex-start !important;
+    width: 100%;
+    position: relative;
+}
+
+/* ---- SIDEBAR ---- */
+.home-cat-sidebar {
+    width: 210px !important;
+    min-width: 210px !important;
+    flex-shrink: 0 !important;
+    position: sticky;
+    top: 70px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    background: #fff;
+    border-right: 1px solid #e8edf3;
+    z-index: 10;
+    align-self: flex-start;
+}
+
+.home-cat-sidebar::-webkit-scrollbar { width: 4px; }
+.home-cat-sidebar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+.home-cat-sidebar__inner { padding: 14px 0 20px; }
+
+.home-cat-sidebar__heading {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 14px 10px;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #0f172a;
+    border-bottom: 2px solid #f1a300;
+    margin-bottom: 6px;
+}
+
+.home-cat-sidebar__heading svg { color: #f1a300; flex-shrink: 0; }
+
+.home-cat-sidebar__list {
+    display: flex !important;
+    flex-direction: column !important;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.home-cat-sidebar__item {
+    display: flex !important;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 14px;
+    text-decoration: none;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    border-left: 3px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.home-cat-sidebar__item:hover {
+    background: #fef9ec;
+    color: #d97706;
+    border-left-color: #f1a300;
+    text-decoration: none;
+}
+
+.home-cat-sidebar__item img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.home-cat-sidebar__icon {
+    width: 22px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.home-cat-sidebar__item span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ---- Nội dung chính (bên phải) ---- */
+.home-body-main {
+    flex: 1 !important;
+    min-width: 0 !important;
+    overflow: hidden;
+}
+
+/* Container bên trong main: không margin auto nữa */
+.home-body-main .misutech_home_container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-inline: 0 !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box !important;
+}
+
+/* ---- Responsive Tablet (768px - 1024px) ---- */
+@media (max-width: 1024px) {
+    .home-cat-sidebar {
+        width: 175px !important;
+        min-width: 175px !important;
+    }
+    .home-cat-sidebar__item {
+        font-size: 12px;
+        padding: 7px 10px;
+    }
+    .home-cat-sidebar__heading { padding: 0 10px 10px; }
+}
+
+/* ---- Responsive Mobile (< 768px): sidebar thành thanh ngang ---- */
+@media (max-width: 767px) {
+    .home-body-layout {
+        flex-direction: column !important;
+    }
+
+    .home-cat-sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+        position: static !important;
+        max-height: none !important;
+        border-right: none;
+        border-bottom: 1px solid #e8edf3;
+        overflow: visible !important;
+    }
+
+    .home-cat-sidebar__inner { padding: 0; }
+
+    .home-cat-sidebar__heading {
+        cursor: pointer;
+        padding: 11px 16px;
+        margin-bottom: 0;
+        border-bottom: 1px solid #e8edf3;
+        user-select: none;
+        justify-content: space-between;
+    }
+
+    .home-cat-sidebar__heading::after {
+        content: '▼';
+        font-size: 10px;
+        color: #94a3b8;
+        transition: transform 0.25s;
+    }
+
+    .home-cat-sidebar.is-open .home-cat-sidebar__heading::after {
+        transform: rotate(180deg);
+    }
+
+    /* Danh sách ẩn mặc định trên mobile */
+    .home-cat-sidebar__list {
+        display: none !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 4px;
+        padding: 10px 12px;
+        background: #fafafa;
+    }
+
+    .home-cat-sidebar.is-open .home-cat-sidebar__list {
+        display: flex !important;
+    }
+
+    .home-cat-sidebar__item {
+        flex: none !important;
+        width: auto !important;
+        border-left: none !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 20px;
+        padding: 5px 10px;
+        font-size: 12px;
+        gap: 5px;
+        background: #fff;
+    }
+
+    .home-cat-sidebar__item:hover {
+        background: #fff8e1;
+        border-color: #f1a300 !important;
+        color: #b45309;
+    }
+
+    .home-cat-sidebar__item img { width: 16px; height: 16px; }
+
+    .home-body-main .misutech_home_container {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
