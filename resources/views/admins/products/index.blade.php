@@ -599,7 +599,7 @@
         </a>
 
         {{-- Hết hàng --}}
-        <a href="{{ route('admin.products.index', array_merge(request()->except(['page', 'status']), ['status' => 'out_of_stock'])) }}"
+        <a href="{{ route('admin.products.index', array_merge(request()->except(['page', 'status', 'type']), ['status' => 'out_of_stock'])) }}"
            class="status-tab-item {{ $currentStatus === 'out_of_stock' ? 'active' : '' }}">
             <span class="status-tab-title" style="color: #dc2626;">
                 <i class="fa-solid fa-triangle-exclamation"></i> Hết hàng
@@ -607,8 +607,17 @@
             <span class="status-tab-count">{{ number_format($stats->out_of_stock ?? 0) }}</span>
         </a>
 
+        {{-- Dịch vụ kỹ thuật --}}
+        <a href="{{ route('admin.products.index', array_merge(request()->except(['page', 'status', 'type']), ['type' => 'service'])) }}"
+           class="status-tab-item {{ request('type') === 'service' ? 'active' : '' }}">
+            <span class="status-tab-title" style="color: #2563eb;">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Dịch vụ
+            </span>
+            <span class="status-tab-count">{{ number_format($stats->services ?? 0) }}</span>
+        </a>
+
         {{-- Thùng rác --}}
-        <a href="{{ route('admin.products.index', array_merge(request()->except(['page', 'status']), ['status' => 'trash'])) }}"
+        <a href="{{ route('admin.products.index', array_merge(request()->except(['page', 'status', 'type']), ['status' => 'trash'])) }}"
            class="status-tab-item {{ $currentStatus === 'trash' ? 'active' : '' }}">
             <span class="status-tab-title" style="color: #b91c1c;">
                 <i class="fa-regular fa-trash-can"></i> Thùng rác
@@ -699,6 +708,16 @@
 
             {{-- Hàng lọc mở rộng --}}
             <div class="filter-grid-secondary">
+                {{-- Loại bài đăng --}}
+                <div class="filter-field">
+                    <label for="filter-type">Loại bài đăng</label>
+                    <select id="filter-type" name="type">
+                        <option value="">Tất cả (Sản phẩm & Dịch vụ)</option>
+                        <option value="product" {{ request('type') === 'product' ? 'selected' : '' }}>📦 Chỉ sản phẩm</option>
+                        <option value="service" {{ request('type') === 'service' ? 'selected' : '' }}>🛠️ Chỉ dịch vụ</option>
+                    </select>
+                </div>
+
                 {{-- Nổi bật --}}
                 <div class="filter-field">
                     <label for="filter-featured">Sản phẩm nổi bật</label>
@@ -851,6 +870,16 @@
                                             {{ $product->name }}
                                         </a>
                                         <div class="product-meta-row">
+                                            @if($product->isService())
+                                                <span class="badge bg-primary text-white" style="font-size: 11px; padding: 2px 7px; border-radius: 4px;">
+                                                    <i class="fa-solid fa-screwdriver-wrench me-1"></i> Dịch vụ
+                                                </span>
+                                            @else
+                                                <span class="badge bg-light text-secondary border" style="font-size: 11px; padding: 2px 7px; border-radius: 4px;">
+                                                    <i class="fa-solid fa-box me-1"></i> Sản phẩm
+                                                </span>
+                                            @endif
+
                                             @if($product->sku)
                                                 <span class="sku-badge" title="Mã SKU">
                                                     {{ $product->sku }}
@@ -858,7 +887,7 @@
                                             @endif
 
                                             @if($product->is_featured)
-                                                <span class="feature-badge badge-featured" title="Sản phẩm nổi bật">
+                                                <span class="feature-badge badge-featured" title="Nổi bật">
                                                     <i class="fa-solid fa-star"></i> Nổi bật
                                                 </span>
                                             @endif
@@ -887,19 +916,27 @@
 
                             {{-- Giá bán --}}
                             <td>
-                                <div class="price-box">
-                                    @if($hasDiscount)
-                                        <span class="price-current has-sale">{{ number_format($product->sale_price) }}đ</span>
-                                        <span class="price-original">{{ number_format($product->price) }}đ</span>
-                                    @else
-                                        <span class="price-current">{{ number_format($product->price) }}đ</span>
-                                    @endif
-                                </div>
+                                @if($product->isService())
+                                    <span class="text-primary fw-bold" style="font-size: 12.5px;">
+                                        <i class="fa-solid fa-phone-volume me-1"></i> Báo giá dự án
+                                    </span>
+                                @else
+                                    <div class="price-box">
+                                        @if($hasDiscount)
+                                            <span class="price-current has-sale">{{ number_format($product->sale_price) }}đ</span>
+                                            <span class="price-original">{{ number_format($product->price) }}đ</span>
+                                        @else
+                                            <span class="price-current">{{ number_format($product->price) }}đ</span>
+                                        @endif
+                                    </div>
+                                @endif
                             </td>
 
                             {{-- Tồn kho --}}
                             <td style="text-align: center;">
-                                @if($product->stock_quantity > 10)
+                                @if($product->isService())
+                                    <span class="text-muted small" title="Dịch vụ không quản lý tồn kho">—</span>
+                                @elseif($product->stock_quantity > 10)
                                     <span class="stock-pill stock-in" title="Số lượng: {{ number_format($product->stock_quantity) }}">
                                         {{ number_format($product->stock_quantity) }} sp
                                     </span>

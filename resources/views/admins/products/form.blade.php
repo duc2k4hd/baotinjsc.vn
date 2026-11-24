@@ -765,17 +765,21 @@
             </div>
 
             {{-- Hộp Giá & Tồn kho --}}
-            <div class="card">
+            <div class="card" id="pricing-stock-card">
                 <h5><i class="fa-solid fa-coins text-primary me-2"></i>Giá & Kho hàng</h5>
 
-                <div class="mb-3">
-                    <label>Mã SKU <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="sku" value="{{ old('sku', $product->sku) }}" required placeholder="SP-12345">
+                <div class="alert alert-info py-2 px-3 small mb-3" id="service-price-note" style="{{ old('type', $product->type ?? 'product') === 'service' ? '' : 'display: none;' }}">
+                    <i class="fa-solid fa-circle-info me-1"></i> <strong>Bài đăng Dịch vụ:</strong> Giá và Tồn kho sẽ hiển thị là "Liên hệ báo giá dự án". Bạn có thể để trống hoặc để mặc định 0.
                 </div>
 
                 <div class="mb-3">
-                    <label>Giá bán <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control fw-bold" name="price" value="{{ old('price', $product->price ?? 0) }}" min="0" step="1" required placeholder="0">
+                    <label>Mã SKU <span class="text-danger sku-req" style="{{ old('type', $product->type ?? 'product') === 'service' ? 'display: none;' : '' }}">*</span></label>
+                    <input type="text" class="form-control" name="sku" id="product-sku" value="{{ old('sku', $product->sku) }}" placeholder="SP-12345 (Dịch vụ có thể để trống)">
+                </div>
+
+                <div class="mb-3">
+                    <label>Giá bán <span class="text-danger price-req" style="{{ old('type', $product->type ?? 'product') === 'service' ? 'display: none;' : '' }}">*</span></label>
+                    <input type="number" class="form-control fw-bold" name="price" id="product-price" value="{{ old('price', $product->price ?? 0) }}" min="0" step="1" placeholder="0 (Dịch vụ để 0)">
                 </div>
 
                 <div class="mb-3">
@@ -789,8 +793,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label>Số lượng tồn kho <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" name="stock_quantity" value="{{ old('stock_quantity', $product->stock_quantity ?? 0) }}" min="0" required placeholder="0">
+                    <label>Số lượng tồn kho <span class="text-danger stock-req" style="{{ old('type', $product->type ?? 'product') === 'service' ? 'display: none;' : '' }}">*</span></label>
+                    <input type="number" class="form-control" name="stock_quantity" id="product-stock" value="{{ old('stock_quantity', $product->stock_quantity ?? 0) }}" min="0" placeholder="0 (Dịch vụ không quản lý tồn kho)">
                 </div>
             </div>
 
@@ -1721,6 +1725,43 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
         });
+    }
+
+    // Dynamic Type switcher (Sản phẩm vs Dịch vụ)
+    const typeSelect = document.getElementById('product-type');
+    const servicePriceNote = document.getElementById('service-price-note');
+    const priceInput = document.getElementById('product-price');
+    const stockInput = document.getElementById('product-stock');
+    const skuReqs = document.querySelectorAll('.sku-req, .price-req, .stock-req');
+
+    function syncTypeUI() {
+        if (!typeSelect) return;
+        const isService = typeSelect.value === 'service';
+        if (servicePriceNote) {
+            servicePriceNote.style.display = isService ? 'block' : 'none';
+        }
+        skuReqs.forEach(el => {
+            el.style.display = isService ? 'none' : '';
+        });
+        if (priceInput) {
+            if (isService) {
+                priceInput.removeAttribute('required');
+            } else {
+                priceInput.setAttribute('required', 'required');
+            }
+        }
+        if (stockInput) {
+            if (isService) {
+                stockInput.removeAttribute('required');
+            } else {
+                stockInput.setAttribute('required', 'required');
+            }
+        }
+    }
+
+    if (typeSelect) {
+        typeSelect.addEventListener('change', syncTypeUI);
+        syncTypeUI();
     }
 
     // Release Editing Lock on exit

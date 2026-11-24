@@ -49,6 +49,7 @@ class ProductController extends Controller
                 COUNT(CASE WHEN deleted_at IS NULL AND is_active = 1 THEN 1 END) as active,
                 COUNT(CASE WHEN deleted_at IS NULL AND is_active = 0 THEN 1 END) as inactive,
                 COUNT(CASE WHEN deleted_at IS NULL AND stock_quantity <= 0 THEN 1 END) as out_of_stock,
+                COUNT(CASE WHEN deleted_at IS NULL AND type = 'service' THEN 1 END) as services,
                 COUNT(CASE WHEN deleted_at IS NOT NULL THEN 1 END) as trash
             ")
             ->first();
@@ -66,6 +67,8 @@ class ProductController extends Controller
                 $query->where('is_active', false);
             } elseif ($request->status === 'out_of_stock') {
                 $query->where('stock_quantity', '<=', 0);
+            } elseif ($request->status === 'service') {
+                $query->where('type', 'service');
             }
         }
 
@@ -88,6 +91,15 @@ class ProductController extends Controller
             })
             ->when($request->filled('is_featured'), function ($q) use ($request) {
                 $q->where('is_featured', $request->boolean('is_featured'));
+            })
+            ->when($request->filled('type'), function ($q) use ($request) {
+                if ($request->type === 'service') {
+                    $q->where('type', 'service');
+                } elseif ($request->type === 'product') {
+                    $q->where(function ($sub) {
+                        $sub->where('type', '!=', 'service')->orWhereNull('type');
+                    });
+                }
             })
             ->when($request->filled('keyword'), function ($q) use ($request) {
                 $keyword = trim($request->keyword);
