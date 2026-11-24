@@ -53,7 +53,16 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $remember = $request->boolean('remember');
+
+        if ($remember) {
+            // Cấu hình thời gian ghi nhớ đăng nhập 30 ngày (30 * 24 * 60 = 43200 phút)
+            if (method_exists(Auth::guard(), 'setRememberDuration')) {
+                Auth::guard()->setRememberDuration(30 * 24 * 60);
+            }
+        }
+
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
             return redirect()->intended(route('admin.dashboard'));

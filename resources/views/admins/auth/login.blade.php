@@ -125,8 +125,8 @@
                 <input type="password" id="password" name="password" required>
             </div>
             <label class="remember">
-                <input type="checkbox" name="remember" value="1">
-                Ghi nhớ đăng nhập
+                <input type="checkbox" name="remember" value="1" {{ old('remember') ? 'checked' : '' }}>
+                Ghi nhớ đăng nhập (30 ngày)
             </label>
             <button type="submit">Đăng nhập</button>
         </form>

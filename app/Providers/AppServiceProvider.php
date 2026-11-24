@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Observers\CategorySlugObserver;
 use App\Observers\PostSlugObserver;
 use App\Observers\ProductSlugObserver;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
@@ -51,5 +52,13 @@ class AppServiceProvider extends ServiceProvider
         Product::observe(ProductSlugObserver::class);
         Post::observe(PostSlugObserver::class);
         Category::observe(CategorySlugObserver::class);
+
+        // Cấu hình thời gian ghi nhớ đăng nhập (remember me) mặc định là 30 ngày (43200 phút)
+        if (method_exists(Auth::guard('web'), 'setRememberDuration')) {
+            Auth::guard('web')->setRememberDuration(30 * 24 * 60);
+        }
+        if (method_exists(Auth::guard('admin'), 'setRememberDuration')) {
+            Auth::guard('admin')->setRememberDuration(30 * 24 * 60);
+        }
     }
 }
