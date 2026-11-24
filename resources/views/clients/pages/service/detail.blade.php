@@ -110,36 +110,36 @@
 @section('content')
 <div class="service-detail-wrapper">
     <div class="service-container">
-        {{-- Breadcrumb --}}
+        {{-- Breadcrumb tối giản --}}
         <nav class="service-breadcrumb" aria-label="breadcrumb">
-            <a href="{{ url('/') }}"><i class="fa-solid fa-house"></i> Trang chủ</a>
-            <span class="separator"><i class="fa-solid fa-chevron-right"></i></span>
+            <a href="{{ url('/') }}">Trang chủ</a>
+            <span class="separator">&gt;</span>
             <a href="{{ route('client.technical-service.index') }}">Dịch vụ kỹ thuật</a>
             @if($product->primaryCategory)
-                <span class="separator"><i class="fa-solid fa-chevron-right"></i></span>
+                <span class="separator">&gt;</span>
                 <a href="{{ url('/' . $product->primaryCategory->slug) }}">{{ $product->primaryCategory->name }}</a>
             @endif
-            <span class="separator"><i class="fa-solid fa-chevron-right"></i></span>
+            <span class="separator">&gt;</span>
             <span class="current">{{ $product->name }}</span>
         </nav>
 
-        {{-- Session Flash Notifications --}}
+        {{-- Thông báo session flash --}}
         @if(session('success'))
-            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert" style="background:#dcfce7;border:1px solid #86efac;color:#166534;border-radius:8px;padding:14px 18px;">
-                <i class="fa-solid fa-circle-check me-2"></i> {{ session('success') }}
+            <div class="alert alert-success alert-dismissible fade show mb-3 py-2 px-3 small" role="alert">
+                {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         @endif
 
-        {{-- 2-Column Layout --}}
+        {{-- Bố cục 2 cột --}}
         <div class="service-grid-layout">
             {{-- CỘT TRÁI: SIDEBAR --}}
             <aside class="service-sidebar">
-                {{-- Box 1: Danh mục dịch vụ / sản phẩm --}}
+                {{-- Box 1: Danh mục --}}
                 <div class="sidebar-box">
                     <div class="sidebar-box-header">
-                        <i class="fa-solid fa-layer-group"></i>
-                        <h3>Danh mục dịch vụ & giải pháp</h3>
+                        <i class="fa-solid fa-bars"></i>
+                        <h3>Danh mục sản phẩm & dịch vụ</h3>
                     </div>
                     <ul class="sidebar-cat-list">
                         @if(isset($sidebarCategories) && $sidebarCategories->isNotEmpty())
@@ -152,91 +152,62 @@
                                 </li>
                             @endforeach
                         @else
-                            {{-- Fallback navigation danh mục --}}
-                            <li><a href="{{ route('client.technical-service.index') }}"><span>Dịch vụ lắp đặt băng tải</span><i class="fa-solid fa-chevron-right"></i></a></li>
-                            <li><a href="{{ route('client.technical-service.index') }}"><span>Lập trình PLC & Tủ điện</span><i class="fa-solid fa-chevron-right"></i></a></li>
-                            <li><a href="{{ route('client.technical-service.index') }}"><span>Bảo trì & Cài đặt biến tần</span><i class="fa-solid fa-chevron-right"></i></a></li>
-                            <li><a href="{{ route('client.technical-service.index') }}"><span>Giải pháp IoT Nhà máy</span><i class="fa-solid fa-chevron-right"></i></a></li>
+                            <li><a href="{{ route('client.technical-service.index') }}"><span>Băng tải tai bèo</span><i class="fa-solid fa-chevron-right"></i></a></li>
+                            <li><a href="{{ route('client.technical-service.index') }}"><span>Băng tải PVC, PU</span><i class="fa-solid fa-chevron-right"></i></a></li>
+                            <li><a href="{{ route('client.technical-service.index') }}"><span>Băng tải cao su lòng máng</span><i class="fa-solid fa-chevron-right"></i></a></li>
+                            <li><a href="{{ route('client.technical-service.index') }}"><span>Lắp đặt biến tần & tủ điện</span><i class="fa-solid fa-chevron-right"></i></a></li>
                             <li><a href="{{ route('client.shop.index') }}"><span>Thiết bị tự động hóa</span><i class="fa-solid fa-chevron-right"></i></a></li>
                         @endif
                     </ul>
                 </div>
 
-                {{-- Box 2: Hỗ trợ tư vấn 24/7 --}}
+                {{-- Box 2: Hỗ trợ tư vấn --}}
                 <div class="sidebar-box">
                     <div class="sidebar-box-header accent">
-                        <i class="fa-solid fa-headset"></i>
-                        <h3>Tư vấn kỹ thuật 24/7</h3>
+                        <i class="fa-solid fa-phone"></i>
+                        <h3>Tư vấn kỹ thuật</h3>
                     </div>
                     <div class="sidebar-contact-body">
-                        <div class="sidebar-hotline-badge">
-                            <span class="sidebar-hotline-label">Hotline tư vấn kỹ thuật</span>
-                            <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="sidebar-hotline-num">
-                                <i class="fa-solid fa-phone"></i>
-                                <span>{{ $settings->hotline ?? '0983.214.896' }}</span>
-                            </a>
-                        </div>
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="sidebar-hotline-num">
+                            {{ $settings->hotline ?? '0983.214.896' }}
+                        </a>
 
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="sidebar-action-btn zalo-btn">
-                            <i class="fa-solid fa-comment-dots"></i> Chat Zalo tư vấn ngay
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="sidebar-action-btn">
+                            <i class="fa-solid fa-comment-dots"></i> Chat Zalo tư vấn
                         </a>
 
                         <ul class="sidebar-commit-list">
-                            <li><i class="fa-solid fa-circle-check"></i> Khảo sát hiện trạng tận nơi</li>
-                            <li><i class="fa-solid fa-circle-check"></i> Thiết kế bản vẽ 2D/3D tối ưu</li>
-                            <li><i class="fa-solid fa-circle-check"></i> Báo giá nhanh chóng trong 30p</li>
-                            <li><i class="fa-solid fa-circle-check"></i> Bảo hành kỹ thuật dài hạn</li>
+                            <li><i class="fa-solid fa-check"></i> Khảo sát hiện trạng tận nơi</li>
+                            <li><i class="fa-solid fa-check"></i> Thiết kế bản vẽ 2D/3D tối ưu</li>
+                            <li><i class="fa-solid fa-check"></i> Báo giá nhanh trong ngày</li>
+                            <li><i class="fa-solid fa-check"></i> Bảo hành kỹ thuật dài hạn</li>
                         </ul>
                     </div>
                 </div>
 
-                {{-- Box 3: Thông tin đơn vị Bảo Tín JSC --}}
+                {{-- Box 3: Thông tin liên hệ --}}
                 <div class="sidebar-box">
                     <div class="sidebar-box-header">
                         <i class="fa-solid fa-building"></i>
                         <h3>Bảo Tín JSC</h3>
                     </div>
                     <div class="sidebar-info-body">
-                        <div class="sidebar-info-item">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <div>
-                                <strong>Văn phòng & Nhà xưởng:</strong><br>
-                                {{ $settings->address ?? 'Hà Nội, Việt Nam' }}
-                            </div>
-                        </div>
-                        <div class="sidebar-info-item">
-                            <i class="fa-solid fa-envelope"></i>
-                            <div>
-                                <strong>Email báo giá:</strong><br>
-                                {{ $settings->email ?? 'info@baotinjsc.vn' }}
-                            </div>
-                        </div>
-                        <div class="sidebar-info-item">
-                            <i class="fa-solid fa-globe"></i>
-                            <div>
-                                <strong>Website:</strong><br>
-                                {{ url('/') }}
-                            </div>
-                        </div>
+                        <p><strong>Địa chỉ:</strong> {{ $settings->address ?? 'Hà Nội, Việt Nam' }}</p>
+                        <p><strong>Hotline:</strong> {{ $settings->hotline ?? '0983.214.896' }}</p>
+                        <p><strong>Email:</strong> {{ $settings->email ?? 'info@baotinjsc.vn' }}</p>
+                        <p><strong>Website:</strong> {{ url('/') }}</p>
                     </div>
                 </div>
             </aside>
 
             {{-- CỘT PHẢI: NỘI DUNG CHÍNH --}}
             <main class="service-main-content">
-                {{-- Header: H1 Title --}}
+                {{-- Tiêu đề H1 --}}
                 <div class="service-header">
                     <h1 class="service-title-h1">{{ $product->name }}</h1>
-                    <div class="service-meta-bar">
-                        <span class="service-badge-tech"><i class="fa-solid fa-screwdriver-wrench"></i> Dịch vụ & Giải pháp</span>
-                        @if($product->updated_at)
-                            <span class="service-meta-item"><i class="fa-regular fa-clock"></i> Cập nhật: {{ $product->updated_at->format('d/m/Y') }}</span>
-                        @endif
-                        <span class="service-meta-item"><i class="fa-solid fa-shield-halved"></i> Khảo sát & Thi công toàn quốc</span>
-                    </div>
                 </div>
 
-                {{-- SHOWCASE GALLERY (NHIỀU ẢNH THEO ẢNH MẪU) --}}
+                {{-- KHỐI GALLERY ẢNH THỰC TẾ --}}
                 @php
                     $allServiceImages = collect();
                     if (isset($galleryImages) && $galleryImages->isNotEmpty()) {
@@ -257,14 +228,10 @@
                 <div class="service-showcase-gallery">
                     {{-- Ảnh lớn chính --}}
                     <div class="service-main-image-wrap" id="serviceMainImageWrap" onclick="openServiceLightbox(0)">
-                        <span class="service-gallery-badge">Hình ảnh thực tế</span>
                         <img id="serviceMainImage" src="{{ $mainImgUrl }}" alt="{{ $product->name }}">
-                        <div class="service-zoom-hint">
-                            <i class="fa-solid fa-magnifying-glass-plus"></i> Phóng to ảnh
-                        </div>
                     </div>
 
-                    {{-- Dải thumbnails nhiều ảnh --}}
+                    {{-- Dải thumbnails ảnh nhỏ bên phải --}}
                     <div class="service-thumbs-col" id="serviceThumbsCol">
                         @foreach($allServiceImages as $index => $itemImg)
                             @php
@@ -279,31 +246,28 @@
                     </div>
                 </div>
 
-                {{-- CTA ACTION BAR --}}
-                <div class="service-cta-bar">
-                    <div class="service-cta-text">
-                        <strong>Cần tư vấn thiết kế & báo giá giải pháp này?</strong>
-                        <div>Liên hệ ngay để nhận giải pháp tối ưu và mức giá cạnh tranh nhất.</div>
+                {{-- THANH BÁO GIÁ & LIÊN HỆ GỌN GÀNG --}}
+                <div class="service-quick-contact-bar">
+                    <div>
+                        <strong>Tư vấn & báo giá giải pháp:</strong> Liên hệ khảo sát thực tế và nhận báo giá tốt nhất.
                     </div>
-                    <div class="service-cta-buttons">
-                        <a href="#consultation-box" class="btn-cta-quote">
-                            <i class="fa-solid fa-paper-plane"></i> Nhận báo giá ngay
+                    <div class="service-quick-actions">
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="btn-contact-flat phone">
+                            <i class="fa-solid fa-phone"></i> {{ $settings->hotline ?? '0983.214.896' }}
                         </a>
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="btn-cta-zalo">
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="btn-contact-flat zalo">
                             <i class="fa-solid fa-comment-dots"></i> Chat Zalo
                         </a>
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="btn-cta-call">
-                            <i class="fa-solid fa-phone"></i> {{ $settings->hotline ?? '0983.214.896' }}
+                        <a href="#consultation-box" class="btn-contact-flat quote">
+                            <i class="fa-solid fa-envelope"></i> Gửi yêu cầu
                         </a>
                     </div>
                 </div>
 
-                {{-- MỤC LỤC BÀI VIẾT TỰ ĐỘNG (TABLE OF CONTENTS) --}}
+                {{-- MỤC LỤC BÀI VIẾT TỰ ĐỘNG --}}
                 <div class="service-toc-box" id="serviceTocBox" style="display: none;">
                     <div class="service-toc-header" onclick="toggleServiceToc()">
-                        <div class="service-toc-title">
-                            <i class="fa-solid fa-list-ul text-primary"></i> Mục lục nội dung
-                        </div>
+                        <span>Mục lục nội dung</span>
                         <button type="button" class="service-toc-toggle" id="serviceTocToggle">
                             <span>[Thu gọn]</span>
                         </button>
@@ -311,14 +275,14 @@
                     <ol class="service-toc-list" id="serviceTocList"></ol>
                 </div>
 
-                {{-- MÔ TẢ NGẮN (LEAD SUMMARY) --}}
+                {{-- MÔ TẢ NGẮN --}}
                 @if(!empty($product->short_description))
                     <div class="service-lead-summary">
                         {!! $product->short_description !!}
                     </div>
                 @endif
 
-                {{-- MÔ TẢ CHI TIẾT (BODY CONTENT) --}}
+                {{-- MÔ TẢ CHI TIẾT --}}
                 <article class="service-body-content" id="serviceBodyContent">
                     @if(!empty($product->description))
                         {!! $product->description !!}
@@ -336,8 +300,8 @@
                             }
                         @endphp
                         @if($embedUrl)
-                            <div class="my-4">
-                                <h3 class="mb-3"><i class="fa-brands fa-youtube text-danger me-2"></i>Video thực tế</h3>
+                            <div class="my-3">
+                                <h2>Video thực tế vận hành</h2>
                                 <div class="ratio ratio-16x9 service-video-embed">
                                     <iframe src="{{ $embedUrl }}" title="{{ $product->name }}" allowfullscreen loading="lazy"></iframe>
                                 </div>
@@ -346,34 +310,24 @@
                     @endif
                 </article>
 
-                {{-- BANNER ĐĂNG KÝ TƯ VẤN NHANH Ở CHÂN BÀI --}}
-                <div class="service-consultation-banner" id="consultation-box">
-                    <div class="consult-banner-info">
-                        <h3>Đăng ký nhận tư vấn & khảo sát miễn phí</h3>
-                        <p>Để lại số điện thoại, kỹ sư Bảo Tín JSC sẽ liên hệ lại ngay trong 15 phút để tư vấn giải pháp tối ưu nhất cho nhà máy của bạn.</p>
-                        <div class="consult-banner-perks">
-                            <span><i class="fa-solid fa-circle-check"></i> Khảo sát tận nơi</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Tư vấn đúng nhu cầu</span>
-                            <span><i class="fa-solid fa-circle-check"></i> Giá tốt nhất</span>
-                        </div>
-                    </div>
-                    <div class="consult-banner-form">
-                        <form action="{{ route('client.product.phone-request') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="product_id" value="{{ $product->id }}">
-                            <input type="tel" name="phone" required placeholder="Nhập số điện thoại của bạn..." class="consult-banner-input" pattern="[0-9]{10,11}">
-                            <button type="submit" class="consult-banner-btn">
-                                <i class="fa-solid fa-paper-plane me-1"></i> Gửi yêu cầu
-                            </button>
-                        </form>
-                    </div>
+                {{-- FORM ĐĂNG KÝ TƯ VẤN GỌN GÀNG --}}
+                <div class="service-footer-consult" id="consultation-box">
+                    <h4>Đăng ký tư vấn & khảo sát miễn phí</h4>
+                    <p>Để lại số điện thoại, kỹ sư Bảo Tín JSC sẽ liên hệ lại ngay để hỗ trợ kỹ thuật và báo giá.</p>
+                    <form action="{{ route('client.product.phone-request') }}" method="POST" class="service-footer-form">
+                        @csrf
+                        <input type="hidden" name="product_id" value="{{ $product->id }}">
+                        <input type="tel" name="phone" required placeholder="Nhập số điện thoại của bạn..." class="service-footer-input" pattern="[0-9]{10,11}">
+                        <button type="submit" class="service-footer-btn">
+                            Gửi yêu cầu
+                        </button>
+                    </form>
                 </div>
 
-                {{-- DỊCH VỤ & GIẢI PHÁP LIÊN QUAN --}}
+                {{-- DỊCH VỤ LIÊN QUAN --}}
                 @if(isset($relatedServices) && $relatedServices->isNotEmpty())
                     <section class="service-related-section">
                         <div class="service-related-heading">
-                            <i class="fa-solid fa-network-wired"></i>
                             <span>Dịch vụ & Giải pháp liên quan</span>
                         </div>
                         <div class="service-related-grid">
@@ -390,9 +344,6 @@
                                         <h4 class="service-card-title">
                                             <a href="{{ url('/' . $rel->slug) }}">{{ $rel->name }}</a>
                                         </h4>
-                                        <a href="{{ url('/' . $rel->slug) }}" class="service-card-link">
-                                            Xem chi tiết <i class="fa-solid fa-arrow-right"></i>
-                                        </a>
                                     </div>
                                 </div>
                             @endforeach
@@ -417,7 +368,6 @@
 
 @section('foot')
 <script>
-    // Gallery state
     const serviceImages = @json($allServiceImages->map(fn($img) => $resolveImg($img['url'] ?? null))->values());
     let currentImgIndex = 0;
 
@@ -425,14 +375,9 @@
         currentImgIndex = index;
         const mainImg = document.getElementById('serviceMainImage');
         if (mainImg) {
-            mainImg.style.opacity = '0.3';
-            setTimeout(() => {
-                mainImg.src = imgSrc;
-                mainImg.style.opacity = '1';
-            }, 120);
+            mainImg.src = imgSrc;
         }
 
-        // Highlight active thumbnail
         const thumbs = document.querySelectorAll('.service-thumb-item');
         thumbs.forEach(t => t.classList.remove('active'));
         if (thumbEl) {
@@ -440,7 +385,6 @@
         }
     }
 
-    // Lightbox modal logic
     function openServiceLightbox(index) {
         if (!serviceImages || serviceImages.length === 0) return;
         currentImgIndex = (typeof index === 'number') ? index : currentImgIndex;
@@ -466,15 +410,10 @@
         currentImgIndex = (currentImgIndex + direction + serviceImages.length) % serviceImages.length;
         const img = document.getElementById('serviceLightboxImg');
         if (img) {
-            img.style.opacity = '0.5';
-            setTimeout(() => {
-                img.src = serviceImages[currentImgIndex];
-                img.style.opacity = '1';
-            }, 100);
+            img.src = serviceImages[currentImgIndex];
         }
     }
 
-    // Keyboard navigation for Lightbox
     document.addEventListener('keydown', function(e) {
         const modal = document.getElementById('serviceLightboxModal');
         if (modal && modal.classList.contains('active')) {
@@ -484,7 +423,6 @@
         }
     });
 
-    // Auto Table of Contents generator
     document.addEventListener('DOMContentLoaded', function() {
         const contentArea = document.getElementById('serviceBodyContent');
         const tocBox = document.getElementById('serviceTocBox');
@@ -499,8 +437,7 @@
 
                     const li = document.createElement('li');
                     if (heading.tagName.toLowerCase() === 'h3') {
-                        li.style.marginLeft = '18px';
-                        li.style.listStyleType = 'circle';
+                        li.style.marginLeft = '15px';
                     }
                     const a = document.createElement('a');
                     a.href = '#' + id;
@@ -516,7 +453,6 @@
             }
         }
 
-        // Wrap tables in responsive container if not already wrapped
         if (contentArea) {
             const tables = contentArea.querySelectorAll('table');
             tables.forEach(table => {
@@ -524,7 +460,7 @@
                     const wrapper = document.createElement('div');
                     wrapper.className = 'table-responsive';
                     wrapper.style.overflowX = 'auto';
-                    wrapper.style.marginBottom = '20px';
+                    wrapper.style.marginBottom = '14px';
                     table.parentNode.insertBefore(wrapper, table);
                     wrapper.appendChild(table);
                 }
