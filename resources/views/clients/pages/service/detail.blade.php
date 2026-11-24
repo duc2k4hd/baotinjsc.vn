@@ -139,7 +139,7 @@
                 <div class="sidebar-box">
                     <div class="sidebar-box-header">
                         <i class="fa-solid fa-bars"></i>
-                        <h3>Danh mục sản phẩm & dịch vụ</h3>
+                        <h3>Danh mục sản phẩm</h3>
                     </div>
                     <ul class="sidebar-cat-list">
                         @if(isset($sidebarCategories) && $sidebarCategories->isNotEmpty())
