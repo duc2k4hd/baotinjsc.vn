@@ -71,12 +71,27 @@
 }
 
 /* ==========================================================================
-   SIDEBAR (CỘT TRÁI): Tối giản, phẳng, không bo viền, không bóng đổ
+   SIDEBAR (CỘT TRÁI): Tối giản, phẳng, sticky khi cuộn, ẩn trên mobile
    ========================================================================== */
 .service-sidebar {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 65px;
+    max-height: calc(100vh - 75px);
+    overflow-y: auto;
+    align-self: start;
+    scrollbar-width: thin;
+}
+
+.service-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.service-sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
 }
 
 .sidebar-box {
@@ -736,13 +751,8 @@
    ========================================================================== */
 @media (max-width: 991px) {
     .service-grid-layout {
-        grid-template-columns: 1fr;
-    }
-    .service-sidebar {
-        order: 2;
-    }
-    .service-main-content {
-        order: 1;
+        grid-template-columns: 230px minmax(0, 1fr);
+        gap: 14px;
     }
     .service-related-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -750,6 +760,16 @@
 }
 
 @media (max-width: 767px) {
+    /* Trên mobile: Ẩn hoàn toàn sidebar theo yêu cầu */
+    .service-sidebar {
+        display: none !important;
+    }
+
+    .service-grid-layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
     .service-showcase-gallery {
         grid-template-columns: 1fr;
     }
