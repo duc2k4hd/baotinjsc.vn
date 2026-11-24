@@ -552,6 +552,29 @@
     aspect-ratio: 16 / 9;
     border: 1px solid var(--bt-border);
     margin: 14px 0;
+    position: relative;
+    overflow: hidden;
+    background: #000000;
+}
+
+.service-video-embed iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    display: block;
+}
+
+/* Trường hợp iframe tự chèn trực tiếp trong bài viết */
+.service-body-content iframe:not(.service-video-embed iframe) {
+    max-width: 100%;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--bt-border);
+    margin: 14px 0;
+    display: block;
 }
 
 /* Form liên hệ chân trang */

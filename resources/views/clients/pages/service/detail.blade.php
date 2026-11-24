@@ -302,7 +302,7 @@
                         @if($embedUrl)
                             <div class="my-3">
                                 <h2>Video thực tế vận hành</h2>
-                                <div class="ratio ratio-16x9 service-video-embed">
+                                <div class="service-video-embed">
                                     <iframe src="{{ $embedUrl }}" title="{{ $product->name }}" allowfullscreen loading="lazy"></iframe>
                                 </div>
                             </div>
