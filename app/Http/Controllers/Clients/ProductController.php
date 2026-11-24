@@ -461,6 +461,61 @@ class ProductController extends Controller
                 }
             }
             
+            // Nếu là dịch vụ (type === 'service'): Điều hướng sang giao diện Dịch vụ kỹ thuật chuyên biệt
+            if ($product->isService()) {
+                $sidebarCategories = Cache::remember('service_sidebar_categories', 86400, function () {
+                    return Category::where('is_active', 1)
+                        ->whereNull('parent_id')
+                        ->orderBy('order', 'asc')
+                        ->limit(10)
+                        ->get(['id', 'name', 'slug']);
+                });
+
+                $relatedServices = Cache::remember('service_related_' . $product->id, 86400, function () use ($product) {
+                    $items = Product::active()
+                        ->service()
+                        ->where('id', '!=', $product->id)
+                        ->when($product->primary_category_id, fn($q) => $q->where('primary_category_id', $product->primary_category_id))
+                        ->select(['id', 'name', 'slug', 'short_description', 'image_ids', 'primary_category_id'])
+                        ->limit(4)
+                        ->get();
+
+                    if ($items->count() < 4) {
+                        $extra = Product::active()
+                            ->service()
+                            ->where('id', '!=', $product->id)
+                            ->whereNotIn('id', $items->pluck('id'))
+                            ->select(['id', 'name', 'slug', 'short_description', 'image_ids', 'primary_category_id'])
+                            ->limit(4 - $items->count())
+                            ->get();
+                        $items = $items->merge($extra);
+                    }
+
+                    if ($items->count() < 4) {
+                        $extraProducts = Product::active()
+                            ->productOnly()
+                            ->featured()
+                            ->where('id', '!=', $product->id)
+                            ->whereNotIn('id', $items->pluck('id'))
+                            ->select(['id', 'name', 'slug', 'short_description', 'image_ids', 'primary_category_id'])
+                            ->limit(4 - $items->count())
+                            ->get();
+                        $items = $items->merge($extraProducts);
+                    }
+
+                    Product::preloadImages($items);
+                    return $items;
+                });
+
+                return view('clients.pages.service.detail', compact(
+                    'product',
+                    'galleryImages',
+                    'sidebarCategories',
+                    'relatedServices',
+                    'supportStaff'
+                ));
+            }
+
             return view('clients.pages.single.index',
                 compact(
                     'product',

@@ -36,6 +36,19 @@ class ProductRequest extends FormRequest
             }
         }
 
+        // Xử lý loại sản phẩm / dịch vụ
+        $type = $this->input('type', 'product') ?: 'product';
+        $merge['type'] = $type;
+
+        if ($type === 'service') {
+            if (!$this->has('price') || $this->input('price') === '' || $this->input('price') === null) {
+                $merge['price'] = 0;
+            }
+            if (!$this->has('stock_quantity') || $this->input('stock_quantity') === '' || $this->input('stock_quantity') === null) {
+                $merge['stock_quantity'] = 999999;
+            }
+        }
+
         // Làm sạch định dạng số tiền (bỏ dấu phẩy ngăn cách hàng nghìn)
         if ($this->has('price') && is_string($this->price)) {
             $cleaned = str_replace([',', ' '], '', trim($this->price));
@@ -105,6 +118,7 @@ class ProductRequest extends FormRequest
         $productId = $product instanceof Product ? $product->id : ($product ?? $this->input('id') ?? $this->input('product_id'));
 
         return [
+            'type' => ['nullable', 'string', 'in:product,service'],
             'sku' => [
                 'nullable',
                 'string',

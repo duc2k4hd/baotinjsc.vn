@@ -250,6 +250,7 @@ class ProductService
         $createdBy = Arr::get($data, 'created_by') ?: (Auth::id() ?? auth('web')->id() ?? \App\Models\Account::value('id') ?? 1);
 
         return [
+            'type' => Arr::get($data, 'type', 'product') ?: 'product',
             'sku' => Arr::get($data, 'sku'),
             'name' => Arr::get($data, 'name'),
             'slug' => $slug,

@@ -18,6 +18,7 @@ class Product extends Model
     protected $table = 'products';
 
     protected $fillable = [
+        'type',
         'sku',
         'name',
         'slug',
@@ -338,6 +339,32 @@ class Product extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', 1);
+    }
+
+    /**
+     * Check if product is a service
+     */
+    public function isService(): bool
+    {
+        return ($this->type ?? 'product') === 'service';
+    }
+
+    /**
+     * Scope services only
+     */
+    public function scopeService($query)
+    {
+        return $query->where('type', 'service');
+    }
+
+    /**
+     * Scope standard products only
+     */
+    public function scopeProductOnly($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('type', '!=', 'service')->orWhereNull('type');
+        });
     }
 
     public static function getRelatedProducts(self $product, int $limit = 10)

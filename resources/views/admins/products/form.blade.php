@@ -461,10 +461,20 @@
             {{-- Thông tin cơ bản --}}
             <div class="card">
                 <h5><i class="fa-solid fa-file-pen text-primary me-2"></i>Thông tin cơ bản</h5>
-                
-                <div class="mb-3">
-                    <label>Tên sản phẩm <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control form-control-lg fw-bold" name="name" id="product-name" value="{{ old('name', $product->name) }}" required placeholder="Nhập tên sản phẩm...">
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold">Loại bài đăng <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-lg" name="type" id="product-type">
+                            <option value="product" {{ old('type', $product->type ?? 'product') === 'product' ? 'selected' : '' }}>📦 Sản phẩm (Thương mại)</option>
+                            <option value="service" {{ old('type', $product->type ?? 'product') === 'service' ? 'selected' : '' }}>🛠️ Dịch vụ (Băng tải, Kỹ thuật)</option>
+                        </select>
+                        <small class="text-muted d-block mt-1">Dịch vụ sẽ dùng giao diện riêng: H1, Showcase nhiều ảnh, bài viết mô tả kỹ thuật và hotline.</small>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold">Tên sản phẩm / Dịch vụ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-lg fw-bold" name="name" id="product-name" value="{{ old('name', $product->name) }}" required placeholder="Nhập tên sản phẩm hoặc dịch vụ...">
+                    </div>
                 </div>
 
                 <div class="mb-3">
