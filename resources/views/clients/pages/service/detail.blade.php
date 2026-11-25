@@ -109,6 +109,13 @@
 
 @section('content')
 <div class="service-detail-wrapper">
+    {{-- Banner 19:6 full trang web riêng cho dịch vụ (nếu có) --}}
+    @if(!empty($product->service_banner))
+        <div class="service-top-banner">
+            <img src="{{ $resolveImg($product->service_banner) }}" alt="{{ $product->name }}">
+        </div>
+    @endif
+
     <div class="service-container">
         {{-- Breadcrumb tối giản --}}
         <nav class="service-breadcrumb" aria-label="breadcrumb">
@@ -128,13 +135,6 @@
             <div class="alert alert-success alert-dismissible fade show mb-3 py-2 px-3 small" role="alert">
                 {{ session('success') }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        @endif
-
-        {{-- Banner 16:9 riêng cho dịch vụ (nếu có) --}}
-        @if(!empty($product->service_banner))
-            <div class="service-top-banner">
-                <img src="{{ $resolveImg($product->service_banner) }}" alt="{{ $product->name }}">
             </div>
         @endif
 

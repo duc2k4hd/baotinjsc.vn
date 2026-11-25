@@ -17,7 +17,7 @@
 /* Wrapper toàn trang: Nền trắng sạch, không nền xám card */
 .service-detail-wrapper {
     background-color: #ffffff;
-    padding: 10px 0 30px;
+    padding: 0 0 30px;
     color: var(--bt-body);
     font-size: 14.5px;
     line-height: 1.65;
@@ -26,7 +26,7 @@
 .service-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 15px;
+    padding: 10px 15px 0;
 }
 
 /* Breadcrumb: Tối giản, không khung, không viền, không bo góc */
@@ -62,14 +62,14 @@
     font-weight: 600;
 }
 
-/* Banner riêng dịch vụ (Tỷ lệ 16:9 phía trên service-grid-layout) */
+/* Banner riêng dịch vụ (Tỷ lệ 19:6 full trang web) */
 .service-top-banner {
     width: 100%;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 19 / 6;
     overflow: hidden;
-    border: 1px solid var(--bt-border);
+    border-bottom: 1px solid var(--bt-border);
     background: #f8fafc;
-    margin-bottom: 14px;
+    margin: 0;
 }
 
 .service-top-banner img {

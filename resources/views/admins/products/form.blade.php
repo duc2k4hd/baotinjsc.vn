@@ -760,14 +760,14 @@
                 </div>
             </div>
 
-            {{-- Hộp Banner riêng cho Dịch vụ (Tỷ lệ 16:9 - Chỉ hiển thị khi loại bài đăng là Dịch vụ) --}}
+            {{-- Hộp Banner riêng cho Dịch vụ (Tỷ lệ 19:6 - Chỉ hiển thị khi loại bài đăng là Dịch vụ) --}}
             <div class="card" id="service-banner-card" style="{{ old('type', $product->type ?? 'product') === 'service' ? '' : 'display: none;' }}">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <h5 class="mb-0"><i class="fa-solid fa-panorama text-primary me-2"></i>Banner Dịch vụ (16:9)</h5>
-                    <span class="badge bg-info text-dark">Tỷ lệ 16:9</span>
+                    <h5 class="mb-0"><i class="fa-solid fa-panorama text-primary me-2"></i>Banner Dịch vụ (19:6)</h5>
+                    <span class="badge bg-info text-dark">Tỷ lệ 19:6</span>
                 </div>
                 <p class="text-muted small mb-3">
-                    Hiển thị nổi bật phía trên cùng trang chi tiết dịch vụ. Khuyến nghị ảnh ngang tỷ lệ 16:9.
+                    Hiển thị full trang web phía trên cùng trang chi tiết dịch vụ. Khuyến nghị ảnh ngang tỷ lệ 19:6.
                 </p>
 
                 <div class="service-banner-wrapper text-center">
@@ -779,13 +779,13 @@
                     <input type="hidden" id="remove-service-banner" name="remove_service_banner" value="0">
                     <input type="file" id="service-banner-file" name="service_banner_file" accept="image/*" class="d-none">
 
-                    <div id="service-banner-preview" class="mb-3" style="aspect-ratio: 16 / 9; width: 100%; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                    <div id="service-banner-preview" class="mb-3" style="aspect-ratio: 19 / 6; width: 100%; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer;">
                         @if($serviceBannerUrl)
                             <img src="{{ $serviceBannerUrl }}" alt="Banner dịch vụ" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
                         @else
                             <div class="text-muted p-3">
                                 <i class="fa-solid fa-panorama fa-2x mb-1 d-block text-primary"></i>
-                                <span class="small fw-semibold d-block">Chọn hoặc tải lên banner 16:9</span>
+                                <span class="small fw-semibold d-block">Chọn hoặc tải lên banner 19:6</span>
                             </div>
                         @endif
                     </div>
@@ -1891,10 +1891,10 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!file || !file.type || !file.type.startsWith('image/')) return;
         const bannerCropCfg = {
             isService: true,
-            ratio: 16 / 9,
-            label: '16:9',
-            desc: 'tỷ lệ 16:9 (chuẩn banner dịch vụ)',
-            title: 'Cắt banner dịch vụ (Bắt buộc tỷ lệ 16:9)'
+            ratio: 19 / 6,
+            label: '19:6',
+            desc: 'tỷ lệ 19:6 (chuẩn banner full-width dịch vụ)',
+            title: 'Cắt banner dịch vụ (Bắt buộc tỷ lệ 19:6)'
         };
         checkAndCropImage(file, bannerCropCfg).then(validFile => {
             try {
@@ -1962,7 +1962,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (serviceBannerPathInput) serviceBannerPathInput.value = '';
             if (removeServiceBannerInput) removeServiceBannerInput.value = '1';
             if (serviceBannerPreview) {
-                serviceBannerPreview.innerHTML = `<div class="text-muted p-3"><i class="fa-solid fa-panorama fa-2x mb-1 d-block text-primary"></i><span class="small fw-semibold d-block">Chọn hoặc tải lên banner 16:9</span></div>`;
+                serviceBannerPreview.innerHTML = `<div class="text-muted p-3"><i class="fa-solid fa-panorama fa-2x mb-1 d-block text-primary"></i><span class="small fw-semibold d-block">Chọn hoặc tải lên banner 19:6</span></div>`;
             }
             btnClearServiceBanner.classList.add('d-none');
         });
