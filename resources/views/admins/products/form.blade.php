@@ -967,15 +967,15 @@
             <div class="modal-header bg-dark text-white py-2 px-3">
                 <h6 class="modal-title d-flex align-items-center gap-2 mb-0" id="cropImageModalLabel">
                     <i class="fa-solid fa-crop-simple text-warning"></i>
-                    <span>Cắt ảnh sản phẩm (Bắt buộc tỷ lệ vuông 1:1)</span>
+                    <span id="cropModalTitleText">Cắt ảnh sản phẩm (Bắt buộc tỷ lệ vuông 1:1)</span>
                 </h6>
-                <span class="badge bg-warning text-dark fw-bold ms-auto">Chuẩn tỷ lệ 1:1</span>
+                <span class="badge bg-warning text-dark fw-bold ms-auto" id="cropModalBadge">Chuẩn tỷ lệ 1:1</span>
             </div>
             <div class="modal-body p-3">
                 <div class="alert alert-warning py-2 px-3 small mb-2 d-flex align-items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation fs-5 text-warning"></i>
-                    <div>
-                        Ảnh bạn vừa tải lên có kích thước <strong id="cropDimText">...</strong> (chưa phải hình vuông).
+                    <div id="cropModalAlertText">
+                        Ảnh bạn vừa tải lên có kích thước <strong id="cropDimText">...</strong> (chưa đúng tỷ lệ).
                         Hệ thống yêu cầu <strong>căn chỉnh và cắt thành hình vuông 1:1</strong> để ảnh hiển thị chuẩn đẹp trên website.
                     </div>
                 </div>
@@ -1162,14 +1162,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ========================================================
-    // CROPPER 1:1 CONTROLLER (Bắt buộc tỷ lệ vuông 1:1 khi upload ảnh)
+    // CROPPER CONTROLLER (Sản phẩm: 1:1 | Dịch vụ: 4:3)
     // ========================================================
     let currentCropper = null;
     let cropperResolve = null;
     let cropperReject = null;
     const cropModalEl = document.getElementById('cropImageModal');
     const cropperTargetImg = document.getElementById('cropperTargetImg');
-    const cropDimText = document.getElementById('cropDimText');
+    const cropModalTitleText = document.getElementById('cropModalTitleText');
+    const cropModalBadge = document.getElementById('cropModalBadge');
+    const cropModalAlertText = document.getElementById('cropModalAlertText');
     let cropModalInstance = null;
 
     if (cropModalEl && typeof bootstrap !== 'undefined') {
@@ -1179,28 +1181,52 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function getRequiredAspectConfig() {
+        const typeEl = document.getElementById('product-type');
+        const isService = typeEl && typeEl.value === 'service';
+        if (isService) {
+            return {
+                isService: true,
+                ratio: 4 / 3,
+                label: '4:3',
+                desc: 'tỷ lệ 4:3 (chuẩn khung dịch vụ)',
+                title: 'Cắt ảnh dịch vụ (Bắt buộc tỷ lệ 4:3)'
+            };
+        }
+        return {
+            isService: false,
+            ratio: 1,
+            label: '1:1',
+            desc: 'hình vuông 1:1',
+            title: 'Cắt ảnh sản phẩm (Bắt buộc tỷ lệ vuông 1:1)'
+        };
+    }
+
     function checkAndCropImage(file) {
         return new Promise((resolve, reject) => {
             if (!file || !file.type || !file.type.startsWith('image/')) {
                 return resolve(file);
             }
 
+            const cfg = getRequiredAspectConfig();
             const img = new Image();
             const objectUrl = URL.createObjectURL(file);
 
             img.onload = function () {
                 const w = img.naturalWidth;
                 const h = img.naturalHeight;
-                const diff = Math.abs(w - h);
+                const currentRatio = w / h;
+                const isRatioValid = cfg.isService
+                    ? Math.abs(currentRatio - cfg.ratio) <= 0.02
+                    : Math.abs(w - h) <= 2;
 
-                // Cho phép sai lệch tối đa 2px
-                if (diff <= 2) {
+                if (isRatioValid) {
                     URL.revokeObjectURL(objectUrl);
                     return resolve(file);
                 }
 
-                // Không đúng hình vuông -> Buộc mở Cropper popup
-                openCropperPopup(objectUrl, file, w, h)
+                // Chưa đúng tỷ lệ -> Mở Cropper popup theo tỷ lệ 1:1 hoặc 4:3
+                openCropperPopup(objectUrl, file, w, h, cfg)
                     .then(croppedFile => {
                         URL.revokeObjectURL(objectUrl);
                         resolve(croppedFile);
@@ -1220,13 +1246,15 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    function openCropperPopup(imageSrc, file, width, height) {
+    function openCropperPopup(imageSrc, file, width, height, cfg) {
         return new Promise((resolve, reject) => {
             cropperResolve = resolve;
             cropperReject = reject;
 
-            if (cropDimText) {
-                cropDimText.textContent = `${width} × ${height}px`;
+            if (cropModalTitleText) cropModalTitleText.textContent = cfg.title;
+            if (cropModalBadge) cropModalBadge.textContent = `Chuẩn tỷ lệ ${cfg.label}`;
+            if (cropModalAlertText) {
+                cropModalAlertText.innerHTML = `Ảnh bạn vừa tải lên có kích thước <strong>${width} × ${height}px</strong> (chưa đúng tỷ lệ ${cfg.label}). Hệ thống yêu cầu <strong>căn chỉnh và cắt theo ${cfg.desc}</strong> để ảnh hiển thị chuẩn đẹp trên website.`;
             }
 
             if (cropperTargetImg) {
@@ -1245,7 +1273,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (typeof Cropper !== 'undefined' && cropperTargetImg) {
                     currentCropper = new Cropper(cropperTargetImg, {
-                        aspectRatio: 1, // BẮT BUỘC TỶ LỆ VUÔNG 1:1
+                        aspectRatio: cfg.ratio, // 1:1 cho sản phẩm, 4:3 cho dịch vụ
                         viewMode: 1,
                         autoCropArea: 0.95,
                         responsive: true,
@@ -1280,19 +1308,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 imageSmoothingQuality: 'high'
             });
         } else if (cropperTargetImg && cropperTargetImg.naturalWidth > 0) {
-            // Fallback an toàn: Tự động cắt vuông 1:1 ở giữa bằng HTML5 Canvas nếu Cropper chưa sẵn sàng
+            // Fallback an toàn: Tự động cắt giữa theo đúng tỷ lệ 1:1 hoặc 4:3 nếu Cropper chưa sẵn sàng
+            const cfg = getRequiredAspectConfig();
             const w = cropperTargetImg.naturalWidth;
             const h = cropperTargetImg.naturalHeight;
-            const size = Math.min(w, h);
-            const sx = (w - size) / 2;
-            const sy = (h - size) / 2;
+            let cropW, cropH;
+            if (w / h > cfg.ratio) {
+                cropH = h;
+                cropW = Math.round(h * cfg.ratio);
+            } else {
+                cropW = w;
+                cropH = Math.round(w / cfg.ratio);
+            }
+            const sx = (w - cropW) / 2;
+            const sy = (h - cropH) / 2;
             canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
+            canvas.width = cropW;
+            canvas.height = cropH;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, size, size);
-            ctx.drawImage(cropperTargetImg, sx, sy, size, size, 0, 0, size, size);
+            ctx.fillRect(0, 0, cropW, cropH);
+            ctx.drawImage(cropperTargetImg, sx, sy, cropW, cropH, 0, 0, cropW, cropH);
         }
 
         if (!canvas) {
@@ -1353,8 +1389,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (primaryIdInput) primaryIdInput.value = '';
 
             const reader = new FileReader();
+            const ratioLabel = getRequiredAspectConfig().label;
             reader.onload = function (e) {
-                renderPrimaryPreview(e.target.result, `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn 1:1`);
+                renderPrimaryPreview(e.target.result, `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn ${ratioLabel}`);
             };
             reader.readAsDataURL(validFile);
         }).catch(err => {
@@ -1527,7 +1564,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 if (statusEl) {
                     statusEl.classList.remove('is-empty');
-                    statusEl.textContent = `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn 1:1`;
+                    statusEl.textContent = `File từ máy: ${validFile.name} (${(validFile.size / 1024).toFixed(1)} KB) - Chuẩn ${getRequiredAspectConfig().label}`;
                 }
                 if (btnClear) btnClear.classList.remove('d-none');
             };
