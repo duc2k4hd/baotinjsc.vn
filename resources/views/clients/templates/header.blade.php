@@ -1,41 +1,16 @@
 <!-- Header -->
 <header class="bt-header">
     <div class="container">
-        {{-- TẦNG 1: Logo + Slogan (Trái) & Tiện ích + Tìm kiếm (Phải) --}}
+        {{-- TẦNG 1: Logo (Trái) & Tìm kiếm (Phải) --}}
         <div class="bt-header-top">
             <div class="bt-header-brand">
                 <a href="{{ route('client.home.index') }}" class="bt-header-logo">
                     <img src="{{ asset('clients/assets/img/business/' . ($settings->site_logo ?? 'logo.webp')) }}" 
                          alt="{{ $settings->site_name ?? 'Bảo Tín JSC' }}">
                 </a>
-                <div class="bt-header-slogan">
-                    <span class="bt-slogan-sub">CHUYÊN THIẾT KẾ, CHẾ TẠO, LẮP ĐẶT</span>
-                    <span class="bt-slogan-main">BĂNG TẢI &amp; TỰ ĐỘNG HÓA CÔNG NGHIỆP</span>
-                </div>
             </div>
 
             <div class="bt-header-right-top">
-                {{-- Hàng tiện ích nhỏ góc trên phải --}}
-                <div class="bt-header-utils">
-                    @if(!empty($settings->contact_phone))
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone) }}" class="bt-util-link bt-util-phone" title="Hotline hỗ trợ">
-                            <i class="fas fa-phone-alt"></i>
-                            <span>{{ $settings->contact_phone }}</span>
-                        </a>
-                    @endif
-                    <a href="{{ auth()->check() ? route('client.profile.index') : route('client.auth.login') }}" class="bt-util-link" title="Tài khoản">
-                        <i class="fas fa-user"></i>
-                        <span>{{ auth()->check() ? (auth()->user()->name ?? 'Tài khoản') : 'Đăng nhập' }}</span>
-                    </a>
-                    <a href="{{ $cartLink ?? route('client.cart.index') }}" class="bt-util-link bt-util-cart" title="Giỏ hàng">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span>Giỏ hàng</span>
-                        @if(isset($cartCount) && $cartCount > 0)
-                            <span class="bt-cart-badge">{{ $cartCount }}</span>
-                        @endif
-                    </a>
-                </div>
-
                 {{-- Thanh tìm kiếm bo nhẹ màu xám --}}
                 <form action="{{ route('client.shop.index') }}" method="GET" class="bt-header-search">
                     <input type="text" 
