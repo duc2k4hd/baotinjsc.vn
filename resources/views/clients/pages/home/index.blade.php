@@ -43,7 +43,7 @@
         $ogImageUrl = !empty($settings->site_logo)
             ? asset('clients/assets/img/business/' . $settings->site_logo)
             : asset('clients/assets/img/business/logo.webp');
-        $hotline = $settings->contact_hotline ?? ($settings->contact_phone ?? '0985214595');
+        $hotline = $settings->contact_phone ?? '0985214595';
         $email = $settings->contact_email ?? 'info@baotinjsc.vn';
         $address = $settings->contact_address ?? 'Hà Nội, Việt Nam';
 

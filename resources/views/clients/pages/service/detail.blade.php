@@ -93,7 +93,7 @@
             '@type' => 'Organization',
             'name' => $settings->site_name ?? 'Bảo Tín JSC',
             'url' => url('/'),
-            'telephone' => $settings->hotline ?? ($settings->phone ?? '0983214896'),
+            'telephone' => $settings->contact_phone ?? '0985214595',
         ]
     ];
 @endphp
@@ -168,11 +168,11 @@
                         <h3>Tư vấn kỹ thuật</h3>
                     </div>
                     <div class="sidebar-contact-body">
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="sidebar-hotline-num">
-                            {{ $settings->hotline ?? '0983.214.896' }}
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0985214595') }}" class="sidebar-hotline-num">
+                            {{ $settings->contact_phone ?? '0985.214.595' }}
                         </a>
 
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="sidebar-action-btn">
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_zalo ?? ($settings->contact_phone ?? '0985214595')) }}" target="_blank" rel="noopener noreferrer" class="sidebar-action-btn">
                             <i class="fa-solid fa-comment-dots"></i> Chat Zalo tư vấn
                         </a>
 
@@ -189,13 +189,13 @@
                 <div class="sidebar-box">
                     <div class="sidebar-box-header">
                         <i class="fa-solid fa-building"></i>
-                        <h3>Bảo Tín JSC</h3>
+                        <h3>{{ $settings->site_name ?? 'Bảo Tín JSC' }}</h3>
                     </div>
                     <div class="sidebar-info-body">
-                        <p><strong>Địa chỉ:</strong> {{ $settings->address ?? 'Hà Nội, Việt Nam' }}</p>
-                        <p><strong>Hotline:</strong> {{ $settings->hotline ?? '0983.214.896' }}</p>
-                        <p><strong>Email:</strong> {{ $settings->email ?? 'info@baotinjsc.vn' }}</p>
-                        <p><strong>Website:</strong> {{ url('/') }}</p>
+                        <p><strong>Địa chỉ:</strong> {{ $settings->contact_address ?? 'Hà Nội, Việt Nam' }}</p>
+                        <p><strong>Hotline:</strong> {{ $settings->contact_phone ?? '0985.214.595' }}</p>
+                        <p><strong>Email:</strong> {{ $settings->contact_email ?? 'info@baotinjsc.vn' }}</p>
+                        <p><strong>Website:</strong> {{ $settings->site_url ?? url('/') }}</p>
                     </div>
                 </div>
             </aside>
@@ -252,10 +252,10 @@
                         <strong>Tư vấn & báo giá giải pháp:</strong> Liên hệ khảo sát thực tế và nhận báo giá tốt nhất.
                     </div>
                     <div class="service-quick-actions">
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" class="btn-contact-flat phone">
-                            <i class="fa-solid fa-phone"></i> {{ $settings->hotline ?? '0983.214.896' }}
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0985214595') }}" class="btn-contact-flat phone">
+                            <i class="fa-solid fa-phone"></i> {{ $settings->contact_phone ?? '0985.214.595' }}
                         </a>
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->hotline ?? '0983214896') }}" target="_blank" rel="noopener noreferrer" class="btn-contact-flat zalo">
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_zalo ?? ($settings->contact_phone ?? '0985214595')) }}" target="_blank" rel="noopener noreferrer" class="btn-contact-flat zalo">
                             <i class="fa-solid fa-comment-dots"></i> Chat Zalo
                         </a>
                         <a href="#consultation-box" class="btn-contact-flat quote">
@@ -287,7 +287,7 @@
                     @if(!empty($product->description))
                         {!! $product->description !!}
                     @else
-                        <p>Thông tin chi tiết về dịch vụ <strong>{{ $product->name }}</strong> đang được cập nhật. Quý khách vui lòng liên hệ hotline <strong>{{ $settings->hotline ?? '0983.214.896' }}</strong> để nhận tư vấn kỹ thuật trực tiếp.</p>
+                        <p>Thông tin chi tiết về dịch vụ <strong>{{ $product->name }}</strong> đang được cập nhật. Quý khách vui lòng liên hệ hotline <strong>{{ $settings->contact_phone ?? '0985.214.595' }}</strong> để nhận tư vấn kỹ thuật trực tiếp.</p>
                     @endif
 
                     {{-- Video nếu có --}}

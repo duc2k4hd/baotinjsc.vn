@@ -556,7 +556,7 @@
                             <i class="fas fa-share"></i>
                             <span>CHIA SẺ</span>
                         </button>
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0903223663') }}?text={{ urlencode('Xin chào Bảo Tín JSC, tôi cần tư vấn về sản phẩm: ' . $product->name) }}"
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_zalo ?? ($settings->contact_phone ?? '')) }}?text={{ urlencode('Xin chào ' . ($settings->site_name ?? 'Bảo Tín JSC') . ', tôi cần tư vấn về sản phẩm: ' . $product->name) }}"
                            target="_blank" rel="noopener noreferrer" class="product-action-meta-item" title="Tư vấn trực tiếp">
                             <i class="fas fa-comment-dots"></i>
                             <span>ĐẶT CÂU HỎI</span>
@@ -569,14 +569,14 @@
 
                     {{-- Nút Liên hệ / Zalo nhanh --}}
                     <div class="quick-contact-row">
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0903223663') }}?text={{ urlencode('Xin chào Bảo Tín JSC, tôi cần tư vấn & báo giá sản phẩm: ' . $product->name) }}"
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_zalo ?? ($settings->contact_phone ?? '')) }}?text={{ urlencode('Xin chào ' . ($settings->site_name ?? 'Bảo Tín JSC') . ', tôi cần tư vấn & báo giá sản phẩm: ' . $product->name) }}"
                            target="_blank" rel="noopener noreferrer" class="btn-contact-action btn-contact-zalo">
                             <i class="fab fa-zalo"></i>
                             <span>Chat Zalo tư vấn kỹ thuật</span>
                         </a>
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0903223663') }}" class="btn-contact-action btn-contact-call">
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '') }}" class="btn-contact-action btn-contact-call">
                             <i class="fas fa-phone-alt"></i>
-                            <span>Hotline: <strong>{{ $settings->contact_phone ?? '0903 223 663' }}</strong></span>
+                            <span>Hotline: <strong>{{ $settings->contact_phone ?? '' }}</strong></span>
                         </a>
                     </div>
                 </div>
@@ -876,11 +876,11 @@
                         </div>
                     </div>
                     <div class="side-support-actions">
-                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0903223663') }}" class="side-support-btn call-btn">
+                        <a href="tel:{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '') }}" class="side-support-btn call-btn">
                             <i class="fas fa-phone-alt"></i>
-                            <span>Hotline: <strong>{{ $settings->contact_phone ?? '0903 223 663' }}</strong></span>
+                            <span>Hotline: <strong>{{ $settings->contact_phone ?? '' }}</strong></span>
                         </a>
-                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_phone ?? '0903223663') }}?text={{ urlencode('Xin chào Bảo Tín JSC, tôi cần tư vấn kỹ thuật sản phẩm: ' . $product->name) }}"
+                        <a href="https://zalo.me/{{ preg_replace('/[^0-9]/', '', $settings->contact_zalo ?? ($settings->contact_phone ?? '')) }}?text={{ urlencode('Xin chào ' . ($settings->site_name ?? 'Bảo Tín JSC') . ', tôi cần tư vấn kỹ thuật sản phẩm: ' . $product->name) }}"
                            target="_blank" rel="noopener noreferrer" class="side-support-btn zalo-btn">
                             <i class="fab fa-zalo"></i>
                             <span>Chat Zalo hỗ trợ kỹ thuật</span>

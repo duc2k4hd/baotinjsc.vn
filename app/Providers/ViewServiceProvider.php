@@ -32,11 +32,33 @@ class ViewServiceProvider extends ServiceProvider
         try {
             if (Schema::hasTable('settings')) {
                 $settings = Cache::rememberForever('settings', function () {
-                    return Setting::active()
+                    $raw = Setting::active()
                         ->get() // ❗ quan trọng
                         ->mapWithKeys(fn ($s) => [$s->key => $s->getParsedValue()])
                         ->toArray();
+
+                    // Tự động map các alias phổ biến để các trang gọi linh hoạt luôn nhận đúng giá trị từ database
+                    $raw['hotline'] = $raw['hotline'] ?? $raw['contact_phone'] ?? null;
+                    $raw['phone'] = $raw['phone'] ?? $raw['contact_phone'] ?? null;
+                    $raw['contact_hotline'] = $raw['contact_hotline'] ?? $raw['contact_phone'] ?? null;
+                    $raw['email'] = $raw['email'] ?? $raw['contact_email'] ?? null;
+                    $raw['address'] = $raw['address'] ?? $raw['contact_address'] ?? null;
+                    $raw['logo'] = $raw['logo'] ?? $raw['site_logo'] ?? null;
+                    $raw['favicon'] = $raw['favicon'] ?? $raw['site_favicon'] ?? null;
+                    $raw['banner'] = $raw['banner'] ?? $raw['site_banner'] ?? null;
+                    $raw['name'] = $raw['name'] ?? $raw['site_name'] ?? null;
+                    $raw['title'] = $raw['title'] ?? $raw['site_title'] ?? null;
+                    $raw['description'] = $raw['description'] ?? $raw['site_description'] ?? null;
+                    $raw['tax_code'] = $raw['tax_code'] ?? $raw['site_tax_code'] ?? null;
+                    $raw['zalo'] = $raw['zalo'] ?? $raw['contact_zalo'] ?? ($raw['contact_phone'] ?? null);
+                    $raw['url'] = $raw['url'] ?? $raw['site_url'] ?? null;
+
+                    return $raw;
                 });
+
+                // Cập nhật vào config để các helper toàn cục có thể dùng config('settings.key')
+                config(['settings' => $settings]);
+
                 View::share('settings', (object) $settings);
             } else {
                 View::share('settings', (object) []);
