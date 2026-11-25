@@ -126,7 +126,7 @@
 @push('head')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css">
     <link rel="stylesheet" href="{{ asset('admins/css/media-manager.css') }}?v={{ env('APP_VERSION', '1.0') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" integrity="sha512-cyzxRvewl+FOKTtpBzYjW6x6IAYDX23wfwwzs2UmQxF9sj4r2CKvV3QUF1Ssub24DWqy8/TUvScuLFZYnxdrJA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 @endpush
 
 @push('styles')
@@ -139,14 +139,10 @@
         background-color: #0f172a;
         border-radius: 6px;
         overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
     }
     .cropper-modal-wrapper img {
-        max-width: 100%;
-        max-height: 100%;
         display: block;
+        max-width: 100%;
     }
     /* 2 COLUMN LAYOUT - WordPress Style */
     #product-form .row.g-4 {
@@ -1027,7 +1023,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js" integrity="sha512-6lplKLe1tT/Qgqt1ezde4M45+Z51x5eS5e57147b19895c102a9e96f13bcf04051b72a39281e7d0251" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -1274,14 +1270,30 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('btnCropperReset')?.addEventListener('click', () => currentCropper?.reset());
 
     document.getElementById('btnCropperApply')?.addEventListener('click', () => {
-        if (!currentCropper) return;
-        const canvas = currentCropper.getCroppedCanvas({
-            maxWidth: 2000,
-            maxHeight: 2000,
-            fillColor: '#ffffff',
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high'
-        });
+        let canvas = null;
+        if (currentCropper) {
+            canvas = currentCropper.getCroppedCanvas({
+                maxWidth: 2000,
+                maxHeight: 2000,
+                fillColor: '#ffffff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+        } else if (cropperTargetImg && cropperTargetImg.naturalWidth > 0) {
+            // Fallback an toàn: Tự động cắt vuông 1:1 ở giữa bằng HTML5 Canvas nếu Cropper chưa sẵn sàng
+            const w = cropperTargetImg.naturalWidth;
+            const h = cropperTargetImg.naturalHeight;
+            const size = Math.min(w, h);
+            const sx = (w - size) / 2;
+            const sy = (h - size) / 2;
+            canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.drawImage(cropperTargetImg, sx, sy, size, size, 0, 0, size, size);
+        }
 
         if (!canvas) {
             alert('Không thể cắt ảnh. Vui lòng thử lại.');
