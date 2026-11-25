@@ -67,7 +67,7 @@ class ProductService
         $oldSlug = $product->slug; // Lưu slug cũ để invalidate cache
         
         $product = DB::transaction(function () use ($product, $data, $oldSlug) {
-            $payload = $this->extractProductPayload($data, $product->id);
+            $payload = $this->extractProductPayload($data, $product->id, $product);
             $payload['category_ids'] = $this->resolveCategoryIds($data);
 
             $product->update($payload);
@@ -221,7 +221,7 @@ class ProductService
         $prod->forceDelete();
     }
 
-    private function extractProductPayload(array $data, ?int $ignoreProductId = null): array
+    private function extractProductPayload(array $data, ?int $ignoreProductId = null, ?Product $existingProduct = null): array
     {
         $slug = Arr::get($data, 'slug');
         if (empty($slug)) {
@@ -270,10 +270,49 @@ class ProductService
             'category_included_ids' => $includedCategoryIds,
             'link_catalog' => $this->normalizeLinkCatalog(Arr::get($data, 'link_catalog'), Arr::get($data, 'catalog_files', [])),
             'video_url' => Arr::get($data, 'video_url') ? trim(Arr::get($data, 'video_url')) : null,
+            'service_banner' => $this->resolveServiceBanner($data, $existingProduct, $slug),
             'is_featured' => Arr::get($data, 'is_featured', false),
             'created_by' => $createdBy,
             'is_active' => Arr::get($data, 'is_active', true),
         ];
+    }
+
+    /**
+     * Xử lý lưu hoặc cập nhật banner 16:9 riêng cho dịch vụ.
+     */
+    private function resolveServiceBanner(array $data, ?Product $existingProduct, string $slug): ?string
+    {
+        $type = Arr::get($data, 'type', 'product') ?: 'product';
+        if ($type !== 'service') {
+            return null;
+        }
+
+        if (! empty(Arr::get($data, 'remove_service_banner'))) {
+            return null;
+        }
+
+        $file = Arr::get($data, 'service_banner_file');
+        if ($file instanceof UploadedFile) {
+            $destination = public_path('clients/assets/img/clothes');
+            if (! is_dir($destination)) {
+                mkdir($destination, 0755, true);
+            }
+            $extension = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $filename = $slug . '-banner-' . time() . '.' . $extension;
+            $file->move($destination, $filename);
+
+            return $filename;
+        }
+
+        $path = Arr::get($data, 'service_banner_path');
+        if (! empty($path)) {
+            $clean = ltrim(trim($path), '/');
+            $clean = preg_replace('#^clients/assets/img/clothes/#', '', $clean);
+
+            return $clean ?: null;
+        }
+
+        return $existingProduct?->service_banner;
     }
 
     // private function normalizeMetaKeywords($keywords): ?array

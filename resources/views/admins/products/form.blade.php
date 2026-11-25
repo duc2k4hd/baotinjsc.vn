@@ -760,6 +760,50 @@
                 </div>
             </div>
 
+            {{-- Hộp Banner riêng cho Dịch vụ (Tỷ lệ 16:9 - Chỉ hiển thị khi loại bài đăng là Dịch vụ) --}}
+            <div class="card" id="service-banner-card" style="{{ old('type', $product->type ?? 'product') === 'service' ? '' : 'display: none;' }}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0"><i class="fa-solid fa-panorama text-primary me-2"></i>Banner Dịch vụ (16:9)</h5>
+                    <span class="badge bg-info text-dark">Tỷ lệ 16:9</span>
+                </div>
+                <p class="text-muted small mb-3">
+                    Hiển thị nổi bật phía trên cùng trang chi tiết dịch vụ. Khuyến nghị ảnh ngang tỷ lệ 16:9.
+                </p>
+
+                <div class="service-banner-wrapper text-center">
+                    @php
+                        $serviceBannerVal = old('service_banner_path', $product->service_banner ?? null);
+                        $serviceBannerUrl = $resolveProductImgUrl($serviceBannerVal);
+                    @endphp
+                    <input type="hidden" id="service-banner-path" name="service_banner_path" value="{{ $serviceBannerVal }}">
+                    <input type="hidden" id="remove-service-banner" name="remove_service_banner" value="0">
+                    <input type="file" id="service-banner-file" name="service_banner_file" accept="image/*" class="d-none">
+
+                    <div id="service-banner-preview" class="mb-3" style="aspect-ratio: 16 / 9; width: 100%; border: 1px dashed #cbd5e1; border-radius: 6px; background: #f8fafc; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        @if($serviceBannerUrl)
+                            <img src="{{ $serviceBannerUrl }}" alt="Banner dịch vụ" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='{{ asset('clients/assets/img/clothes/no-image.webp') }}';">
+                        @else
+                            <div class="text-muted p-3">
+                                <i class="fa-solid fa-panorama fa-2x mb-1 d-block text-primary"></i>
+                                <span class="small fw-semibold d-block">Chọn hoặc tải lên banner 16:9</span>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 justify-content-center">
+                        <button type="button" class="btn btn-primary btn-sm fw-bold" id="btn-pick-service-banner">
+                            <i class="fa-solid fa-photo-film me-1"></i> Chọn từ thư viện
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" id="btn-upload-service-banner">
+                            <i class="fa-solid fa-upload me-1"></i> Tải từ máy tính
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm {{ $serviceBannerVal ? '' : 'd-none' }}" id="btn-clear-service-banner">
+                            <i class="fa-solid fa-trash me-1"></i> Xóa
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             {{-- Hộp Giá & Tồn kho --}}
             <div class="card" id="pricing-stock-card">
                 <h5><i class="fa-solid fa-coins text-primary me-2"></i>Giá & Kho hàng</h5>
@@ -1181,7 +1225,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    let activeCropConfig = null;
+
     function getRequiredAspectConfig() {
+        if (activeCropConfig) {
+            return activeCropConfig;
+        }
         const typeEl = document.getElementById('product-type');
         const isService = typeEl && typeEl.value === 'service';
         if (isService) {
@@ -1202,12 +1251,13 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
-    function checkAndCropImage(file) {
+    function checkAndCropImage(file, customConfig = null) {
         return new Promise((resolve, reject) => {
             if (!file || !file.type || !file.type.startsWith('image/')) {
                 return resolve(file);
             }
 
+            activeCropConfig = customConfig || null;
             const cfg = getRequiredAspectConfig();
             const img = new Image();
             const objectUrl = URL.createObjectURL(file);
@@ -1216,22 +1266,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 const w = img.naturalWidth;
                 const h = img.naturalHeight;
                 const currentRatio = w / h;
-                const isRatioValid = cfg.isService
-                    ? Math.abs(currentRatio - cfg.ratio) <= 0.02
-                    : Math.abs(w - h) <= 2;
+                const isRatioValid = (cfg.ratio === 1)
+                    ? Math.abs(w - h) <= 2
+                    : Math.abs(currentRatio - cfg.ratio) <= 0.03;
 
                 if (isRatioValid) {
+                    activeCropConfig = null;
                     URL.revokeObjectURL(objectUrl);
                     return resolve(file);
                 }
 
-                // Chưa đúng tỷ lệ -> Mở Cropper popup theo tỷ lệ 1:1 hoặc 4:3
+                // Chưa đúng tỷ lệ -> Mở Cropper popup
                 openCropperPopup(objectUrl, file, w, h, cfg)
                     .then(croppedFile => {
+                        activeCropConfig = null;
                         URL.revokeObjectURL(objectUrl);
                         resolve(croppedFile);
                     })
                     .catch(err => {
+                        activeCropConfig = null;
                         URL.revokeObjectURL(objectUrl);
                         reject(err);
                     });
@@ -1779,6 +1832,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Dynamic Type switcher (Sản phẩm vs Dịch vụ)
     const typeSelect = document.getElementById('product-type');
     const servicePriceNote = document.getElementById('service-price-note');
+    const serviceBannerCard = document.getElementById('service-banner-card');
     const priceInput = document.getElementById('product-price');
     const stockInput = document.getElementById('product-stock');
     const skuReqs = document.querySelectorAll('.sku-req, .price-req, .stock-req');
@@ -1788,6 +1842,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const isService = typeSelect.value === 'service';
         if (servicePriceNote) {
             servicePriceNote.style.display = isService ? 'block' : 'none';
+        }
+        if (serviceBannerCard) {
+            serviceBannerCard.style.display = isService ? 'block' : 'none';
         }
         skuReqs.forEach(el => {
             el.style.display = isService ? 'none' : '';
@@ -1811,6 +1868,104 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeSelect) {
         typeSelect.addEventListener('change', syncTypeUI);
         syncTypeUI();
+    }
+
+    // Quản lý Banner Dịch vụ (16:9)
+    const serviceBannerPreview = document.getElementById('service-banner-preview');
+    const serviceBannerFileInput = document.getElementById('service-banner-file');
+    const serviceBannerPathInput = document.getElementById('service-banner-path');
+    const removeServiceBannerInput = document.getElementById('remove-service-banner');
+    const btnPickServiceBanner = document.getElementById('btn-pick-service-banner');
+    const btnUploadServiceBanner = document.getElementById('btn-upload-service-banner');
+    const btnClearServiceBanner = document.getElementById('btn-clear-service-banner');
+
+    function renderServiceBannerPreview(src) {
+        if (!serviceBannerPreview) return;
+        const resolved = resolveProductImageUrl(src);
+        serviceBannerPreview.innerHTML = `<img src="${resolved}" alt="Banner dịch vụ" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='/clients/assets/img/clothes/no-image.webp';">`;
+        if (btnClearServiceBanner) btnClearServiceBanner.classList.remove('d-none');
+        if (removeServiceBannerInput) removeServiceBannerInput.value = '0';
+    }
+
+    function handleServiceBannerFile(file) {
+        if (!file || !file.type || !file.type.startsWith('image/')) return;
+        const bannerCropCfg = {
+            isService: true,
+            ratio: 16 / 9,
+            label: '16:9',
+            desc: 'tỷ lệ 16:9 (chuẩn banner dịch vụ)',
+            title: 'Cắt banner dịch vụ (Bắt buộc tỷ lệ 16:9)'
+        };
+        checkAndCropImage(file, bannerCropCfg).then(validFile => {
+            try {
+                const dt = new DataTransfer();
+                dt.items.add(validFile);
+                if (serviceBannerFileInput) serviceBannerFileInput.files = dt.files;
+            } catch (e) {
+                console.warn(e);
+            }
+            if (serviceBannerPathInput) serviceBannerPathInput.value = '';
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                renderServiceBannerPreview(e.target.result);
+            };
+            reader.readAsDataURL(validFile);
+        }).catch(() => {
+            if (serviceBannerFileInput) serviceBannerFileInput.value = '';
+        });
+    }
+
+    if (btnPickServiceBanner) {
+        btnPickServiceBanner.addEventListener('click', function () {
+            if (typeof window.openMediaPicker === 'function') {
+                window.openMediaPicker({
+                    mode: 'single',
+                    scope: 'client',
+                    folder: 'clothes',
+                    onSelect: (file) => {
+                        if (file) {
+                            if (serviceBannerFileInput) serviceBannerFileInput.value = '';
+                            const chosenPath = file.relative_path || file.path || file.filename || file.url;
+                            if (serviceBannerPathInput) serviceBannerPathInput.value = chosenPath;
+                            const previewUrl = (file.url && file.url.includes('/')) ? file.url : resolveProductImageUrl(chosenPath);
+                            renderServiceBannerPreview(previewUrl);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    if (btnUploadServiceBanner) {
+        btnUploadServiceBanner.addEventListener('click', () => serviceBannerFileInput?.click());
+    }
+
+    if (serviceBannerFileInput) {
+        serviceBannerFileInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                handleServiceBannerFile(this.files[0]);
+            }
+        });
+    }
+
+    if (serviceBannerPreview) {
+        serviceBannerPreview.addEventListener('click', function () {
+            if (!serviceBannerPathInput?.value && !(serviceBannerFileInput?.files?.length)) {
+                btnPickServiceBanner?.click();
+            }
+        });
+    }
+
+    if (btnClearServiceBanner) {
+        btnClearServiceBanner.addEventListener('click', function () {
+            if (serviceBannerFileInput) serviceBannerFileInput.value = '';
+            if (serviceBannerPathInput) serviceBannerPathInput.value = '';
+            if (removeServiceBannerInput) removeServiceBannerInput.value = '1';
+            if (serviceBannerPreview) {
+                serviceBannerPreview.innerHTML = `<div class="text-muted p-3"><i class="fa-solid fa-panorama fa-2x mb-1 d-block text-primary"></i><span class="small fw-semibold d-block">Chọn hoặc tải lên banner 16:9</span></div>`;
+            }
+            btnClearServiceBanner.classList.add('d-none');
+        });
     }
 
     // Release Editing Lock on exit

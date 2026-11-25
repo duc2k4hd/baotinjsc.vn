@@ -40,6 +40,7 @@ class Product extends Model
         'image_ids',
         'link_catalog',
         'video_url',
+        'service_banner',
         'is_featured',
         'locked_by',
         'locked_at',

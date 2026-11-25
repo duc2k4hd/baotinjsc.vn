@@ -131,6 +131,13 @@
             </div>
         @endif
 
+        {{-- Banner 16:9 riêng cho dịch vụ (nếu có) --}}
+        @if(!empty($product->service_banner))
+            <div class="service-top-banner">
+                <img src="{{ $resolveImg($product->service_banner) }}" alt="{{ $product->name }}">
+            </div>
+        @endif
+
         {{-- Bố cục 2 cột --}}
         <div class="service-grid-layout">
             {{-- CỘT TRÁI: SIDEBAR --}}

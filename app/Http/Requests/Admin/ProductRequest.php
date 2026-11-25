@@ -163,6 +163,11 @@ class ProductRequest extends FormRequest
             'catalog_files.*' => ['file', 'mimes:pdf,doc,docx,xls,xlsx,zip,rar', 'max:20480'], // 20MB
             'video_url' => ['nullable', 'string', 'max:500'],
 
+            // Service Banner 16:9 (Chỉ dùng cho dịch vụ)
+            'service_banner_file' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp,gif,avif', 'max:10240'],
+            'service_banner_path' => ['nullable', 'string', 'max:500'],
+            'remove_service_banner' => ['nullable', 'boolean'],
+
             // Primary image
             'primary_image' => ['nullable', 'array'],
             'primary_image.id' => ['nullable', 'integer', 'exists:images,id'],

@@ -62,6 +62,23 @@
     font-weight: 600;
 }
 
+/* Banner riêng dịch vụ (Tỷ lệ 16:9 phía trên service-grid-layout) */
+.service-top-banner {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--bt-border);
+    background: #f8fafc;
+    margin-bottom: 14px;
+}
+
+.service-top-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 /* Bố cục 2 cột: Cột trái 250px, Cột phải tự do */
 .service-grid-layout {
     display: grid;
