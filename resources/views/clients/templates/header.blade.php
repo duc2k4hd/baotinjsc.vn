@@ -102,19 +102,7 @@
                             </div>
                         </div>
                     </li>
-                    {{-- 3. GIỚI THIỆU --}}
-                    <li>
-                        <a href="{{ route('client.introduction.index') }}" class="{{ request()->routeIs('client.introduction.*') ? 'active' : '' }}">GIỚI THIỆU</a>
-                    </li>
-                    {{-- 4. DỊCH VỤ --}}
-                    <li>
-                        <a href="{{ route('client.technical-service.index') }}" class="{{ request()->routeIs('client.technical-service.*') ? 'active' : '' }}">DỊCH VỤ</a>
-                    </li>
-                    {{-- 5. TIN TỨC --}}
-                    <li>
-                        <a href="{{ route('client.blog.index') }}" class="{{ request()->routeIs('client.blog.*') ? 'active' : '' }}">TIN TỨC</a>
-                    </li>
-                    {{-- 6. LIÊN HỆ --}}
+                    {{-- 3. LIÊN HỆ --}}
                     <li>
                         <a href="{{ route('client.contact.index') }}" class="{{ request()->routeIs('client.contact.*') ? 'active' : '' }}">LIÊN HỆ</a>
                     </li>
@@ -271,9 +259,6 @@ document.addEventListener('DOMContentLoaded', function () {
     <div class="bt-mobile-quick-nav">
         <a href="{{ route('client.home.index') }}" class="{{ request()->routeIs('client.home.*') ? 'active' : '' }}">Trang chủ</a>
         <a href="{{ route('client.shop.index') }}" class="{{ request()->routeIs('client.shop.*') ? 'active' : '' }}">Sản phẩm</a>
-        <a href="{{ route('client.introduction.index') }}" class="{{ request()->routeIs('client.introduction.*') ? 'active' : '' }}">Giới thiệu</a>
-        <a href="{{ route('client.technical-service.index') }}" class="{{ request()->routeIs('client.technical-service.*') ? 'active' : '' }}">Dịch vụ</a>
-        <a href="{{ route('client.blog.index') }}" class="{{ request()->routeIs('client.blog.*') ? 'active' : '' }}">Tin tức</a>
         <a href="{{ route('client.contact.index') }}" class="{{ request()->routeIs('client.contact.*') ? 'active' : '' }}">Liên hệ</a>
     </div>
 
