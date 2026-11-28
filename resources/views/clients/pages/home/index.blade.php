@@ -315,31 +315,6 @@
                                 <a href="{{ route('client.product.detail', $product->slug) }}"
                                     style="color:inherit;text-decoration:none;">{{ $product->name }}</a>
                             </h3>
-                            <div class="misutech_home_product_rating"
-                                aria-label="Đánh giá {{ $product->display_rating_value ?? 5 }} trên 5">
-                                @php $stars = round($product->display_rating_value ?? 5); @endphp
-                                @for ($i = 1; $i <= 5; $i++)
-                                    @if ($i <= $stars) ★ @else ☆ @endif
-                                @endfor
-                                <span>({{ $product->display_review_count ?? 0 }})</span>
-                            </div>
-                            <div class="misutech_home_product_price_row">
-                                <div>
-                                    @if (($product->sale_price ?? 0) > 1000 || ($product->price ?? 0) > 1000)
-                                        <strong class="misutech_home_product_price">{{ number_format($product->sale_price ?: $product->price, 0, ',', '.') }} đ</strong>
-                                        @if ($hasSale)
-                                            <del class="misutech_home_product_old_price">{{ number_format($product->price, 0, ',', '.') }} đ</del>
-                                        @endif
-                                    @else
-                                        <strong class="misutech_home_product_price" style="color: var(--misutech_home_primary, #2563EB); font-size: 13px;">Liên hệ</strong>
-                                    @endif
-                                </div>
-                                <button class="misutech_home_add_cart" type="button" data-cart
-                                    data-product-id="{{ $product->id }}"
-                                    data-product="{{ $product->name }}" aria-label="Thêm {{ $product->name }} vào giỏ hàng">
-                                    +
-                                </button>
-                            </div>
                         </article>
                     @endforeach
                 </div>

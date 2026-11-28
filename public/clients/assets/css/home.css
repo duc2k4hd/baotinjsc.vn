@@ -600,7 +600,7 @@
     background: var(--misutech_home_white);
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: flex-start;
     box-sizing: border-box;
     border-radius: 8px;
     border: 1px solid #eef0f4;
@@ -689,7 +689,7 @@
 .misutech_home_product_name {
     height: 36px;
     overflow: hidden;
-    margin: 0 0 6px;
+    margin: 0;
     font-size: 12px;
     line-height: 1.45;
     font-weight: 600;
@@ -836,7 +836,6 @@
     background: transparent;
 }
 .misutech_home_catalog_grid .misutech_home_product_card {
-    min-height: 310px;
     padding: 14px 12px;
 }
 #misutech_home_catalog_0 .misutech_home_product_card:first-child {
@@ -1242,7 +1241,7 @@
     .misutech_home_product_name {
         font-size: 12px;
         min-height: 32px;
-        margin-bottom: 4px;
+        margin-bottom: 0;
     }
     .misutech_home_product_price {
         font-size: 13px;
