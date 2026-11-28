@@ -334,12 +334,19 @@
                 </div>
 
                 <!-- Map Section -->
+                @php
+                    $contactAddress = trim((string) ($settings->contact_address ?? ''));
+                    $mapEmbedUrl = $contactAddress !== ''
+                        ? 'https://www.google.com/maps?q=' . rawurlencode($contactAddress) . '&hl=vi&z=16&output=embed'
+                        : ($settings->source_map ?? null);
+                @endphp
                 <div class="contact-map-wrapper">
                     <h2 class="contact-map-title">Vị trí của chúng tôi</h2>
-                    @if($settings->source_map ?? null)
+                    @if($mapEmbedUrl)
                         <div class="contact-map">
                             <iframe 
-                                src="{{ $settings->source_map }}" 
+                                src="{{ $mapEmbedUrl }}" 
+                                title="Vị trí của chúng tôi{{ $contactAddress !== '' ? ' - ' . $contactAddress : '' }}"
                                 width="100%" 
                                 height="450" 
                                 style="border:0; border-radius: 8px;" 
