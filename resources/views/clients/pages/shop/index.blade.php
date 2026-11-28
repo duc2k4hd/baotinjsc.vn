@@ -286,8 +286,6 @@
                                             <h4 class="autosensor_shop_products_filter_new_products_item_info_title">
                                                 {{ $product->name }}</h4>
                                         </a>
-                                        <p class="autosensor_shop_products_filter_new_products_item_info_price">
-                                            {{ number_format($product->price, 0, ',', '.') }}đ</p>
                                     </div>
                                 </div>
                             @endforeach
